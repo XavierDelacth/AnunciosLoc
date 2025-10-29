@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Projeto AnuncioLoc</string>
+    <string name="titulo">AnunciosLoc</string>
+    <string name="subtitulo">Anúncios baseados em localização</string>
+    <string name="wellcome">Bem-vindo</string>
+    <string name="entre_ou_criar">Entre ou crie uma nova conta</string>
+    <string name="login">Login</string>
+    <string name="registrar">Registrar</string>
+    <string name="nome_utilizador">Nome de Utilizador</string>
+    <string name="senha">Senha</string>
+    <string name="confirmar_senha">Confirmar Senha</string>
+    <string name="entrar">Entrar</string>
+</resources>
