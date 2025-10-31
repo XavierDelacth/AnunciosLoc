@@ -15,10 +15,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        TextView tv = new TextView(this);
-        tv.setText("Bem-vindo ao AnunciosLoc!\n\nVocê está logado.");
-        tv.setTextSize(20);
-        tv.setPadding(50, 50, 50, 50);
-        setContentView(tv);
+        setContentView(R.layout.activity_main);
     }
 }

@@ -21,7 +21,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/placeholder_image"
+            android:src="@drawable/placeholder_images"
             app:cardCornerRadius="12dp" />
 
         <Space
@@ -39,7 +39,7 @@
                 android:id="@+id/tv_titulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Vendemos terreno no Sun City"
+                android:text="@string/Anuncio1"
                 android:textColor="@color/preto_texto"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -51,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Vendo 5 clippers no seu voo sem acidentes..."
+                android:text="@string/Anuncio2"
                 android:textColor="@color/cinza_texto"
                 android:textSize="14sp"
                 android:maxLines="2"
@@ -63,11 +63,11 @@
             android:id="@+id/btn_salvar"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_bookmark"
-            android:tint="@color/bookmark_cinza"
+            android:src="@drawable/ic_bookmark_foreground"
+
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="top"
-            android:contentDescription="Salvar anúncio" />
+            android:contentDescription="@string/salvarAnuncio" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

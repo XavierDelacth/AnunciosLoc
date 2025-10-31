@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Projeto AnuncioLoc</string>
+    <string name="app_name">AnunciosLoc</string>
     <string name="titulo">AnunciosLoc</string>
     <string name="subtitulo">Anúncios baseados em localização</string>
     <string name="wellcome">Bem-vindo</string>
@@ -10,4 +10,7 @@
     <string name="senha">Senha</string>
     <string name="confirmar_senha">Confirmar Senha</string>
     <string name="entrar">Entrar</string>
+    <string name="Anuncio1">Vendemos terreno no Sun City</string>
+    <string name="Anuncio2">Vendo 5 clippers no seu voo sem acidentes...</string>
+    <string name="salvarAnuncio">Salvar anúncio</string>
 </resources>
