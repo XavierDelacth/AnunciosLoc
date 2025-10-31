@@ -21,7 +21,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/placeholder_image"
+            android:src="@drawable/espaco_image"
             app:cardCornerRadius="12dp" />
 
         <Space
@@ -64,9 +64,9 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:src="@drawable/ic_bookmark"
-            android:tint="@color/bookmark_cinza"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="top"
+            android:layout_marginTop="50dp"
             android:contentDescription="Salvar anúncio" />
 
     </LinearLayout>

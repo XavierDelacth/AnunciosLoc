@@ -243,8 +243,8 @@
                 android:text="Anúncios criados por si"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:textColor="@color/white"
-                android:background="@color/verde_principal"
+                android:textColor="@color/verde_principal"
+                android:background="@color/white"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -257,8 +257,8 @@
                 android:text="Anúncios guardados"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:textColor="@color/verde_principal"
-                android:background="@color/white"
+                android:textColor="@color/white"
+                android:background="@color/verde_principal"
                 android:clickable="true"
                 android:focusable="true" />
         </LinearLayout>
