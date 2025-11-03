@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f9fafb">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:elevation="4dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp">
+
+                <!-- Logout Button -->
+                <Button
+                    android:id="@+id/btnLogout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:background="@android:color/transparent"
+                    android:textColor="#dc2626"
+                    android:text="Sair"
+                    android:drawableStart="@drawable/ic_logout"
+                    android:drawablePadding="8dp" />
+
+            </RelativeLayout>
+
+            <!-- Profile Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp">
+
+                <!-- Profile Picture -->
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:background="#3b82f6"
+                    android:padding="24dp"
+                    android:src="@drawable/ic_user"
+                    android:contentDescription="Profile"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Username -->
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/tvUsername"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="João Silva"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="#1f2937" />
+
+                    <ImageButton
+                        android:id="@+id/btnEditName"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_toEndOf="@id/tvUsername"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:src="@drawable/ic_edit"
+                        android:contentDescription="Edit name" />
+
+                    <EditText
+                        android:id="@+id/etUsername"
+                        android:layout_width="200dp"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/edit_text_border" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutEditButtons"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toEndOf="@id/etUsername"
+                        android:layout_centerVertical="true"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <ImageButton
+                            android:id="@+id/btnConfirmEdit"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="#10b981"
+                            android:src="@drawable/ic_check"
+                            android:contentDescription="Confirm" />
+
+                        <ImageButton
+                            android:id="@+id/btnCancelEdit"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="4dp"
+                            android:background="#6b7280"
+                            android:src="@drawable/ic_close"
+                            android:contentDescription="Cancel" />
+
+                    </LinearLayout>
+
+                </RelativeLayout>
+
+                <!-- Change Password Button -->
+                <Button
+                    android:id="@+id/btnChangePassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#374151"
+                    android:textColor="@android:color/white"
+                    android:text="Alterar Senha"
+                    android:drawableStart="@drawable/ic_lock"
+                    android:drawablePadding="8dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Keys Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chaves de Perfil"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#1f2937"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Tabs -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Minhas Chaves" />
+
+                <com.google.android.material.tabs.TabItem
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Chaves Públicas" />
+
+            </com.google.android.material.tabs.TabLayout>
+
+            <!-- Search and Add -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <SearchView
+                    android:id="@+id/searchView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:queryHint="Pesquisar chaves..." />
+
+                <Button
+                    android:id="@+id/btnAddKey"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="#3b82f6"
+                    android:text="+"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp" />
+
+            </LinearLayout>
+
+            <!-- Keys List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewKeys"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -42,7 +42,7 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/verde_principal"
-                android:layout_marginStart="8dp" />
+                android:layout_marginStart="78dp" />
 
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
@@ -60,43 +60,56 @@
             android:orientation="vertical">
 
             <!-- ==== LOCAL DE PROPAGAÇÃO ==== -->
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
                 android:text="Local de Propagação"
-                android:textColor="#212121"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
 
+            <!-- LINHA: CAMPO + ÍCONE + (mesma linha) -->
             <LinearLayout
-                android:id="@+id/llLocal"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/edittext_background"
-                android:paddingHorizontal="16dp"
-                android:layout_marginBottom="20dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
+                android:layout_marginBottom="20dp">
 
-                <TextView
+                <!-- CAMPO DE TEXTO -->
+                <LinearLayout
+                    android:id="@+id/llLocal"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="Selecionar um local"
-                    android:textColor="#757575"
-                    android:textSize="15sp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/edittext_background"
+                    android:padding="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecionar um local"
+                        android:textColor="#757575"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <!-- ÍCONE + AO LADO DIREITO -->
                 <ImageView
                     android:id="@+id/btnAddLocation"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
                     android:src="@android:drawable/ic_menu_add"
-                    app:tint="@color/verde_principal" />
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/verde_principal"
+                    android:padding="12dp" />
+
             </LinearLayout>
 
             <!-- ==== MENSAGEM DO ANÚNCIO ==== -->
@@ -106,7 +119,7 @@
                 android:text="Mensagem do Anúncio"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="@color/verde_principal"
                 android:layout_marginBottom="8dp" />
 
             <EditText
@@ -129,7 +142,7 @@
                 android:text="Período de Propagação"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="@color/verde_principal"
                 android:layout_marginBottom="8dp" />
 
             <!-- Data Início -->
@@ -307,7 +320,7 @@
                 android:text="Tipo de Restrição"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="@color/verde_principal"
                 android:layout_marginBottom="8dp" />
 
             <Spinner
@@ -326,15 +339,13 @@
                 android:text="Chaves de Perfil"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="@color/verde_principal"
                 android:layout_marginBottom="8dp" />
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#E0E0E0" />
-
-            <!-- Aqui você pode adicionar uma lista de chips ou TextViews -->
 
         </LinearLayout>
     </ScrollView>
