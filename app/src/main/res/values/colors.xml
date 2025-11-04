@@ -11,6 +11,7 @@
 
     <color name="verde_principal">#00A676</color>
     <color name="verde_claro">#E8F8F5</color>
+    <color name="vermelho_cancelar">#D32F2F</color>
     <color name="azul_anuncio">#2196F3</color>
     <color name="azul_claro">#E3F2FD</color>
     <color name="cinza_texto">#666666</color>

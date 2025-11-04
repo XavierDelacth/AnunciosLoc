@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f9fafb">
+    android:background="#f9fafb"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,24 +17,44 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@android:color/white"
-            android:elevation="4dp">
+            android:elevation="2dp">
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp">
 
-                <!-- Logout Button -->
+                <!-- Botão Voltar -->
                 <Button
-                    android:id="@+id/btnLogout"
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentStart="true"
+                    android:background="@drawable/rounded_button_background"
+                    android:text="←"
+                    android:textColor="#1e293b"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- Título Centralizado -->
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:text="Meu Perfil"
+                    android:textColor="#16a34a"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- Logout Button -->
+                <ImageButton
+                    android:id="@+id/btnClosePassword"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:layout_alignParentEnd="true"
-                    android:background="@android:color/transparent"
-                    android:textColor="#dc2626"
-                    android:text="Sair"
-                    android:drawableStart="@drawable/ic_logout"
-                    android:drawablePadding="8dp" />
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    android:contentDescription="Fechar" />
 
             </RelativeLayout>
 
@@ -42,18 +63,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="center"
+                android:gravity="center_horizontal"
                 android:padding="16dp">
 
                 <!-- Profile Picture -->
-                <ImageView
+                <LinearLayout
                     android:layout_width="96dp"
                     android:layout_height="96dp"
-                    android:background="#3b82f6"
-                    android:padding="24dp"
-                    android:src="@drawable/ic_user"
-                    android:contentDescription="Profile"
-                    android:layout_marginBottom="16dp" />
+                    android:background="@drawable/bg_circle_blue"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <ImageView
+                        android:layout_width="35dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_user"
+                        android:tint="@color/branco"/>
+
+                </LinearLayout>
 
                 <!-- Username -->
                 <RelativeLayout
@@ -72,12 +99,12 @@
 
                     <ImageButton
                         android:id="@+id/btnEditName"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="42dp"
+                        android:layout_height="43dp"
                         android:layout_toEndOf="@id/tvUsername"
                         android:layout_centerVertical="true"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackground"
+                        android:layout_marginStart="1dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_edit"
                         android:contentDescription="Edit name" />
 
@@ -86,9 +113,11 @@
                         android:layout_width="200dp"
                         android:layout_height="wrap_content"
                         android:visibility="gone"
+                        android:text="João Silva"
                         android:textSize="24sp"
                         android:textStyle="bold"
-                        android:background="@drawable/edit_text_border" />
+                        android:background="@drawable/ic_edit"
+                        android:padding="8dp" />
 
                     <LinearLayout
                         android:id="@+id/layoutEditButtons"
@@ -97,22 +126,23 @@
                         android:layout_toEndOf="@id/etUsername"
                         android:layout_centerVertical="true"
                         android:orientation="horizontal"
-                        android:visibility="gone">
+                        android:visibility="gone"
+                        android:layout_marginStart="8dp">
 
                         <ImageButton
                             android:id="@+id/btnConfirmEdit"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="#10b981"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_button_green"
                             android:src="@drawable/ic_check"
                             android:contentDescription="Confirm" />
 
                         <ImageButton
                             android:id="@+id/btnCancelEdit"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
                             android:layout_marginStart="4dp"
-                            android:background="#6b7280"
+                            android:background="@drawable/bg_button_gray"
                             android:src="@drawable/ic_close"
                             android:contentDescription="Cancel" />
 
@@ -125,11 +155,13 @@
                     android:id="@+id/btnChangePassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="#374151"
+                    android:background="@color/verde_principal"
                     android:textColor="@android:color/white"
                     android:text="Alterar Senha"
-                    android:drawableStart="@drawable/ic_lock"
-                    android:drawablePadding="8dp" />
+                    android:textStyle="bold"
+                    android:padding="16dp"
+                    android:drawablePadding="8dp"
+                    app:src="@drawable/ic_lock" />
 
             </LinearLayout>
 
@@ -156,7 +188,10 @@
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                app:tabBackground="@drawable/tab_selector"
+                app:tabTextColor="@color/verde_principal"
+                app:tabIndicatorHeight="0dp">
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="0dp"
@@ -172,29 +207,42 @@
 
             </com.google.android.material.tabs.TabLayout>
 
-            <!-- Search and Add -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical">
 
-                <SearchView
+                <!-- Search View com fundo que destaca -->
+                <androidx.appcompat.widget.SearchView
                     android:id="@+id/searchView"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:queryHint="Pesquisar chaves..." />
+                    android:background="@drawable/search_view_background"
+                    android:queryHint="Pesquisar chaves..."
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@android:color/transparent"
+                    app:searchHintIcon="@null"
+                    app:closeIcon="@drawable/ic_close_small" />
 
+                <!-- Botão Adicionar melhorado -->
                 <Button
                     android:id="@+id/btnAddKey"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_marginStart="8dp"
-                    android:background="#3b82f6"
+                    android:background="@drawable/btn_add_selector"
                     android:text="+"
-                    android:textColor="@android:color/white"
-                    android:textSize="18sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:gravity="center"
+                    android:stateListAnimator="@null"
+                    android:elevation="4dp" />
 
             </LinearLayout>
 
