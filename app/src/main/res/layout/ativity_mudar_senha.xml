@@ -1,83 +1,190 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:background="@android:color/white">
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
 
-    <RelativeLayout
+    <!-- Toolbar superior com logotipo -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:background="@android:color/transparent"
+        android:padding="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp" />
+
+            <!-- LOGOTIPO centralizado -->
+            <FrameLayout
+                android:id="@+id/logo_container"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/circle_background"
+                android:layout_gravity="center">
+
+                <ImageView
+                    android:id="@+id/iv_megaphone"
+                    android:layout_width="50dp"
+                    android:layout_height="80dp"
+                    android:layout_gravity="center"
+                    android:src="@raw/logotipo"
+                    android:scaleType="centerInside"
+                    android:contentDescription="@string/app_name" />
+            </FrameLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/btnProfile"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_person"
+                android:padding="6dp"
+                app:tint="@color/white"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp">
+
+                <ImageView
+                    android:id="@+id/btnNotification"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/ic_notification"
+                    android:padding="6dp"
+                    app:tint="@color/white"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+                <TextView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:background="@drawable/badge_notification"
+                    android:text="4"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:gravity="center"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp" />
+            </FrameLayout>
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Card mais curto e centralizado verticalmente -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="80dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="80dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        android:backgroundTint="@android:color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Cabeçalho -->
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawableStart="@drawable/ic_lock"
-                android:drawablePadding="8dp"
-                android:text="Alterar Senha"
-                android:textColor="#1f2937"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:drawableStart="@drawable/ic_lock"
+                        android:drawablePadding="8dp"
+                        android:text="Alterar Senha"
+                        android:textColor="#1f2937"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnClosePassword"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_alignParentEnd="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    android:contentDescription="Fechar" />
+            </RelativeLayout>
+
+            <!-- Campos de senha -->
+            <EditText
+                android:id="@+id/etCurrentPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Senha Actual"
+                android:inputType="textPassword"
+                android:background="@drawable/edit_text_border"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/etNewPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nova Senha"
+                android:inputType="textPassword"
+                android:background="@drawable/edit_text_border"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/etConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Confirmar Senha"
+                android:inputType="textPassword"
+                android:background="@drawable/edit_text_border"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Botão Confirmar -->
+            <Button
+                android:id="@+id/btnConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confirmar"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:background="@color/verde_principal"
+                android:padding="16dp" />
 
         </LinearLayout>
-
-        <ImageButton
-            android:id="@+id/btnClosePassword"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_close"
-            android:contentDescription="Fechar" />
-
-    </RelativeLayout>
-
-    <EditText
-        android:id="@+id/etCurrentPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Senha Actual"
-        android:inputType="textPassword"
-        android:background="@drawable/edit_text_border"
-        android:padding="16dp"
-        android:layout_marginBottom="12dp" />
-
-    <EditText
-        android:id="@+id/etNewPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nova Senha"
-        android:inputType="textPassword"
-        android:background="@drawable/edit_text_border"
-        android:padding="16dp"
-        android:layout_marginBottom="12dp" />
-
-    <EditText
-        android:id="@+id/etConfirmPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Confirmar Senha"
-        android:inputType="textPassword"
-        android:background="@drawable/edit_text_border"
-        android:padding="16dp"
-        android:layout_marginBottom="24dp" />
-
-    <Button
-        android:id="@+id/btnConfirmPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Confirmar"
-        android:textColor="@android:color/white"
-        android:textStyle="bold"
-        android:background="@color/verde_principal"
-        android:padding="16dp" />
-
-</LinearLayout>
+    </androidx.cardview.widget.CardView>
+</RelativeLayout>
