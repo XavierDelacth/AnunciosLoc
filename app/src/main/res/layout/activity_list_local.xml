@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
-    <!-- Toolbar superior -->
+    <!-- Toolbar superior com logotipo -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,20 +19,35 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:id="@+id/btnBack"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/ic_arrow_back"
-                app:tint="@color/white"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp" />
+            <!-- LOGOTIPO no início (esquerda) -->
+            <FrameLayout
+                android:id="@+id/logo_container"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/circle_background">
 
-            <View
+                <ImageView
+                    android:id="@+id/iv_megaphone"
+                    android:layout_width="40dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:src="@raw/logotipo"
+                    android:scaleType="centerInside"
+                    android:contentDescription="@string/app_name" />
+            </FrameLayout>
+
+            <!-- Título ao lado do logotipo -->
+            <TextView
                 android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Todos os Locais"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
+            <!-- Ícones de perfil e notificação -->
             <ImageView
                 android:id="@+id/btnProfile"
                 android:layout_width="36dp"
@@ -92,7 +107,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="12dp"
+                android:padding="16dp"
                 android:gravity="center_vertical">
 
                 <EditText
@@ -102,16 +117,16 @@
                     android:layout_weight="1"
                     android:hint="Pesquisar Local"
                     android:background="@drawable/edittext_background"
-                    android:padding="10dp"
-                    android:textColorHint="#999999" />
+                    android:padding="12dp"
+                    android:textColorHint="#999999"
+                    android:layout_marginEnd="12dp" />
 
                 <ImageView
                     android:id="@+id/btnSearch"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:src="@drawable/ic_search"
-                    android:padding="6dp"
-                    android:layout_marginStart="8dp"
+                    android:padding="10dp"
                     app:tint="@color/verde_principal"
                     android:background="?attr/selectableItemBackgroundBorderless" />
             </LinearLayout>
@@ -127,58 +142,168 @@
                     android:id="@+id/layoutLocais"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
 
-                    <!-- Aqui os itens serão repetidos dinamicamente -->
-
-                    <!-- Exemplo de item -->
-                    <LinearLayout
+                    <!-- Belas Shopping -->
+                    <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:background="#E6F5EA"
-                        android:padding="12dp"
                         android:layout_marginBottom="12dp"
-                        android:layout_marginHorizontal="8dp"
-                        android:layout_marginTop="8dp"
-                        android:clipToOutline="true"
-                        android:backgroundTint="@color/white">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_location"
-                            app:tint="@color/verde_principal" />
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp">
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:orientation="vertical"
-                            android:layout_marginStart="8dp">
+                            android:padding="16dp">
 
                             <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
                                 android:text="Belas Shopping"
+                                android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textSize="16sp"
-                                android:textColor="@color/verde_principal" />
+                                android:textColor="#000000" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(1) 4.5%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(2) 3.0%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(3) 2.0%"
+                                    android:textColor="#666666" />
+
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Zango -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
 
                             <TextView
-                                android:text="8.7543231, -9.2101234, 50m"
-                                android:textColor="#666"
-                                android:textSize="13sp" />
-                        </LinearLayout>
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Zango"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000" />
 
-                        <TextView
-                            android:text="GPS"
-                            android:textColor="@android:color/white"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="2dp"
-                            android:background="@drawable/tag_gps"
-                            android:textSize="11sp"
-                            android:layout_marginStart="4dp" />
-                    </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(1) 4.5%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(2) 3.0%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(3) 2.0%"
+                                    android:textColor="#666666" />
+
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Ginásio do Camama -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Ginásio do Camama"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="8dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(1) 4.5%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(2) 3.0%"
+                                    android:textColor="#666666" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="(3) 2.0%"
+                                    android:textColor="#666666" />
+
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
 
                 </LinearLayout>
             </ScrollView>
@@ -193,7 +318,6 @@
                 android:backgroundTint="@color/verde_principal"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </RelativeLayout>
