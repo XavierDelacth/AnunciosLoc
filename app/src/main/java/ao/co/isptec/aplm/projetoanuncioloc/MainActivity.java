@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -13,64 +12,58 @@ public class MainActivity extends AppCompatActivity {
 
     private CardView cardLocais, cardAnuncios;
     private TextView tabCriados, tabGuardados;
-    private ImageView btnProfile, btnNotification; // <-- adicionado
+    private ImageView btnProfile, btnNotification;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Inicializar cards
+        // Inicializar views
         cardLocais = findViewById(R.id.cardLocais);
         cardAnuncios = findViewById(R.id.cardAnuncios);
-
-        // Inicializar tabs
         tabCriados = findViewById(R.id.tabCriados);
         tabGuardados = findViewById(R.id.tabGuardados);
-
-        // Inicializar perfil e notificações
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
 
-        // Clique no card Locais -> abre tela AdicionarLocalActivity
-        cardLocais.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AdicionarLocalActivity.class);
-            startActivity(intent);
-        });
+        // Clique nos cards
+        cardLocais.setOnClickListener(v -> startActivity(new Intent(this, AdicionarLocalActivity.class)));
+        cardAnuncios.setOnClickListener(v -> startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
 
-        // Clique no card Anúncios -> abre tela AdicionarAnunciosActivity
-        cardAnuncios.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AdicionarAnunciosActivity.class);
-            startActivity(intent);
-        });
+        // Clique no Perfil
+        btnProfile.setOnClickListener(v -> startActivity(new Intent(this, PerfilActivity.class)));
 
-        // Tabs
+        // Clique nas Notificações
+        btnNotification.setOnClickListener(v -> startActivity(new Intent(this, NotificacoesActivity.class)));
+
+        // === CLIQUE NAS TABS ===
         tabCriados.setOnClickListener(v -> {
-            tabCriados.setBackgroundColor(getResources().getColor(R.color.verde_principal));
-            tabCriados.setTextColor(getResources().getColor(R.color.white));
-            tabGuardados.setBackgroundColor(getResources().getColor(R.color.white));
-            tabGuardados.setTextColor(getResources().getColor(R.color.verde_principal));
-            // Atualizar RecyclerView se necessário
+            selectTab(true);
+            // Aqui podes carregar anúncios criados
         });
 
         tabGuardados.setOnClickListener(v -> {
-            tabGuardados.setBackgroundColor(getResources().getColor(R.color.verde_principal));
-            tabGuardados.setTextColor(getResources().getColor(R.color.white));
-            tabCriados.setBackgroundColor(getResources().getColor(R.color.white));
-            tabCriados.setTextColor(getResources().getColor(R.color.verde_principal));
-            // Atualizar RecyclerView se necessário
+            selectTab(false);
+            // Abre a tela LocalGuardadoActivity
+            startActivity(new Intent(MainActivity.this, LocalGuardadoActivity.class));
         });
 
-        // Clique no botão Perfil -> abre PerfilActivity
-        btnProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, PerfilActivity.class);
-            startActivity(intent);
-        });
+        // Inicia com "Criados" selecionado
+        selectTab(true);
+    }
 
-        // Clique no botão Notificações -> abre NotificacoesActivity
-        btnNotification.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, NotificacoesActivity.class);
-            startActivity(intent);
-        });
+    private void selectTab(boolean isCriados) {
+        if (isCriados) {
+            tabCriados.setBackgroundColor(getColor(R.color.verde_principal));
+            tabCriados.setTextColor(getColor(R.color.white));
+            tabGuardados.setBackgroundColor(getColor(R.color.white));
+            tabGuardados.setTextColor(getColor(R.color.verde_principal));
+        } else {
+            tabCriados.setBackgroundColor(getColor(R.color.white));
+            tabCriados.setTextColor(getColor(R.color.verde_principal));
+            tabGuardados.setBackgroundColor(getColor(R.color.verde_principal));
+            tabGuardados.setTextColor(getColor(R.color.white));
+        }
     }
 }
