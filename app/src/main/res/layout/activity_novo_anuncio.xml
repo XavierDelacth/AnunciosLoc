@@ -349,4 +349,5 @@
 
         </LinearLayout>
     </ScrollView>
+    <!-- ==== CHAVES DE PERFIL ====  aqui deve ter um carde com as coisas das chaves com um scroll e no card deve ter chaves e valores bem estruturado-->
 </LinearLayout>

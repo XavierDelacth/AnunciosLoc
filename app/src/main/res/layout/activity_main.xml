@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@drawable/gradient_background"
     android:paddingTop="8dp">
-
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -18,20 +17,17 @@
         android:paddingEnd="0dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-
             <FrameLayout
                 android:id="@+id/logo_container"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_marginStart="4dp"
                 android:background="@drawable/circle_background">
-
                 <ImageView
                     android:id="@+id/iv_megaphone"
                     android:layout_width="50dp"
@@ -41,12 +37,10 @@
                     android:scaleType="centerInside"
                     android:contentDescription="@string/app_name" />
             </FrameLayout>
-
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1" />
-
             <ImageView
                 android:id="@+id/btnProfile"
                 android:layout_width="40dp"
@@ -55,12 +49,10 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
                 app:tint="@color/white" />
-
             <FrameLayout
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="8dp">
-
                 <ImageView
                     android:id="@+id/btnNotification"
                     android:layout_width="40dp"
@@ -69,7 +61,6 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:padding="8dp"
                     app:tint="@color/white" />
-
                 <TextView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
@@ -84,7 +75,6 @@
             </FrameLayout>
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
-
     <!-- Localização -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -94,7 +84,6 @@
         android:layout_marginBottom="16dp"
         android:paddingStart="16dp"
         android:gravity="start">
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -103,20 +92,17 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="4dp" />
-
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_marginEnd="6dp"
                 android:src="@drawable/ic_location"
                 app:tint="@color/white" />
-
             <TextView
                 android:id="@+id/tvLocation"
                 android:layout_width="wrap_content"
@@ -127,7 +113,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
-
     <!-- Botões Locais e Anúncios -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -136,29 +121,26 @@
         android:gravity="center"
         android:paddingHorizontal="16dp"
         android:layout_marginBottom="12dp">
-
         <!-- Card Locais -->
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardLocais"
             android:layout_width="140dp"
             android:layout_height="110dp"
             android:layout_marginEnd="16dp"
             app:cardCornerRadius="10dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/white">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
-
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:src="@drawable/ic_location"
                     app:tint="@color/verde_principal" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -167,7 +149,6 @@
                     android:textStyle="bold"
                     android:textColor="@color/verde_principal"
                     android:layout_marginTop="4dp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -176,28 +157,25 @@
                     android:textColor="@color/cinza_texto" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-
         <!-- Card Anúncios -->
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardAnuncios"
             android:layout_width="140dp"
             android:layout_height="110dp"
             app:cardCornerRadius="10dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/white">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
-
                 <ImageView
                     android:layout_width="36dp"
                     android:layout_height="36dp"
                     android:src="@drawable/ic_megaphone"
                     app:tint="@color/azul_anuncio" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -206,7 +184,6 @@
                     android:textStyle="bold"
                     android:textColor="@color/azul_anuncio"
                     android:layout_marginTop="4dp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -216,7 +193,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>
-
     <!-- Caixa branca -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardTabs"
@@ -228,12 +204,10 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="6dp"
         android:backgroundTint="#FFFFFF">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-
             <TextView
                 android:id="@+id/tabCriados"
                 android:layout_width="0dp"
@@ -247,7 +221,6 @@
                 android:background="@color/verde_principal"
                 android:clickable="true"
                 android:focusable="true" />
-
             <TextView
                 android:id="@+id/tabGuardados"
                 android:layout_width="0dp"
@@ -263,7 +236,6 @@
                 android:focusable="true" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
     <!-- Barra de Pesquisa -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -274,13 +246,11 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
         android:backgroundTint="#FFFFFF">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
             android:padding="12dp">
-
             <SearchView
                 android:id="@+id/searchView"
                 android:layout_width="0dp"
@@ -288,22 +258,18 @@
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:queryHint="Pesquisar chaves..." />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
     <!-- ScrollView para a lista de anúncios -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
             <!-- RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
@@ -314,8 +280,6 @@
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
                 android:clipToPadding="false" />
-
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>
