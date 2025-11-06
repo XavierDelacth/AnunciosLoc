@@ -24,6 +24,9 @@
 
         <activity android:name=".RegisterActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".AdicionarLocalActivity" android:exported="false" />
+        <activity android:name=".PerfilActivity" android:exported="false" />
+
 
     </application>
 

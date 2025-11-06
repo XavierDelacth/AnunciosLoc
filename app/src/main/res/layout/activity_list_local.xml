@@ -19,7 +19,6 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- LOGOTIPO no início (esquerda) -->
             <FrameLayout
                 android:id="@+id/logo_container"
                 android:layout_width="50dp"
@@ -37,7 +36,6 @@
                     android:contentDescription="@string/app_name" />
             </FrameLayout>
 
-            <!-- Título ao lado do logotipo -->
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -47,7 +45,6 @@
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <!-- Ícones de perfil e notificação -->
             <ImageView
                 android:id="@+id/btnProfile"
                 android:layout_width="36dp"
@@ -95,7 +92,7 @@
         android:layout_marginEnd="16dp"
         app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
-        android:backgroundTint="@android:color/white">
+        app:cardBackgroundColor="@android:color/white"> <!-- COR CORRIGIDA -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -146,13 +143,15 @@
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp">
 
-                    <!-- Belas Shopping -->
+                    <!-- Exemplos de CardViews internos (Belas Shopping, Zango, Ginásio do Camama) -->
+                    <!-- Corrigidos com app:cardBackgroundColor -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="@android:color/white">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -194,18 +193,19 @@
                                     android:layout_weight="1"
                                     android:text="(3) 2.0%"
                                     android:textColor="#666666" />
-
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
+                    <!-- Repita app:cardBackgroundColor="@android:color/white" para os outros CardViews internos -->
                     <!-- Zango -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="@android:color/white">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -247,7 +247,6 @@
                                     android:layout_weight="1"
                                     android:text="(3) 2.0%"
                                     android:textColor="#666666" />
-
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
@@ -258,7 +257,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="@android:color/white">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -300,7 +300,6 @@
                                     android:layout_weight="1"
                                     android:text="(3) 2.0%"
                                     android:textColor="#666666" />
-
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

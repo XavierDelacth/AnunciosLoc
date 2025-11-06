@@ -252,7 +252,7 @@
                 android:text="Confirmar"
                 android:textSize="16sp"
                 android:textColor="#FFFFFF"
-                android:background="@drawable/button_primary_background"
+                android:background="@color/azul_claro"
                 android:padding="16dp"
                 android:layout_marginBottom="16dp"
                 android:visibility="gone" />

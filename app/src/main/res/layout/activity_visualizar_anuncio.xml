@@ -141,7 +141,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/location_badge_background"
+                            android:background="@color/branco"
                             android:text="📍 Largo da Independência"
                             android:textColor="#6366f1"
                             android:textSize="12sp"
@@ -156,7 +156,7 @@
                         android:id="@+id/policyBadge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/whitelist_badge_background"
+                        android:background="@color/branco"
                         android:text="👥 Whitelist: Estudantes"
                         android:textColor="#065f46"
                         android:textSize="12sp"
@@ -288,7 +288,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:background="@drawable/whitelist_badge_small"
+                                android:background="@color/branco"
                                 android:text="Whitelist"
                                 android:textColor="#065f46"
                                 android:textSize="12sp"
