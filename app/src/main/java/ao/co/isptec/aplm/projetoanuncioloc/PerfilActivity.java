@@ -7,23 +7,22 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import com.google.android.material.tabs.TabLayout;
 
 public class PerfilActivity extends AppCompatActivity {
 
-    // UI Components
     private Button btnBack, btnChangePassword, btnAddKey;
     private ImageButton btnClosePassword, btnEditName, btnConfirmEdit, btnCancelEdit;
     private TextView tvUsername;
     private EditText etUsername;
     private LinearLayout layoutEditButtons;
     private SearchView searchView;
+    private TabLayout tabLayout;
 
-    // Data
     private String currentUsername = "João Silva";
 
     @Override
@@ -34,6 +33,7 @@ public class PerfilActivity extends AppCompatActivity {
         initViews();
         setupProfileSection();
         setupClickListeners();
+        setupTabs();
     }
 
     private void initViews() {
@@ -48,11 +48,24 @@ public class PerfilActivity extends AppCompatActivity {
         btnChangePassword = findViewById(R.id.btnChangePassword);
         btnAddKey = findViewById(R.id.btnAddKey);
         searchView = findViewById(R.id.searchView);
+        tabLayout = findViewById(R.id.tabLayout);
     }
 
     private void setupProfileSection() {
         tvUsername.setText(currentUsername);
         etUsername.setText(currentUsername);
+    }
+
+    private void setupTabs() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                Toast.makeText(PerfilActivity.this, "Selecionado: " + tab.getText(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
     }
 
     private void setupClickListeners() {
@@ -68,11 +81,8 @@ public class PerfilActivity extends AppCompatActivity {
         btnConfirmEdit.setOnClickListener(v -> confirmNameEdit());
         btnCancelEdit.setOnClickListener(v -> cancelNameEdit());
 
-        btnChangePassword.setOnClickListener(v ->
-                startActivity(new Intent(this, AlterarSenhaActivity.class)));
-
-        btnAddKey.setOnClickListener(v ->
-                startActivity(new Intent(this, AddicionarKeyActivity.class)));
+        btnChangePassword.setOnClickListener(v -> startActivity(new Intent(this, AlterarSenhaActivity.class)));
+        btnAddKey.setOnClickListener(v -> startActivity(new Intent(this, AddicionarKeyActivity.class)));
     }
 
     private void startEditingName() {
@@ -80,7 +90,6 @@ public class PerfilActivity extends AppCompatActivity {
         etUsername.setVisibility(View.VISIBLE);
         layoutEditButtons.setVisibility(View.VISIBLE);
         btnEditName.setVisibility(View.GONE);
-
         etUsername.requestFocus();
         etUsername.setSelection(etUsername.getText().length());
     }
@@ -94,7 +103,7 @@ public class PerfilActivity extends AppCompatActivity {
         currentUsername = newName;
         tvUsername.setText(newName);
         endEditingName();
-        Toast.makeText(this, "Nome atualizado com sucesso", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Nome atualizado!", Toast.LENGTH_SHORT).show();
     }
 
     private void cancelNameEdit() {

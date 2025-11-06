@@ -24,19 +24,15 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp">
 
-                <!-- Botão Voltar -->
-                <Button
+                <ImageButton
                     android:id="@+id/btnBack"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentStart="true"
-                    android:background="@color/branco"
-                    android:text="←"
-                    android:textColor="#1e293b"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="#1e293b"
+                    android:contentDescription="Voltar" />
 
-                <!-- Título Centralizado -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -46,7 +42,6 @@
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <!-- Logout Button -->
                 <ImageButton
                     android:id="@+id/btnClosePassword"
                     android:layout_width="32dp"
@@ -66,22 +61,18 @@
                 android:gravity="center_horizontal"
                 android:padding="16dp">
 
-                <!-- Profile Picture -->
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="96dp"
                     android:layout_height="96dp"
                     android:background="@drawable/bg_circle_blue"
-                    android:gravity="center"
                     android:layout_marginBottom="16dp">
-
                     <ImageView
                         android:layout_width="35dp"
                         android:layout_height="48dp"
+                        android:layout_gravity="center"
                         android:src="@drawable/ic_user" />
+                </FrameLayout>
 
-                </LinearLayout>
-
-                <!-- Username -->
                 <RelativeLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -102,10 +93,9 @@
                         android:layout_height="43dp"
                         android:layout_toEndOf="@id/tvUsername"
                         android:layout_centerVertical="true"
-                        android:layout_marginStart="1dp"
+                        android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_edit"
-                        android:contentDescription="Edit name" />
+                        android:src="@drawable/ic_edit" />
 
                     <EditText
                         android:id="@+id/etUsername"
@@ -115,7 +105,7 @@
                         android:text="João Silva"
                         android:textSize="24sp"
                         android:textStyle="bold"
-                        android:background="@drawable/ic_edit"
+                        android:background="@drawable/edit_text_border"
                         android:padding="8dp" />
 
                     <LinearLayout
@@ -132,39 +122,35 @@
                             android:id="@+id/btnConfirmEdit"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@color/verde_principal"
+                            android:background="@drawable/bg_circle_blue"
                             android:src="@drawable/ic_check"
-                            android:contentDescription="Confirm" />
+                            app:tint="@color/white" />
 
                         <ImageButton
                             android:id="@+id/btnCancelEdit"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_marginStart="4dp"
-                            android:background="@color/branco"
+                            android:background="@drawable/bg_circle_blue"
                             android:src="@drawable/ic_close"
-                            android:contentDescription="Cancel" />
+                            app:tint="@color/white" />
 
                     </LinearLayout>
-
                 </RelativeLayout>
 
-                <!-- Change Password Button -->
                 <Button
                     android:id="@+id/btnChangePassword"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@color/verde_principal"
+                    android:backgroundTint="@color/verde_principal"
                     android:textColor="@android:color/white"
                     android:text="Alterar Senha"
                     android:textStyle="bold"
                     android:padding="16dp"
-                    android:drawablePadding="8dp"
                     android:drawableStart="@drawable/ic_lock"
-                    />
+                    android:drawablePadding="8dp" />
 
             </LinearLayout>
-
         </LinearLayout>
 
         <!-- Keys Section -->
@@ -183,26 +169,25 @@
                 android:textColor="#1f2937"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Tabs -->
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:tabBackground="@drawable/tab_selector"
+                app:tabMode="fixed"
+                app:tabGravity="fill"
                 app:tabTextColor="@color/verde_principal"
-                app:tabIndicatorHeight="0dp">
+                app:tabSelectedTextColor="@color/verde_principal"
+                app:tabIndicatorColor="@color/verde_principal"
+                android:layout_marginBottom="16dp">
 
                 <com.google.android.material.tabs.TabItem
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="Minhas Chaves" />
 
                 <com.google.android.material.tabs.TabItem
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="Chaves Públicas" />
 
             </com.google.android.material.tabs.TabLayout>
@@ -214,7 +199,6 @@
                 android:layout_marginBottom="16dp"
                 android:gravity="center_vertical">
 
-                <!-- Search View com fundo que destaca -->
                 <androidx.appcompat.widget.SearchView
                     android:id="@+id/searchView"
                     android:layout_width="0dp"
@@ -224,36 +208,29 @@
                     android:queryHint="Pesquisar chaves..."
                     app:iconifiedByDefault="false"
                     app:queryBackground="@android:color/transparent"
-                    app:searchHintIcon="@null"
-                    app:closeIcon="@drawable/ic_close" />
+                    app:searchHintIcon="@null" />
 
-                <!-- Botão Adicionar melhorado -->
                 <Button
                     android:id="@+id/btnAddKey"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_marginStart="8dp"
-                    android:background="@drawable/btn_add_selector"
+                    android:background="@drawable/bg_circle_blue"
                     android:text="+"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@android:color/white"
                     android:textSize="28sp"
                     android:textStyle="bold"
-                    android:includeFontPadding="false"
-                    android:padding="0dp"
-                    android:gravity="center"
-                    android:stateListAnimator="@null"
-                    android:elevation="4dp" />
+                    android:gravity="center" />
 
             </LinearLayout>
 
-            <!-- Keys List -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewKeys"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:padding="8dp" />
 
         </LinearLayout>
-
     </LinearLayout>
-
 </ScrollView>
