@@ -48,8 +48,8 @@
                     android:layout_height="32dp"
                     android:layout_alignParentEnd="true"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_close"
-                    android:contentDescription="Fechar" />
+                    android:src="@drawable/ic_logout"
+                    android:contentDescription="Sair" />
 
             </RelativeLayout>
 
@@ -210,17 +210,25 @@
                     app:queryBackground="@android:color/transparent"
                     app:searchHintIcon="@null" />
 
+
                 <Button
                     android:id="@+id/btnAddKey"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
                     android:background="@drawable/bg_circle_blue"
                     android:text="+"
                     android:textColor="@android:color/white"
-                    android:textSize="28sp"
+                    android:textSize="32sp"
                     android:textStyle="bold"
-                    android:gravity="center" />
+                    android:gravity="center"
+                    android:elevation="6dp"
+                    android:includeFontPadding="false"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    style="?android:attr/borderlessButtonStyle" />
 
             </LinearLayout>
 

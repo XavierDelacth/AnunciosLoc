@@ -2,7 +2,7 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.view.View; // ADICIONADO
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -15,8 +15,8 @@ import com.google.android.material.tabs.TabLayout;
 
 public class PerfilActivity extends AppCompatActivity {
 
-    private Button btnBack, btnChangePassword, btnAddKey;
-    private ImageButton btnClosePassword, btnEditName, btnConfirmEdit, btnCancelEdit;
+    private ImageButton btnBack, btnClosePassword, btnEditName, btnConfirmEdit, btnCancelEdit;
+    private Button btnChangePassword, btnAddKey;
     private TextView tvUsername;
     private EditText etUsername;
     private LinearLayout layoutEditButtons;
@@ -62,7 +62,6 @@ public class PerfilActivity extends AppCompatActivity {
             public void onTabSelected(TabLayout.Tab tab) {
                 Toast.makeText(PerfilActivity.this, "Selecionado: " + tab.getText(), Toast.LENGTH_SHORT).show();
             }
-
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
