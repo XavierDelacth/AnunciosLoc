@@ -15,17 +15,26 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 
+
+
+
+
 public class RegisterActivity extends AppCompatActivity {
 
     private TextInputEditText etUsername, etPassword, etConfirmPassword;
     private Button btnRegister;
     private TextView tvTabLogin;
+    private DBManager dbManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        // INICIA O BANCO
+        dbManager = new DBManager(this);
+
+        // FIND VIEWS
         etUsername = findViewById(R.id.et_username);
         etPassword = findViewById(R.id.et_password);
         etConfirmPassword = findViewById(R.id.et_confirm_password);
@@ -33,24 +42,25 @@ public class RegisterActivity extends AppCompatActivity {
         tvTabLogin = findViewById(R.id.tv_tab_login);
 
         tvTabLogin.setOnClickListener(v -> {
-            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
 
         btnRegister.setOnClickListener(v -> {
-            String username = etUsername.getText().toString().trim();
-            String password = etPassword.getText().toString();
-            String confirmPassword = etConfirmPassword.getText().toString();
+            String user = etUsername.getText().toString().trim();
+            String pass = etPassword.getText().toString();
+            String confirm = etConfirmPassword.getText().toString();
 
-            if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
+            if (TextUtils.isEmpty(user) || TextUtils.isEmpty(pass)) {
                 Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
-            } else if (!password.equals(confirmPassword)) {
+            } else if (!pass.equals(confirm)) {
                 Toast.makeText(this, "As senhas não coincidem", Toast.LENGTH_SHORT).show();
-            } else {
-                // TODO: Chamar API do servidor (F1 - Registrar)
-                Toast.makeText(this, "Registro bem-sucedido!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            } else if (dbManager.register(user, pass)) {
+                Toast.makeText(this, "Registado com sucesso!", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(this, LoginActivity.class));
                 finish();
+            } else {
+                Toast.makeText(this, "Usuário já existe!", Toast.LENGTH_SHORT).show();
             }
         });
     }
