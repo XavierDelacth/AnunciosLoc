@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
-    <!-- Toolbar superior com logotipo -->
+    <!-- Toolbar superior -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -19,22 +19,16 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <FrameLayout
-                android:id="@+id/logo_container"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/circle_background">
-
-                <ImageView
-                    android:id="@+id/iv_megaphone"
-                    android:layout_width="40dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    android:src="@raw/logotipo"
-                    android:scaleType="centerInside"
-                    android:contentDescription="@string/app_name" />
-            </FrameLayout>
+            <!-- BOTÃO VOLTAR -->
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="12dp"
+                app:tint="@color/white"
+                android:contentDescription="Voltar" />
 
             <TextView
                 android:layout_width="0dp"
@@ -43,7 +37,8 @@
                 android:text="Todos os Locais"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_marginStart="8dp" />
 
             <ImageView
                 android:id="@+id/btnProfile"
@@ -87,12 +82,15 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="80dp"
+        android:layout_below="@id/toolbar"
+        android:layout_above="@+id/btnAddLocal"
+        android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="24dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@android:color/white"> <!-- COR CORRIGIDA -->
+        app:cardBackgroundColor="@android:color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -133,6 +131,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:fillViewport="true"
+                android:scrollbars="vertical"
                 android:paddingBottom="16dp">
 
                 <LinearLayout
@@ -143,9 +143,9 @@
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp">
 
-                    <!-- Exemplos de CardViews internos (Belas Shopping, Zango, Ginásio do Camama) -->
-                    <!-- Corrigidos com app:cardBackgroundColor -->
+                    <!-- Belas Shopping -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/cardBelas"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
@@ -171,35 +171,44 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:layout_marginTop="8dp">
+                                android:layout_marginTop="8dp"
+                                android:gravity="end">
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(1) 4.5%"
-                                    android:textColor="#666666" />
+                                    android:text="Raio: 500m | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(2) 3.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lat: -8.9200 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(3) 2.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lng: 13.2300 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="GPS"
+                                    android:textColor="@color/verde_principal"
+                                    android:textStyle="bold"
+                                    android:textSize="13sp" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
-                    <!-- Repita app:cardBackgroundColor="@android:color/white" para os outros CardViews internos -->
                     <!-- Zango -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/cardZango"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
@@ -225,34 +234,44 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:layout_marginTop="8dp">
+                                android:layout_marginTop="8dp"
+                                android:gravity="end">
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(1) 4.5%"
-                                    android:textColor="#666666" />
+                                    android:text="Raio: 300m | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(2) 3.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lat: -8.9500 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(3) 2.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lng: 13.2500 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Wi-Fi"
+                                    android:textColor="#FF9800"
+                                    android:textStyle="bold"
+                                    android:textSize="13sp" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
                     <!-- Ginásio do Camama -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/cardCamama"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
@@ -278,28 +297,99 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal"
-                                android:layout_marginTop="8dp">
+                                android:layout_marginTop="8dp"
+                                android:gravity="end">
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(1) 4.5%"
-                                    android:textColor="#666666" />
+                                    android:text="Raio: 200m | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(2) 3.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lat: -8.9100 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
 
                                 <TextView
-                                    android:layout_width="0dp"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="(3) 2.0%"
-                                    android:textColor="#666666" />
+                                    android:text="Lng: 13.2400 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="GPS"
+                                    android:textColor="@color/verde_principal"
+                                    android:textStyle="bold"
+                                    android:textSize="13sp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Museu Nacional (adicionei para testar scroll) -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp"
+                        app:cardBackgroundColor="@android:color/white">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Museu Nacional"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#000000" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="8dp"
+                                android:gravity="end">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Raio: 400m | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Lat: -8.8300 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Lng: 13.2300 | "
+                                    android:textColor="#666666"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="GPS"
+                                    android:textColor="@color/verde_principal"
+                                    android:textStyle="bold"
+                                    android:textSize="13sp" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
@@ -307,16 +397,21 @@
                 </LinearLayout>
             </ScrollView>
 
-            <!-- Botão Adicionar -->
-            <Button
-                android:id="@+id/btnAddLocal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Adicionar"
-                android:layout_margin="16dp"
-                android:backgroundTint="@color/verde_principal"
-                android:textColor="@android:color/white"
-                android:textStyle="bold" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+
+    <!-- Botão Adicionar - FORA DO CARD -->
+    <Button
+        android:id="@+id/btnAddLocal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Adicionar"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="24dp"
+        android:layout_alignParentBottom="true"
+        android:backgroundTint="@color/verde_principal"
+        android:textColor="@android:color/white"
+        android:textStyle="bold" />
+
 </RelativeLayout>

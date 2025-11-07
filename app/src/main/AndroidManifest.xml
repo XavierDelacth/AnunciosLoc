@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="ao.co.isptec.aplm.projetoanuncioloc">
+
+    <!-- Permissões de localização -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -12,10 +18,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ProjetoAnuncioLoc">
 
-        <!-- LOGIN É A TELA INICIAL -->
-        <activity
-            android:name=".LoginActivity"
-            android:exported="true">
+        <!-- TUA CHAVE DO GOOGLE MAPS -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA5uayP0OH9bCkCxT6ArplGm0ct6B54tL4" />
+
+        <!-- Activities -->
+        <activity android:name=".LoginActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,6 +35,12 @@
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".AdicionarLocalActivity" android:exported="false" />
         <activity android:name=".PerfilActivity" android:exported="false" />
+        <activity android:name=".AdicionarAnunciosActivity" android:exported="false" />
+        <activity android:name=".AddicionarKeyActivity" android:exported="false" />
+        <activity android:name=".LocalGuardadoActivity" android:exported="false" />
+        <activity android:name=".AdicionarGPS" android:exported="false" />
+        <activity android:name=".AdicionarWIFI" android:exported="false" />
+        <activity android:name=".MapaActivity" android:exported="false" />
         <activity android:name=".NotificacoesActivity" android:exported="false" />
         <activity android:name=".AlterarSenhaActivity" android:exported="false"  />
         <activity android:name=".AdicionarKeyActivity" android:exported="false" />
