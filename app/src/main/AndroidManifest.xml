@@ -26,7 +26,8 @@
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".AdicionarLocalActivity" android:exported="false" />
         <activity android:name=".PerfilActivity" android:exported="false" />
-
+        <activity android:name=".AdicionarAnunciosActivity" android:exported="false" />
+        <activity android:name=".LocalGuardadoActivity" android:exported="false" />
 
     </application>
 

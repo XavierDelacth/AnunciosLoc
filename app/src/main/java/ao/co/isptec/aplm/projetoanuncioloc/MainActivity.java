@@ -2,9 +2,9 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -19,38 +19,63 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Inicializar views
+        initViews();
+        setupClickListeners();
+        setupTabs();
+        selectTab(true);
+
+        // Compatível com back gesture (Android 13+)
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // Se veio de Guardados → fica em Criados
+                if (getIntent().getBooleanExtra("fromGuardados", false)) {
+                    selectTab(true);
+                    getIntent().removeExtra("fromGuardados");
+                } else {
+                    // Sai do app
+                    finish();
+                }
+            }
+        });
+    }
+
+    private void initViews() {
         cardLocais = findViewById(R.id.cardLocais);
         cardAnuncios = findViewById(R.id.cardAnuncios);
         tabCriados = findViewById(R.id.tabCriados);
         tabGuardados = findViewById(R.id.tabGuardados);
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
+    }
 
-        // Clique nos cards
-        cardLocais.setOnClickListener(v -> startActivity(new Intent(this, AdicionarLocalActivity.class)));
-        cardAnuncios.setOnClickListener(v -> startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
+    private void setupClickListeners() {
+        // Card Locais - Abre tela de gerir locais
+        cardLocais.setOnClickListener(v ->
+                startActivity(new Intent(this, AdicionarLocalActivity.class)));
 
-        // Clique no Perfil
-        btnProfile.setOnClickListener(v -> startActivity(new Intent(this, PerfilActivity.class)));
+        // Card Anúncios - Agora abre DIRETAMENTE a tela de criar novo anúncio
+        cardAnuncios.setOnClickListener(v ->
+                startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
 
-        // Clique nas Notificações
-        btnNotification.setOnClickListener(v -> startActivity(new Intent(this, NotificacoesActivity.class)));
+        // Perfil
+        btnProfile.setOnClickListener(v ->
+                startActivity(new Intent(this, PerfilActivity.class)));
 
-        // === CLIQUE NAS TABS ===
-        tabCriados.setOnClickListener(v -> {
-            selectTab(true);
-            // Aqui podes carregar anúncios criados
-        });
+        // Notificações
+        btnNotification.setOnClickListener(v ->
+                startActivity(new Intent(this, NotificacoesActivity.class)));
+    }
+
+    private void setupTabs() {
+        tabCriados.setOnClickListener(v -> selectTab(true));
 
         tabGuardados.setOnClickListener(v -> {
             selectTab(false);
-            // Abre a tela LocalGuardadoActivity
-            startActivity(new Intent(MainActivity.this, LocalGuardadoActivity.class));
+            Intent intent = new Intent(this, LocalGuardadoActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(intent);
         });
-
-        // Inicia com "Criados" selecionado
-        selectTab(true);
     }
 
     private void selectTab(boolean isCriados) {

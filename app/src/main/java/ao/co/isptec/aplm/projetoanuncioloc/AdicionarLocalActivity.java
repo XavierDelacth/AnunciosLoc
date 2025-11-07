@@ -2,52 +2,103 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import androidx.annotation.Nullable;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 public class AdicionarLocalActivity extends AppCompatActivity {
 
     private EditText etSearch;
     private Button btnAddLocal;
+    private CardView cardBelas, cardZango, cardCamama;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list_local);
+        setContentView(R.layout.activity_list_local); // ← AGORA FUNCIONA!
 
-        // Inicializar Views
+        initViews();
+        setupToolbar();
+        setupSearchFilter();
+        setupAddButton();
+        setupCardClicks();
+    }
+
+    private void initViews() {
         etSearch = findViewById(R.id.etSearch);
         btnAddLocal = findViewById(R.id.btnAddLocal);
+        cardBelas = findViewById(R.id.cardBelas);
+        cardZango = findViewById(R.id.cardZango);
+        cardCamama = findViewById(R.id.cardCamama);
+    }
 
-        // Clique no botão Adicionar
-        btnAddLocal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                adicionarLocal();
+    private void setupToolbar() {
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnProfile).setOnClickListener(v -> showToast("Perfil"));
+        findViewById(R.id.btnNotification).setOnClickListener(v -> showToast("Notificações"));
+    }
+
+    private void setupSearchFilter() {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filtrarLocais(s.toString().trim());
             }
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
-    // Método para adicionar Local (pode abrir outra tela ou salvar)
-    private void adicionarLocal() {
-        String nomeLocal = etSearch.getText().toString().trim();
+    private void setupAddButton() {
+        btnAddLocal.setOnClickListener(v -> {
+            String nome = etSearch.getText().toString().trim();
+            if (nome.isEmpty()) {
+                etSearch.setError("Digite o nome do local");
+                etSearch.requestFocus();
+                return;
+            }
+            Intent intent = new Intent(this, ConfirmarLocalActivity.class);
+            intent.putExtra("nomeLocal", nome);
+            startActivity(intent);
+        });
+    }
 
-        if (nomeLocal.isEmpty()) {
-            etSearch.setError("Digite o nome do local");
-            etSearch.requestFocus();
-            return;
+    private void setupCardClicks() {
+        View.OnClickListener cardClick = v -> {
+            CardView card = (CardView) v;
+            LinearLayout innerLayout = (LinearLayout) ((LinearLayout) card.getChildAt(0)).getChildAt(0);
+            TextView tvNome = (TextView) innerLayout.getChildAt(0);
+            String nomeLocal = tvNome.getText().toString();
+
+            Intent result = new Intent();
+            result.putExtra("localSelecionado", nomeLocal);
+            setResult(RESULT_OK, result);
+            finish();
+        };
+
+        cardBelas.setOnClickListener(cardClick);
+        cardZango.setOnClickListener(cardClick);
+        cardCamama.setOnClickListener(cardClick);
+    }
+
+    private void filtrarLocais(String query) {
+        CardView[] cards = {cardBelas, cardZango, cardCamama};
+        String[] nomes = {"Belas Shopping", "Zango", "Ginásio do Camama"};
+
+        for (int i = 0; i < cards.length; i++) {
+            boolean visible = nomes[i].toLowerCase().contains(query.toLowerCase());
+            cards[i].setVisibility(visible ? View.VISIBLE : View.GONE);
         }
+    }
 
-        // Aqui você pode salvar o local em banco ou enviar para outra Activity
-        // Exemplo: abrir uma Activity de confirmação
-        Intent intent = new Intent(AdicionarLocalActivity.this, ConfirmarLocalActivity.class);
-        intent.putExtra("nomeLocal", nomeLocal);
-        startActivity(intent);
-
-        // Se quiser apenas limpar o campo
-        // etSearch.setText("");
+    private void showToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }
