@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
-    android:background="@android:color/white">
+    app:cardBackgroundColor="@color/branco">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,18 +15,20 @@
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- Imagem -->
+        <!-- Imagem à esquerda -->
         <ImageView
             android:id="@+id/img_anuncio"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/espaco_image"
             android:scaleType="centerCrop"
+            android:src="@drawable/espaco_image"
             app:cardCornerRadius="12dp" />
 
-        <Space android:layout_width="12dp" android:layout_height="1dp" />
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="1dp" />
 
-        <!-- Conteúdo -->
+        <!-- Título + Descrição -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -36,40 +39,26 @@
                 android:id="@+id/tv_titulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Apartamento T2 para Arrendar no Centro"
+                android:text="Vendemos terreno no Sun City"
+                android:textColor="@color/preto_texto"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/verde_principal" />
+                android:maxLines="2"
+                android:ellipsize="end" />
 
-            <!-- DESCRIÇÃO COM VER MAIS -->
             <TextView
                 android:id="@+id/tv_descricao"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Apartamento T2 mobilado com vista para o mar, perto do Largo da Independência..."
-                android:textSize="14sp"
+                android:text="Vendo 5 clippers no seu voo sem acidentes..."
                 android:textColor="@color/cinza_texto"
+                android:textSize="14sp"
                 android:maxLines="2"
                 android:ellipsize="end" />
-
-            <!-- BOTÃO VER MAIS -->
-            <TextView
-                android:id="@+id/btn_ver_mais"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ver mais"
-                android:textColor="@color/verde_principal"
-                android:textStyle="bold"
-                android:textSize="13sp"
-                android:visibility="gone"
-                android:layout_marginTop="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp" />
-
         </LinearLayout>
 
-        <!-- Bookmark -->
+        <!-- Ícone de guardar (bookmark) -->
         <ImageView
             android:id="@+id/btn_salvar"
             android:layout_width="32dp"
@@ -77,9 +66,10 @@
             android:src="@drawable/bookmark_selector"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="top"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="50dp"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            android:contentDescription="Salvar anúncio" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>
