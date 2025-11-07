@@ -245,6 +245,23 @@
                         android:padding="10dp" />
                 </LinearLayout>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Mapa (toque para definir coordenadas)"
+                    android:textColor="@color/verde_principal"
+                    android:textStyle="bold"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="6dp"/>
+
+                <fragment
+                    android:id="@+id/fragmentoMapa"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:layout_marginBottom="12dp"/>
+
+
                 <!-- Raio -->
                 <TextView
                     android:layout_width="match_parent"
