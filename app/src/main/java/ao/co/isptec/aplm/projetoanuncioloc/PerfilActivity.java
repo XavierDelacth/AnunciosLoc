@@ -23,6 +23,8 @@ public class PerfilActivity extends AppCompatActivity {
     private SearchView searchView;
     private TabLayout tabLayout;
 
+
+
     private String currentUsername = "João Silva";
 
     @Override
@@ -34,6 +36,9 @@ public class PerfilActivity extends AppCompatActivity {
         setupProfileSection();
         setupClickListeners();
         setupTabs();
+
+
+
     }
 
     private void initViews() {
@@ -80,7 +85,7 @@ public class PerfilActivity extends AppCompatActivity {
         btnConfirmEdit.setOnClickListener(v -> confirmNameEdit());
         btnCancelEdit.setOnClickListener(v -> cancelNameEdit());
 
-        btnChangePassword.setOnClickListener(v -> startActivity(new Intent(this, AlterarSenhaActivity.class)));
+        btnChangePassword.setOnClickListener(v -> startActivity(new Intent(PerfilActivity.this, AlterarSenhaActivity.class)));
         btnAddKey.setOnClickListener(v -> startActivity(new Intent(this, AddicionarKeyActivity.class)));
     }
 

@@ -16,17 +16,17 @@ public class AdicionarLocalActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list_local);
+        setContentView(R.layout.activity_list_local);  // teu layout com a lista
 
-        // Inicializar Views
-        etSearch = findViewById(R.id.etSearch);
         btnAddLocal = findViewById(R.id.btnAddLocal);
 
-        // Clique no botão Adicionar
+        // CLIQUE NO BOTÃO ADICIONAR → abre o modal como Dialog
         btnAddLocal.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                adicionarLocal();
+                Intent intent = new Intent(AdicionarLocalActivity.this, AdicionarGPS.class);
+                startActivity(intent);
+
             }
         });
     }
