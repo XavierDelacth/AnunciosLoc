@@ -170,7 +170,7 @@
                         android:layout_weight="1"
                         android:text="WIFI"
                         android:backgroundTint="#E0E0E0"
-                        android:textColor="@android:color/black"
+                        android:textColor="@android:color/darker_gray"
                         android:textStyle="bold" />
                 </LinearLayout>
 

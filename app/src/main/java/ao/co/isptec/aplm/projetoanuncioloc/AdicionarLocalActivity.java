@@ -42,9 +42,7 @@ public class AdicionarLocalActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        findViewById(R.id.btnProfile).setOnClickListener(v -> showToast("Perfil"));
-        findViewById(R.id.btnNotification).setOnClickListener(v -> showToast("Notificações"));
-    }
+     }
 
     private void setupSearchFilter() {
         etSearch.addTextChangedListener(new TextWatcher() {

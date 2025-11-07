@@ -55,16 +55,30 @@ public class AdicionarGPS extends AppCompatActivity implements OnMapReadyCallbac
 
         clienteLocalizacao = LocationServices.getFusedLocationProviderClient(this);
 
+        // No onCreate(), depois do setContentView
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+                // SLIDE REVERSO
+     }
+        });
+
+// Também no btnCancelar e btnFechar
+        btnCancelar.setOnClickListener(v -> {
+            finish();
+    });
+
+        btnFechar.setOnClickListener(v -> {
+            finish();
+        });
+
         // === Configuração do Mapa ===
         SupportMapFragment mapaFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentoMapa);
         if (mapaFragment != null) {
             mapaFragment.getMapAsync(this);
         }
-
-        // === Botões ===
-        btnFechar.setOnClickListener(v -> finish());
-        btnCancelar.setOnClickListener(v -> finish());
 
         btnWifi.setOnClickListener(v -> {
             startActivity(new Intent(this, AdicionarWIFI.class));

@@ -34,7 +34,7 @@ public class LocalGuardadoActivity extends AppCompatActivity {
 
     private CardView cardLocais, cardAnuncios, cardTabs;
     private TextView tabCriados, tabGuardados, tvLocation;
-    private ImageView btnProfile, btnNotification, ivClear;
+    private ImageView ivClear;
     private EditText etSearch;
     private RecyclerView recyclerView;
 
@@ -81,8 +81,6 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         tabCriados = findViewById(R.id.tabCriados);
         tabGuardados = findViewById(R.id.tabGuardados);
 
-        btnProfile = findViewById(R.id.btnProfile);
-        btnNotification = findViewById(R.id.btnNotification);
         tvLocation = findViewById(R.id.tvLocation);
 
         etSearch = findViewById(R.id.etSearch);
@@ -93,9 +91,6 @@ public class LocalGuardadoActivity extends AppCompatActivity {
     private void setupClickListeners() {
         cardLocais.setOnClickListener(v -> startActivity(new Intent(this, AdicionarLocalActivity.class)));
         cardAnuncios.setOnClickListener(v -> startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
-
-        btnProfile.setOnClickListener(v -> startActivity(new Intent(this, PerfilActivity.class)));
-        btnNotification.setOnClickListener(v -> startActivity(new Intent(this, NotificacoesActivity.class)));
 
         ivClear.setOnClickListener(v -> etSearch.setText(""));
 

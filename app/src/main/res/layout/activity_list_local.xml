@@ -24,7 +24,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/ic_arrow_back"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
                 app:tint="@color/white"
@@ -38,52 +38,23 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:layout_marginStart="8dp" />
-
-            <ImageView
-                android:id="@+id/btnProfile"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_person"
-                android:padding="6dp"
-                app:tint="@color/white"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+                android:layout_marginStart="8dp"
+                android:gravity="center"/>
 
             <FrameLayout
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="8dp">
-
-                <ImageView
-                    android:id="@+id/btnNotification"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_notification"
-                    android:padding="6dp"
-                    app:tint="@color/white"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
-
-                <TextView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:background="@drawable/badge_notification"
-                    android:text="4"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:gravity="center"
-                    android:layout_gravity="top|end"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginEnd="2dp" />
             </FrameLayout>
+
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <!-- Card centralizado com scroll -->
+    <!-- CARD PRINCIPAL – TUDO DENTRO (incluindo o botão) -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
-        android:layout_above="@+id/btnAddLocal"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -126,7 +97,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless" />
             </LinearLayout>
 
-            <!-- Lista de locais -->
+            <!-- Scroll com lista de locais -->
             <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -143,7 +114,7 @@
                     android:paddingStart="16dp"
                     android:paddingEnd="16dp">
 
-                    <!-- Belas Shopping -->
+                    <!-- CARD BELAS -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/cardBelas"
                         android:layout_width="match_parent"
@@ -151,7 +122,10 @@
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
                         app:cardElevation="2dp"
-                        app:cardBackgroundColor="@android:color/white">
+                        app:cardBackgroundColor="@android:color/white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -206,7 +180,7 @@
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
-                    <!-- Zango -->
+                    <!-- CARD ZANGO -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/cardZango"
                         android:layout_width="match_parent"
@@ -214,7 +188,10 @@
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
                         app:cardElevation="2dp"
-                        app:cardBackgroundColor="@android:color/white">
+                        app:cardBackgroundColor="@android:color/white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -269,7 +246,7 @@
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
-                    <!-- Ginásio do Camama -->
+                    <!-- CARD CAMAMA -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/cardCamama"
                         android:layout_width="match_parent"
@@ -277,7 +254,10 @@
                         android:layout_marginBottom="12dp"
                         app:cardCornerRadius="12dp"
                         app:cardElevation="2dp"
-                        app:cardBackgroundColor="@android:color/white">
+                        app:cardBackgroundColor="@android:color/white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -332,7 +312,7 @@
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
-                    <!-- Museu Nacional (adicionei para testar scroll) -->
+                    <!-- CARD MUSEU NACIONAL -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -397,21 +377,21 @@
                 </LinearLayout>
             </ScrollView>
 
+            <!-- BOTÃO ADICIONAR – AGORA DENTRO DO CARD -->
+            <Button
+                android:id="@+id/btnAddLocal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Adicionar"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp"
+                android:backgroundTint="@color/verde_principal"
+                android:textColor="@android:color/white"
+                android:textStyle="bold" />
+
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
-    <!-- Botão Adicionar - FORA DO CARD -->
-    <Button
-        android:id="@+id/btnAddLocal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Adicionar"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="24dp"
-        android:layout_alignParentBottom="true"
-        android:backgroundTint="@color/verde_principal"
-        android:textColor="@android:color/white"
-        android:textStyle="bold" />
 
 </RelativeLayout>

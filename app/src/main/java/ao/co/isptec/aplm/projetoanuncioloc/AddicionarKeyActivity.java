@@ -20,7 +20,7 @@ public class AddicionarKeyActivity extends AppCompatActivity {
         // Card: Criar nova chave
         findViewById(R.id.card_new_key).setOnClickListener(v -> {
             // Abre tela de criar nova chave
-            Intent intent = new Intent(this, CreateNewKeyActivity.class);
+            Intent intent = new Intent(this, CriarNovaChaveActivity.class);
             startActivityForResult(intent, 2);  // REQUEST_CODE = 2
         });
     }

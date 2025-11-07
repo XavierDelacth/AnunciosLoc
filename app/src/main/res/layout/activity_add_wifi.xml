@@ -159,7 +159,7 @@
                         android:layout_weight="1"
                         android:backgroundTint="#E0E0E0"
                         android:text="GPS"
-                        android:textColor="@android:color/black"
+                        android:textColor="@android:color/darker_gray"
                         android:textStyle="bold" />
 
                     <Button

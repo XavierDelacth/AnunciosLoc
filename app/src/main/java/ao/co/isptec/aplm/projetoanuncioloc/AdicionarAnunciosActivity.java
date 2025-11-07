@@ -75,14 +75,13 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         initViews();
         setupSpinner();
         setupClickListeners();
-        setupChavesExpansivel();
     }
 
     private void initViews() {
         btnBack = findViewById(R.id.btnBack);
         llLocal = findViewById(R.id.llLocal);
         btnAddLocation = findViewById(R.id.btnAddLocation);
-        tvLocalSelecionado = findViewById(R.id.tvLocalSelecionado);
+        tvLocalSelecionado = findViewById(R.id.tvLocalSelecionado);  // ← FALTA ESTA LINHA!
         etMensagem = findViewById(R.id.etMensagem);
         llDataInicio = findViewById(R.id.llDataInicio);
         llDataFim = findViewById(R.id.llDataFim);
@@ -152,20 +151,6 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         localLauncher.launch(intent);
     }
 
-
-
-
-    private void setupChavesExpansivel() {
-        // Configurar expansão das chaves
-        findViewById(R.id.itemClube).setOnClickListener(v ->
-                toggleChaveExpansivel(findViewById(R.id.valoresClube), findViewById(R.id.arrowClube)));
-
-        findViewById(R.id.itemIdade).setOnClickListener(v ->
-                toggleChaveExpansivel(findViewById(R.id.valoresIdade), findViewById(R.id.arrowIdade)));
-
-        findViewById(R.id.itemInteresses).setOnClickListener(v ->
-                toggleChaveExpansivel(findViewById(R.id.valoresInteresses), findViewById(R.id.arrowInteresses)));
-    }
 
     private void toggleChaveExpansivel(LinearLayout valores, ImageView arrow) {
         if (valores.getVisibility() == View.VISIBLE) {
@@ -284,7 +269,6 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         tvLocalSelecionado.setText("Selecionar um local");
         tvLocalSelecionado.setTextColor(getColor(android.R.color.darker_gray));
 
-        fecharTodasChaves();
     }
 
     private void resetarDataHora(TextView textView, String textoPadrao) {
@@ -292,31 +276,8 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         textView.setTextColor(getResources().getColor(android.R.color.darker_gray));
     }
 
-    private void fecharTodasChaves() {
-        // Fechar chave Clube
-        LinearLayout valoresClube = findViewById(R.id.valoresClube);
-        ImageView arrowClube = findViewById(R.id.arrowClube);
-        if (valoresClube.getVisibility() == View.VISIBLE) {
-            valoresClube.setVisibility(View.GONE);
-            arrowClube.setRotation(0);
-        }
 
-        // Fechar chave Idade
-        LinearLayout valoresIdade = findViewById(R.id.valoresIdade);
-        ImageView arrowIdade = findViewById(R.id.arrowIdade);
-        if (valoresIdade.getVisibility() == View.VISIBLE) {
-            valoresIdade.setVisibility(View.GONE);
-            arrowIdade.setRotation(0);
-        }
 
-        // Fechar chave Interesses
-        LinearLayout valoresInteresses = findViewById(R.id.valoresInteresses);
-        ImageView arrowInteresses = findViewById(R.id.arrowInteresses);
-        if (valoresInteresses.getVisibility() == View.VISIBLE) {
-            valoresInteresses.setVisibility(View.GONE);
-            arrowInteresses.setRotation(0);
-        }
-    }
 
     // Classe interna para representar o anúncio
     private static class Anuncio {
