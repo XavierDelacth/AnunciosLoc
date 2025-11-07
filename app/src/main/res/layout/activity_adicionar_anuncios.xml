@@ -1,0 +1,846 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+
+    <!-- ==================== TOOLBAR SIMPLES ==================== -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#FFFFFF"
+        android:elevation="0dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Seta de Voltar -->
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="12dp"
+                app:tint="#333333"
+                android:contentDescription="Voltar" />
+
+            <!-- Título -->
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Novo Anúncio"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginStart="78dp" />
+
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- ==================== CONTEÚDO PRINCIPAL ==================== -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ==== LOCAL DE PROPAGAÇÃO ==== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Local de Propagação"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
+
+            <!-- LINHA: CAMPO + ÍCONE + (mesma linha) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="20dp">
+
+                <!-- CAMPO DE TEXTO -->
+                <LinearLayout
+                    android:id="@+id/llLocal"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/edittext_background"
+                    android:padding="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecionar um local"
+                        android:textColor="#757575"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <!-- ÍCONE + AO LADO DIREITO -->
+                <ImageView
+                    android:id="@+id/btnAddLocation"
+                    android:layout_width="70dp"
+                    android:layout_height="70dp"
+                    android:src="@android:drawable/ic_menu_add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="@color/verde_principal"
+                    android:padding="12dp" />
+
+            </LinearLayout>
+
+            <!-- ==== MENSAGEM DO ANÚNCIO ==== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mensagem do Anúncio"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etMensagem"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@drawable/edittext_background"
+                android:hint="Escreva uma mensagem..."
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:padding="16dp"
+                android:textColor="#212121"
+                android:textColorHint="#757575"
+                android:layout_marginBottom="20dp" />
+
+            <!-- ==== PERÍODO DE PROPAGAÇÃO ==== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Período de Propagação"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Data Início -->
+            <LinearLayout
+                android:id="@+id/llDataInicio"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/edittext_background"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Data início"
+                    android:textColor="#424242"
+                    android:textSize="15sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvDataInicio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="dd/mm/aaaa"
+                    android:textColor="#757575"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@android:drawable/ic_menu_today"
+                    app:tint="#757575"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Data Fim -->
+            <LinearLayout
+                android:id="@+id/llDataFim"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/edittext_background"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Data fim"
+                    android:textColor="#424242"
+                    android:textSize="15sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvDataFim"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="dd/mm/aaaa"
+                    android:textColor="#757575"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@android:drawable/ic_menu_today"
+                    app:tint="#757575"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Hora Início -->
+            <LinearLayout
+                android:id="@+id/llHoraInicio"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/edittext_background"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hora início"
+                    android:textColor="#424242"
+                    android:textSize="15sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvHoraInicio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="hh:mm"
+                    android:textColor="#757575"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    app:tint="#757575"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Hora Fim -->
+            <LinearLayout
+                android:id="@+id/llHoraFim"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/edittext_background"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hora fim"
+                    android:textColor="#424242"
+                    android:textSize="15sp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tvHoraFim"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="hh:mm"
+                    android:textColor="#757575"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    app:tint="#757575"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- ==== TIPO DE RESTRIÇÃO ==== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tipo de Restrição"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
+
+            <!-- SELECT BONITO: WHITELIST / BLACKLIST (EXATO COMO NA TUA IMAGEM) -->
+            <LinearLayout
+                android:id="@+id/llTipoRestricao"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/spinner_restricao_background"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <TextView
+                    android:id="@+id/tvTipoRestricao"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Whitelist"
+                    android:textColor="#424242"
+                    android:textSize="15sp" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_arrow_drop_down"
+                    app:tint="#757575" />
+
+                <!-- Spinner invisível (apenas para lógica) -->
+                <Spinner
+                    android:id="@+id/spinnerRestricao"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:entries="@array/tipo_restricao"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+            <!-- ==== CHAVES DE PERFIL ==== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chaves de Perfil"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/verde_principal"
+                android:layout_marginBottom="8dp" />
+
+            <!-- CARD COM TABS + PESQUISA + BOTÃO + + CHAVES EXPANSÍVEIS -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                android:backgroundTint="#FAFAFA">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Barra de Pesquisa + Botão + -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:background="#FFFFFF">
+
+                        <!-- Barra de Pesquisa com CardView (sombra e borda arredondada) -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            app:cardCornerRadius="8dp"
+                            app:cardElevation="2dp"
+                            android:backgroundTint="#FFFFFF">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:paddingStart="12dp"
+                                android:paddingEnd="8dp">
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_menu_search"
+                                    app:tint="#9E9E9E" />
+
+                                <EditText
+                                    android:id="@+id/etPesquisarChaves"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:background="@null"
+                                    android:hint="Pesquisar chaves..."
+                                    android:textSize="14sp"
+                                    android:textColor="#212121"
+                                    android:textColorHint="#9E9E9E"
+                                    android:paddingStart="8dp"
+                                    android:paddingEnd="8dp"
+                                    android:inputType="text"
+                                    android:imeOptions="actionSearch" />
+
+                            </LinearLayout>
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- BOTÃO + (AZUL) -->
+
+                        <ImageView
+                            android:id="@+id/btnAdicionarChave"
+                            android:layout_width="70dp"
+                            android:layout_height="70dp"
+                            android:src="@android:drawable/ic_menu_add"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            app:tint="@color/verde_principal"
+                            android:padding="12dp" />
+
+                    </LinearLayout>
+
+                    <!-- ScrollView com Chaves Expansíveis - CORRIGIDO -->
+                    <ScrollView
+                        android:id="@+id/scrollChaves"
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp"
+                        android:fillViewport="true"
+                        android:scrollbars="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/containerChaves"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- EXEMPLO: Chave "Clube" -->
+                            <LinearLayout
+                                android:id="@+id/itemClube"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <!-- Cabeçalho -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="56dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingHorizontal="16dp">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical"
+                                        android:layout_marginStart="12dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Clube"
+                                            android:textStyle="bold"
+                                            android:textColor="#212121"
+                                            android:textSize="15sp" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Real Madrid"
+                                            android:textColor="#757575"
+                                            android:textSize="13sp" />
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:id="@+id/arrowClube"
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_drop_down"
+                                        app:tint="#757575" />
+
+                                </LinearLayout>
+
+                                <!-- Valores (4 chips) -->
+                                <LinearLayout
+                                    android:id="@+id/valoresClube"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    android:background="#FAFAFA"
+                                    android:padding="12dp">
+
+                                    <HorizontalScrollView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:scrollbars="none">
+
+                                        <com.google.android.material.chip.ChipGroup
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:singleLine="true">
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Real Madrid"
+                                                app:chipBackgroundColor="#E8F5E9"
+                                                app:chipStrokeColor="#4CAF50"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#1B5E20"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Barcelona"
+                                                app:chipBackgroundColor="#FFF3E0"
+                                                app:chipStrokeColor="#FF9800"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#E65100"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="1º de Agosto"
+                                                app:chipBackgroundColor="#E3F2FD"
+                                                app:chipStrokeColor="#2196F3"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#0D47A1"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Petro de Luanda"
+                                                app:chipBackgroundColor="#F3E5F5"
+                                                app:chipStrokeColor="#9C27B0"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#4A148C" />
+
+                                        </com.google.android.material.chip.ChipGroup>
+                                    </HorizontalScrollView>
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:background="#EEEEEE" />
+
+                            </LinearLayout>
+
+                            <!-- Chave "Idade" -->
+                            <LinearLayout
+                                android:id="@+id/itemIdade"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <!-- Cabeçalho -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="56dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingHorizontal="16dp">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical"
+                                        android:layout_marginStart="12dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Idade"
+                                            android:textStyle="bold"
+                                            android:textColor="#212121"
+                                            android:textSize="15sp" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="25-35 anos"
+                                            android:textColor="#757575"
+                                            android:textSize="13sp" />
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:id="@+id/arrowIdade"
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_drop_down"
+                                        app:tint="#757575" />
+
+                                </LinearLayout>
+
+                                <!-- Valores -->
+                                <LinearLayout
+                                    android:id="@+id/valoresIdade"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    android:background="#FAFAFA"
+                                    android:padding="12dp">
+
+                                    <HorizontalScrollView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:scrollbars="none">
+
+                                        <com.google.android.material.chip.ChipGroup
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:singleLine="true">
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="18-24 anos"
+                                                app:chipBackgroundColor="#E8F5E9"
+                                                app:chipStrokeColor="#4CAF50"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#1B5E20"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="25-35 anos"
+                                                app:chipBackgroundColor="#FFF3E0"
+                                                app:chipStrokeColor="#FF9800"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#E65100"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="36-45 anos"
+                                                app:chipBackgroundColor="#E3F2FD"
+                                                app:chipStrokeColor="#2196F3"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#0D47A1"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="46+ anos"
+                                                app:chipBackgroundColor="#F3E5F5"
+                                                app:chipStrokeColor="#9C27B0"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#4A148C" />
+
+                                        </com.google.android.material.chip.ChipGroup>
+                                    </HorizontalScrollView>
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:background="#EEEEEE" />
+
+                            </LinearLayout>
+
+                            <!-- Chave "Interesses" -->
+                            <LinearLayout
+                                android:id="@+id/itemInteresses"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <!-- Cabeçalho -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="56dp"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical"
+                                    android:paddingHorizontal="16dp">
+
+                                    <LinearLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:orientation="vertical"
+                                        android:layout_marginStart="12dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Interesses"
+                                            android:textStyle="bold"
+                                            android:textColor="#212121"
+                                            android:textSize="15sp" />
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Tecnologia, Esportes"
+                                            android:textColor="#757575"
+                                            android:textSize="13sp" />
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:id="@+id/arrowInteresses"
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_arrow_drop_down"
+                                        app:tint="#757575" />
+
+                                </LinearLayout>
+
+                                <!-- Valores -->
+                                <LinearLayout
+                                    android:id="@+id/valoresInteresses"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    android:background="#FAFAFA"
+                                    android:padding="12dp">
+
+                                    <HorizontalScrollView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:scrollbars="none">
+
+                                        <com.google.android.material.chip.ChipGroup
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:singleLine="true">
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Tecnologia"
+                                                app:chipBackgroundColor="#E8F5E9"
+                                                app:chipStrokeColor="#4CAF50"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#1B5E20"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Esportes"
+                                                app:chipBackgroundColor="#FFF3E0"
+                                                app:chipStrokeColor="#FF9800"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#E65100"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Música"
+                                                app:chipBackgroundColor="#E3F2FD"
+                                                app:chipStrokeColor="#2196F3"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#0D47A1"
+                                                android:layout_marginEnd="8dp" />
+
+                                            <com.google.android.material.chip.Chip
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="32dp"
+                                                android:text="Arte"
+                                                app:chipBackgroundColor="#F3E5F5"
+                                                app:chipStrokeColor="#9C27B0"
+                                                app:chipStrokeWidth="1dp"
+                                                android:textColor="#4A148C" />
+
+                                        </com.google.android.material.chip.ChipGroup>
+                                    </HorizontalScrollView>
+                                </LinearLayout>
+
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:background="#EEEEEE" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </ScrollView>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- BOTÃO PUBLICAR ANÚNCIO -->
+            <Button
+                android:id="@+id/btnPublicar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/verde_principal"
+                android:text="Publicar Anúncio"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

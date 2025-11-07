@@ -139,6 +139,7 @@
 
         <!-- Card Locais -->
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardLocais"
             android:layout_width="140dp"
             android:layout_height="110dp"
             android:layout_marginEnd="16dp"
@@ -179,6 +180,7 @@
 
         <!-- Card Anúncios -->
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardAnuncios"
             android:layout_width="140dp"
             android:layout_height="110dp"
             app:cardCornerRadius="10dp"
@@ -264,30 +266,55 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Barra de Pesquisa -->
+    <!-- BARRA DE PESQUISA ESTILIZADA -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        android:backgroundTint="#FFFFFF">
+        app:cardCornerRadius="12dp"
+        app:cardElevation="3dp"
+        android:backgroundTint="#F8F9FA">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="12dp">
+            android:padding="12dp"
+            android:gravity="center_vertical">
 
-            <SearchView
-                android:id="@+id/searchView"
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"
+                app:tint="@color/cinza_texto"
+                android:layout_marginEnd="12dp" />
+
+            <EditText
+                android:id="@+id/etSearch"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:queryHint="Pesquisar chaves..." />
+                android:background="@null"
+                android:hint="Pesquisar chaves..."
+                android:textSize="15sp"
+                android:textColor="@color/black"
+                android:textColorHint="@color/cinza_texto"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/ivClear"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_close"
+                app:tint="@color/cinza_texto"
+                android:visibility="gone"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -304,7 +331,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"

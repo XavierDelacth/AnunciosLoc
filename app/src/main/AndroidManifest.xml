@@ -26,10 +26,13 @@
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".AdicionarLocalActivity" android:exported="false" />
         <activity android:name=".PerfilActivity" android:exported="false" />
-        <activity   android:name=".AdicionarGPS" android:exported="false" />
-        <activity android:name=".AdicionarWIFI" android:exported="false"/>
-        <activity android:name=".AlterarSenhaActivity" android:exported="false" />
-        <activity android:name=".AddicionarKeyActivity" android:exported="false" />
+        <activity android:name=".AdicionarAnunciosActivity" android:exported="false" />
+        <activity android:name=".LocalGuardadoActivity" android:exported="false" />
+        <activity android:name=".AdicionarGPS" android:exported="false" />
+        <activity android:name=".AdicionarWIFI" android:exported="false" />
+
+
+
 
 
     </application>

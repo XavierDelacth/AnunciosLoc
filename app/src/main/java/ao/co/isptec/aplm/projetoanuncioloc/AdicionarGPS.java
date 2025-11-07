@@ -37,7 +37,8 @@ public class AdicionarGPS extends AppCompatActivity {
                 etNomeLocal.requestFocus();
                 return;
             }
-            Toast.makeText(this, "Local '" + nome + "' adicionado!", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(this, ConfirmarLocalActivity.class);
             finish();
         });
 
