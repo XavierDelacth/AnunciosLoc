@@ -2,6 +2,7 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -12,6 +13,9 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Calendar;
 
@@ -23,6 +27,45 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
     private LinearLayout llLocal, llDataInicio, llDataFim, llHoraInicio, llHoraFim, llTipoRestricao;
     private Spinner spinnerRestricao;
     private Button btnPublicar;
+    private TextView tvLocalSelecionado;
+
+
+    private String localSelecionado = null; // Guarda o nome do local
+    private static final int REQUEST_LOCAL = 101;
+
+
+    // Launcher moderno (melhor que startActivityForResult)
+    private final ActivityResultLauncher<Intent> localLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String nome = result.getData().getStringExtra("nome_local");
+                    String tipo = result.getData().getStringExtra("tipo");
+
+                    if (nome != null && !nome.isEmpty()) {
+                        localSelecionado = nome;
+                        tvLocalSelecionado.setText(nome);
+                        tvLocalSelecionado.setTextColor(getColor(R.color.verde_principal));
+                        Toast.makeText(this, tipo + " adicionado: " + nome, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+    private final ActivityResultLauncher<Intent> chaveLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String novaChave = result.getData().getStringExtra("nova_chave");
+                    String valor = result.getData().getStringExtra("valor_adicionado");
+
+                    if (novaChave != null) {
+                        Toast.makeText(this, "Chave criada: " + novaChave, Toast.LENGTH_SHORT).show();
+                        // Aqui você pode atualizar a lista de chaves dinamicamente
+                    } else if (valor != null) {
+                        Toast.makeText(this, "Valor adicionado: " + valor, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +82,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
         llLocal = findViewById(R.id.llLocal);
         btnAddLocation = findViewById(R.id.btnAddLocation);
+        tvLocalSelecionado = findViewById(R.id.tvLocalSelecionado);
         etMensagem = findViewById(R.id.etMensagem);
         llDataInicio = findViewById(R.id.llDataInicio);
         llDataFim = findViewById(R.id.llDataFim);
@@ -77,12 +121,16 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
-        btnAddLocation.setOnClickListener(v ->
-                Toast.makeText(this, "Adicionar Local", Toast.LENGTH_SHORT).show());
-        llLocal.setOnClickListener(v ->
-                Toast.makeText(this, "Selecionar Local", Toast.LENGTH_SHORT).show());
-        btnAdicionarChave.setOnClickListener(v ->
-                Toast.makeText(this, "Adicionar Nova Chave", Toast.LENGTH_SHORT).show());
+
+        btnAddLocation.setOnClickListener(v -> abrirAdicionarLocal());
+        llLocal.setOnClickListener(v -> abrirAdicionarLocal());
+
+        btnAdicionarChave.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AddicionarKeyActivity.class);
+            chaveLauncher.launch(intent);
+        });
+
+
         llTipoRestricao.setOnClickListener(v -> spinnerRestricao.performClick());
         llDataInicio.setOnClickListener(v -> showDatePicker(tvDataInicio));
         llDataFim.setOnClickListener(v -> showDatePicker(tvDataFim));
@@ -98,6 +146,14 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
             return false;
         });
     }
+
+    private void abrirAdicionarLocal() {
+        Intent intent = new Intent(this, AdicionarGPS.class);
+        localLauncher.launch(intent);
+    }
+
+
+
 
     private void setupChavesExpansivel() {
         // Configurar expansão das chaves
@@ -168,42 +224,38 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         String horaInicio = tvHoraInicio.getText().toString();
         String horaFim = tvHoraFim.getText().toString();
 
-        // Validações
+        // VALIDAÇÃO DO LOCAL
+        if (localSelecionado == null || localSelecionado.equals("Selecionar um local")) {
+            Toast.makeText(this, "Por favor, adicione um local de propagação", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         if (mensagem.isEmpty()) {
-            showError("Por favor, escreva uma mensagem para o anúncio");
+            showError("Escreva uma mensagem para o anúncio");
             return;
         }
-
         if (dataInicio.equals("dd/mm/aaaa") || dataFim.equals("dd/mm/aaaa")) {
-            showError("Por favor, selecione as datas de início e fim");
+            showError("Selecione as datas de início e fim");
             return;
         }
-
         if (horaInicio.equals("hh:mm") || horaFim.equals("hh:mm")) {
-            showError("Por favor, selecione os horários de início e fim");
+            showError("Selecione os horários");
             return;
         }
 
-        // Criar objeto anúncio
         Anuncio novoAnuncio = new Anuncio(
                 mensagem,
-                "Local a definir",
-                dataInicio,
-                dataFim,
-                horaInicio,
-                horaFim,
-                restricao
+                localSelecionado, // agora usa o local real
+                dataInicio, dataFim, horaInicio, horaFim, restricao
         );
 
-        // Simular publicação bem-sucedida
         boolean sucesso = salvarAnuncio(novoAnuncio);
-
         if (sucesso) {
             Toast.makeText(this, "Anúncio publicado com sucesso!", Toast.LENGTH_SHORT).show();
             limparCampos();
             finish();
         } else {
-            showError("Erro ao publicar anúncio. Tente novamente.");
+            showError("Erro ao publicar. Tente novamente.");
         }
     }
 
@@ -218,23 +270,20 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
     }
 
     private void limparCampos() {
-        // Limpar mensagem
         etMensagem.setText("");
-
-        // Resetar datas
         resetarDataHora(tvDataInicio, "dd/mm/aaaa");
         resetarDataHora(tvDataFim, "dd/mm/aaaa");
         resetarDataHora(tvHoraInicio, "hh:mm");
         resetarDataHora(tvHoraFim, "hh:mm");
-
-        // Resetar restrição
         tvTipoRestricao.setText("Whitelist");
         spinnerRestricao.setSelection(0);
-
-        // Limpar pesquisa
         etPesquisarChaves.setText("");
 
-        // Fechar chaves expandidas
+        // RESETAR LOCAL
+        localSelecionado = null;
+        tvLocalSelecionado.setText("Selecionar um local");
+        tvLocalSelecionado.setTextColor(getColor(android.R.color.darker_gray));
+
         fecharTodasChaves();
     }
 
