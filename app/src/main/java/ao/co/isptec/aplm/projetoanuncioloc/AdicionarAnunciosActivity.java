@@ -125,7 +125,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity {
         llLocal.setOnClickListener(v -> abrirAdicionarLocal());
 
         btnAdicionarChave.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AddicionarKeyActivity.class);
+            Intent intent = new Intent(this, AdicionarKeyActivity.class);
             chaveLauncher.launch(intent);
         });
 

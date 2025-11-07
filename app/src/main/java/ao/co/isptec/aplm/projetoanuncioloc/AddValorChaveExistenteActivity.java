@@ -23,6 +23,8 @@ public class AddValorChaveExistenteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_existente_key); // vamos criar este layout já
 
          // ← CORRETO
+        spinnerChaves = findViewById(R.id.spinner_chaves);
+        etNovoValor = findViewById(R.id.et_novo_valor);
         btnAdicionar = findViewById(R.id.btn_add_value);    // ← CORRETO
         btnClose = findViewById(R.id.btn_close);
 

@@ -202,7 +202,7 @@ public class PerfilActivity extends AppCompatActivity {
         });
 
         // Add Key
-        btnAddKey.setOnClickListener(v -> showAddKeyDialog());
+        btnAddKey.setOnClickListener(v -> showAddKeyDialog());  // ← ADICIONA ESTA LINHA!
     }
 
     private void showEditUsername() {
