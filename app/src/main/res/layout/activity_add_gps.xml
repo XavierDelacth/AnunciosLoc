@@ -188,6 +188,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="exemplo"
+                    android:textColor="@android:color/black"
                     android:background="@drawable/edittext_background"
                     android:padding="10dp"
                     android:textColorHint="#999999" />
@@ -213,7 +214,7 @@
                         android:layout_height="wrap_content" />
                 </LinearLayout>
 
-                <!-- Latitude e Longitude -->
+                <!-- Latitude e Longitude (BLOQUEADOS) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -226,9 +227,13 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="Latitude"
-                        android:inputType="numberDecimal"
+                        android:textColor="@android:color/black"
+                        android:textColorHint="#999999"
+                        android:inputType="none"
                         android:background="@drawable/edittext_background"
-                        android:padding="10dp" />
+                        android:padding="10dp"
+                        android:focusable="false"
+                        android:cursorVisible="false" />
 
                     <View
                         android:layout_width="8dp"
@@ -240,27 +245,57 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="Longitude"
-                        android:inputType="numberDecimal"
+                        android:textColor="@android:color/black"
+                        android:textColorHint="#999999"
+                        android:inputType="none"
                         android:background="@drawable/edittext_background"
-                        android:padding="10dp" />
+                        android:padding="10dp"
+                        android:focusable="false"
+                        android:cursorVisible="false" />
                 </LinearLayout>
 
-                <TextView
+                <!-- AVISO: LOCALIZAÇÃO AUTOMÁTICA (SEM MAPA) -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Mapa (toque para definir coordenadas)"
-                    android:textColor="@color/verde_principal"
-                    android:textStyle="bold"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@drawable/rounded_location_box"
+                    android:padding="18dp"
                     android:layout_marginTop="12dp"
-                    android:layout_marginBottom="6dp"/>
+                    android:layout_marginBottom="12dp">
 
-                <fragment
-                    android:id="@+id/fragmentoMapa"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"
-                    android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:layout_marginBottom="12dp"/>
+                    <!-- Ícone GPS -->
+                    <ImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/ic_gps_fixed"
+                        app:tint="@color/verde_principal" />
 
+                    <!-- Texto principal (dinâmico) -->
+                    <TextView
+                        android:id="@+id/tvAvisoLocalizacao"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="A detectar a sua localização..."
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/verde_principal"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center" />
+
+                    <!-- Subtexto explicativo -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="As coordenadas são preenchidas automaticamente com a sua posição atual"
+                        android:textSize="13sp"
+                        android:textColor="#666666"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="16dp" />
+
+                </LinearLayout>
 
                 <!-- Raio -->
                 <TextView
@@ -275,7 +310,9 @@
                     android:id="@+id/etRaio"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="20"
+                    android:textColor="@android:color/black"
+                    android:textColorHint="#999999"
+                    android:hint="50"
                     android:inputType="number"
                     android:background="@drawable/edittext_background"
                     android:padding="10dp" />
@@ -312,9 +349,7 @@
                         android:textColor="@android:color/white"
                         android:textStyle="bold" />
                 </LinearLayout>
-
             </LinearLayout>
         </ScrollView>
     </androidx.cardview.widget.CardView>
-
 </RelativeLayout>
