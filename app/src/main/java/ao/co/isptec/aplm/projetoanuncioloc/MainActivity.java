@@ -22,16 +22,16 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
     private CardView cardLocais, cardAnuncios;
-    private TextView tabCriados, tabGuardados, tvLocation;
+    private TextView tabCriados, tabGuardados, tvLocation, tvEmptyAnuncios;
     private ImageView btnProfile, btnNotification;
     private RecyclerView rvAnunciosMain;
     private MainAnuncioAdapter adapter;
@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
         setupTabs();
         selectTab(true);
 
-
         // Inicializa provedor de localização
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -57,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         obterLocalizacaoAtual();
 
         setupListaAnuncios();
+
         // Compatível com back gesture (Android 13+)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
         tvLocation = findViewById(R.id.tvLocation);
+        tvEmptyAnuncios = findViewById(R.id.tvEmptyAnuncios);
         rvAnunciosMain = findViewById(R.id.recyclerView);
     }
 
@@ -88,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
         cardAnuncios.setOnClickListener(v ->
                 startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
+
+        cardLocais.setOnClickListener(v -> startActivity(new Intent(this, AdicionarLocalActivity.class)));
 
         btnProfile.setOnClickListener(v ->
                 startActivity(new Intent(this, PerfilActivity.class)));
@@ -121,9 +124,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ============================
-    //  LOCALIZAÇÃO ATUAL
-    // ============================
     private void obterLocalizacaoAtual() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -134,55 +134,48 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Task<Location> task = fusedLocationProviderClient.getLastLocation();
-        task.addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    try {
-                        Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
-                        List<Address> addresses = geocoder.getFromLocation(
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                1
-                        );
+        task.addOnSuccessListener(this, location -> {
+            if (location != null) {
+                try {
+                    Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                    List<Address> addresses = geocoder.getFromLocation(
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            1
+                    );
 
-                        if (addresses != null && !addresses.isEmpty()) {
-                            String local = addresses.get(0).getFeatureName(); // nome do local
-                            String cidade = addresses.get(0).getLocality();   // cidade
-                            String pais = addresses.get(0).getCountryName(); // país
+                    if (addresses != null && !addresses.isEmpty()) {
+                        String cidade = addresses.get(0).getLocality();
+                        String pais = addresses.get(0).getCountryName();
 
-                            String texto = "";
-                            if (cidade != null) texto += " " + cidade;
-                            if (pais != null) texto += ", " + pais;
+                        String texto = "";
+                        if (cidade != null) texto += " " + cidade;
+                        if (pais != null) texto += ", " + pais;
 
-                            tvLocation.setText(texto);
-                        }
-
-                    } catch (IOException e) {
-                        tvLocation.setText("Erro ao obter localização.");
+                        tvLocation.setText(texto);
                     }
-                } else {
-                    tvLocation.setText("Localização não disponível.");
+
+                } catch (IOException e) {
+                    tvLocation.setText("Erro ao obter localização.");
                 }
+            } else {
+                tvLocation.setText("Localização não disponível.");
             }
         });
     }
 
-
     private void setupListaAnuncios() {
-        // Simula anúncios recebidos (baseado no PDF: Alice arrenda imóvel no Largo)
-        // Usa data atual: 13/11/2025
+        // Simula anúncios recebidos (baseado no PDF)
         Anuncio anuncio1 = new Anuncio(
                 "Apartamento T2 para Arrendar - Vista Mar!",
                 "Excelente T2 mobilado no coração da cidade, perto do Largo da Independência. 2 quartos, cozinha equipada. Contacte via app!",
-                "Largo da Independência", // Local do PDF
-                null, // Sem imagem por agora
-                "13/11/2025", "15/11/2025", // Datas
-                "09:00", "18:00", // Horas
-                "Whitelist", // Restrição
-                "Centralizado" // Modo (infraestrutura 4G/WiFi)
+                "Largo da Independência",
+                null,
+                "13/11/2025", "15/11/2025",
+                "09:00", "18:00",
+                "Whitelist",
+                "Centralizado"
         );
-        // Adiciona chaves de exemplo (opcional)
         anuncio1.addChave("Idade", Arrays.asList("18-30", "30-50"));
 
         Anuncio anuncio2 = new Anuncio(
@@ -193,10 +186,8 @@ public class MainActivity extends AppCompatActivity {
                 "13/11/2025", "13/11/2025",
                 "14:00", "20:00",
                 "Nenhuma",
-                "Descentralizado" // WiFi Direct ad-hoc
+                "Descentralizado"
         );
-
-        // NOVA: Adiciona chaves ao segundo anúncio para teste (ex.: Gênero e Interesse)
         anuncio2.addChave("Gênero", Arrays.asList("Feminino", "Masculino"));
         anuncio2.addChave("Interesse", Arrays.asList("Fitness", "Yoga"));
 
@@ -208,6 +199,19 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MainAnuncioAdapter(this, listaAnuncios);
         rvAnunciosMain.setAdapter(adapter);
 
+        // Atualiza visibilidade
+        atualizarVisibilidade();
+    }
+
+    private void atualizarVisibilidade() {
+        if (listaAnuncios.isEmpty()) {
+            rvAnunciosMain.setVisibility(View.GONE);
+            tvEmptyAnuncios.setVisibility(View.VISIBLE);
+            tvEmptyAnuncios.setText("Nenhum anúncio");
+        } else {
+            rvAnunciosMain.setVisibility(View.VISIBLE);
+            tvEmptyAnuncios.setVisibility(View.GONE);
+        }
     }
 
     @Override

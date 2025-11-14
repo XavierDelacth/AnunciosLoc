@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="#FFFFFF"
     android:padding="16dp">
@@ -11,10 +11,10 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp"
-        app:cardBackgroundColor="@android:color/white">
+        app:cardBackgroundColor="@color/gray_100">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,15 +24,17 @@
 
             <!-- NOME DO LOCAL -->
             <TextView
+                android:id="@+id/tv_nome_local"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Belas Shopping"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#000000" />
+                android:textColor="@color/verde_principal"/>
 
             <!-- INFORMAÇÕES (Raio | Lat | Lng | GPS/Wi-Fi) -->
             <LinearLayout
+                android:id="@+id/tv_infos_local"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -40,6 +42,7 @@
                 android:gravity="end">
 
                 <TextView
+                    android:id="@+id/tv_raio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Raio: 500m | "
@@ -47,6 +50,7 @@
                     android:textSize="13sp" />
 
                 <TextView
+                    android:id="@+id/tv_lat"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Lat: -8.9200 | "
@@ -54,6 +58,7 @@
                     android:textSize="13sp" />
 
                 <TextView
+                    android:id="@+id/tv_lng"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Lng: 13.2300 | "
@@ -61,6 +66,7 @@
                     android:textSize="13sp" />
 
                 <TextView
+                    android:id="@+id/tv_tipo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="GPS"

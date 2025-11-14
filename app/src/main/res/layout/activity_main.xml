@@ -6,6 +6,7 @@
     android:orientation="vertical"
     android:background="@drawable/gradient_background"
     android:paddingTop="8dp">
+
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -75,6 +76,7 @@
             </FrameLayout>
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
+
     <!-- Localização -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -113,6 +115,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
+
     <!-- Botões Locais e Anúncios -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -140,8 +143,7 @@
                 <ImageView
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:src="@raw/megaphone1"
-                    />
+                    android:src="@raw/megaphone1" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -196,7 +198,8 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>
-    <!-- Caixa branca -->
+
+    <!-- Caixa branca (Tabs) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardTabs"
         android:layout_width="match_parent"
@@ -239,6 +242,7 @@
                 android:focusable="true" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+
     <!-- Barra de Pesquisa -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -263,17 +267,20 @@
                 android:iconifiedByDefault="false" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-    <!-- ScrollView para a lista de anúncios -->
-    <ScrollView
+
+    <!-- CORREÇÃO: NestedScrollView com RecyclerView -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- RecyclerView -->
+
+            <!-- RecyclerView SEM nestedScrollingEnabled -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
@@ -282,7 +289,20 @@
                 android:paddingEnd="16dp"
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
-                android:clipToPadding="false" />
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false" />
+
+            <!-- Empty State -->
+            <TextView
+                android:id="@+id/tvEmptyAnuncios"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:gravity="center"
+                android:text="Nenhum anúncio"
+                android:textColor="@color/cinza_texto"
+                android:textSize="16sp"
+                android:visibility="gone" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>

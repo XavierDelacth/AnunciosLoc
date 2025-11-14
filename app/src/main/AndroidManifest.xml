@@ -37,8 +37,6 @@
         <activity android:name=".PerfilActivity" android:exported="false" />
         <activity android:name=".AdicionarAnunciosActivity" android:exported="false" />
         <activity android:name=".LocalGuardadoActivity" android:exported="false" />
-        <activity android:name=".AdicionarGPS" android:exported="false" />
-        <activity android:name=".AdicionarWIFI" android:exported="false" />
         <activity android:name=".MapaActivity" android:exported="false" />
         <activity android:name=".NotificacoesActivity" android:exported="false" />
         <activity android:name=".AlterarSenhaActivity" android:exported="false"  />

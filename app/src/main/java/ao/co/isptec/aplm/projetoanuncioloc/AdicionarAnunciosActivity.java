@@ -305,7 +305,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         });
         if (btnAddLocation != null) {
             btnAddLocation.setOnClickListener(v -> {
-                Intent intent = new Intent(AdicionarAnunciosActivity.this, AdicionarGPS.class);
+                Intent intent = new Intent(AdicionarAnunciosActivity.this, AdicionarGPSDialog.class);
                 localLauncher.launch(intent);
             });
         }

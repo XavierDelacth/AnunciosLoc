@@ -157,8 +157,7 @@
                 <ImageView
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:src="@raw/megaphone1"
-                    />
+                    android:src="@raw/megaphone1" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -220,7 +219,7 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 
-    <!-- Caixa branca -->
+    <!-- Caixa branca (Tabs) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardTabs"
         android:layout_width="match_parent"
@@ -267,7 +266,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- BARRA DE PESQUISA ESTILIZADA -->
+    <!-- BARRA DE PESQUISA -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -298,7 +297,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@null"
-                android:hint="Pesquisar chaves..."
+                android:hint="Pesquisar anúncios..."
                 android:textSize="15sp"
                 android:textColor="@color/black"
                 android:textColorHint="@color/cinza_texto"
@@ -316,7 +315,6 @@
                 android:visibility="gone"
                 android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless" />
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -332,6 +330,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView"
                 android:layout_width="match_parent"
@@ -342,7 +341,17 @@
                 android:paddingBottom="16dp"
                 android:clipToPadding="false" />
 
+            <!-- Empty State -->
+            <TextView
+                android:id="@+id/tvEmptyGuardados"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:gravity="center"
+                android:text="Nenhum anúncio guardado"
+                android:textColor="@color/cinza_texto"
+                android:textSize="16sp"
+                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>

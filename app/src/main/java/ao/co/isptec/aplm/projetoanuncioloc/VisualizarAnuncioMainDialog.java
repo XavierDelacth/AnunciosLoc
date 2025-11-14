@@ -270,39 +270,18 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
 
         rvChavesRestricoes.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // showOnlySelected = false para mostrar TODOS os valores como botões
-        keyAdapter = new ProfileKeyAdapter(getContext(), chavesFiltradas, false);
+        // IMPORTANTE: showOnlySelected = true para modo VISUALIZAÇÃO (somente leitura)
+        // Mostra apenas os valores selecionados como texto, SEM botões interativos
+        keyAdapter = new ProfileKeyAdapter(getContext(), chavesFiltradas, true);
 
-        // Listener para cliques nos valores
-        keyAdapter.setOnValueClickListener((keyName, value) -> {
-            Log.d(TAG, "Valor clicado: " + keyName + " -> " + value);
-
-            // Encontra a chave e faz toggle do valor
-            for (ProfileKey key : allKeys) {
-                if (key.getName().equals(keyName)) {
-                    key.toggleValue(value);
-
-                    // Atualiza o anúncio
-                    Map<String, List<String>> chavesAtualizadas = anuncio.getChavesPerfil();
-                    if (key.hasSelectedValues()) {
-                        chavesAtualizadas.put(keyName, new ArrayList<>(key.getSelectedValues()));
-                    } else {
-                        chavesAtualizadas.remove(keyName);
-                    }
-
-                    keyAdapter.notifyDataSetChanged();
-                    Log.d(TAG, "Chave atualizada: " + keyName + " -> " + key.getSelectedValues());
-                    break;
-                }
-            }
-        });
+        // NÃO define listener - modo somente leitura
 
         rvChavesRestricoes.setAdapter(keyAdapter);
 
         rvChavesRestricoes.setVisibility(View.VISIBLE);
         layoutEmptyChaves.setVisibility(View.GONE);
 
-        Log.d(TAG, "RecyclerView configurado com sucesso");
+        Log.d(TAG, "RecyclerView configurado em modo SOMENTE LEITURA");
     }
 
     private void mostrarEmptyState() {

@@ -19,24 +19,31 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Adapters.AnuncioAdapter;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 
 public class LocalGuardadoActivity extends AppCompatActivity {
 
     private CardView cardLocais, cardAnuncios, cardTabs;
-    private TextView tabCriados, tabGuardados, tvLocation;
-    private ImageView ivClear;
+    private TextView tabCriados, tabGuardados, tvLocation, tvEmptyGuardados;
+    private ImageView ivClear, btnProfile, btnNotification;
     private EditText etSearch;
     private RecyclerView recyclerView;
+    private AnuncioAdapter adapter;
+    private List<Anuncio> listaAnunciosGuardados;
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
@@ -52,15 +59,14 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         setupSearch();
         selectTab(false); // Começa na aba "Guardados"
 
-        // ========================
-        // 📍 LOCALIZAÇÃO ATUAL
-        // ========================
+        // Inicializa lista de anúncios guardados
+        setupListaAnunciosGuardados();
+
+        // Localização atual
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         obterLocalizacaoAtual();
 
-        // ========================
         // Botão voltar / Back Gesture
-        // ========================
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -82,15 +88,28 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         tabGuardados = findViewById(R.id.tabGuardados);
 
         tvLocation = findViewById(R.id.tvLocation);
+        tvEmptyGuardados = findViewById(R.id.tvEmptyGuardados);
 
         etSearch = findViewById(R.id.etSearch);
         ivClear = findViewById(R.id.ivClear);
         recyclerView = findViewById(R.id.recyclerView);
+
+        btnProfile = findViewById(R.id.btnProfile);
+        btnNotification = findViewById(R.id.btnNotification);
     }
 
     private void setupClickListeners() {
-        cardLocais.setOnClickListener(v -> startActivity(new Intent(this, AdicionarLocalActivity.class)));
-        cardAnuncios.setOnClickListener(v -> startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
+        cardLocais.setOnClickListener(v ->
+                startActivity(new Intent(this, AdicionarLocalActivity.class)));
+
+        cardAnuncios.setOnClickListener(v ->
+                startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
+
+        btnProfile.setOnClickListener(v ->
+                startActivity(new Intent(this, PerfilActivity.class)));
+
+        btnNotification.setOnClickListener(v ->
+                startActivity(new Intent(this, NotificacoesActivity.class)));
 
         ivClear.setOnClickListener(v -> etSearch.setText(""));
 
@@ -129,16 +148,128 @@ public class LocalGuardadoActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 ivClear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                // TODO: filtrar RecyclerView aqui
+                filtrarAnuncios(s.toString());
             }
         });
     }
 
-    // ============================
-    // 📍 LOCALIZAÇÃO ATUAL
-    // ============================
+    private void setupListaAnunciosGuardados() {
+        listaAnunciosGuardados = new ArrayList<>();
+
+        // ANÚNCIOS SIMULADOS (todos com salvo = true)
+
+        // Anúncio 1: Pizza
+        Anuncio anuncio1 = new Anuncio(
+                "Pizza 50% OFF",
+                "Largo da Independência - Só hoje! Venha experimentar a melhor pizza de Luanda com ingredientes frescos. Entrega grátis no local.",
+                true, // SALVO
+                "Largo da Independência",
+                "",
+                "12/11/2025",
+                "12/11/2025",
+                "18:00",
+                "23:00",
+                "Whitelist",
+                "Centralizado"
+        );
+        anuncio1.addChave("Idade", Arrays.asList("18-24", "25-34"));
+        listaAnunciosGuardados.add(anuncio1);
+
+        // Anúncio 2: Terreno
+        Anuncio anuncio2 = new Anuncio(
+                "Terreno no Sun City",
+                "500m² com vista mar. Ideal para construção residencial. Preço negociável: 150.000 Kz.",
+                true, // SALVO
+                "Belas Shopping",
+                "",
+                "13/11/2025",
+                "30/11/2025",
+                "09:00",
+                "17:00",
+                "Blacklist",
+                "Descentralizado"
+        );
+        anuncio2.addChave("Interesses", Arrays.asList("Imóveis", "Investimentos"));
+        listaAnunciosGuardados.add(anuncio2);
+
+        // Anúncio 3: iPhone
+        Anuncio anuncio3 = new Anuncio(
+                "iPhone 15 Pro 256GB",
+                "Novo, lacrado, com nota fiscal. Cor: Titânio Preto. Inclui carregador original, cabo USB-C, fones AirPods Pro 2ª geração grátis.",
+                true, // SALVO
+                "Ginásio do Camama I",
+                "",
+                "12/11/2025",
+                "20/11/2025",
+                "10:00",
+                "20:00",
+                "Whitelist",
+                "Centralizado"
+        );
+        anuncio3.addChave("Gênero", Arrays.asList("Masculino", "Feminino"));
+        anuncio3.addChave("Interesses", Arrays.asList("Tecnologia"));
+        listaAnunciosGuardados.add(anuncio3);
+
+        // Setup RecyclerView
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new AnuncioAdapter(this, listaAnunciosGuardados);
+        recyclerView.setAdapter(adapter);
+
+        // Atualiza visibilidade
+        atualizarVisibilidade();
+    }
+
+    private void filtrarAnuncios(String query) {
+        if (adapter == null) return;
+
+        List<Anuncio> listaFiltrada = new ArrayList<>();
+
+        if (query.isEmpty()) {
+            listaFiltrada.addAll(listaAnunciosGuardados);
+        } else {
+            String queryLower = query.toLowerCase();
+            for (Anuncio anuncio : listaAnunciosGuardados) {
+                if (anuncio.titulo.toLowerCase().contains(queryLower) ||
+                        anuncio.descricao.toLowerCase().contains(queryLower) ||
+                        anuncio.local.toLowerCase().contains(queryLower)) {
+                    listaFiltrada.add(anuncio);
+                }
+            }
+        }
+
+        // Atualiza adapter com lista filtrada
+        adapter = new AnuncioAdapter(this, listaFiltrada);
+        recyclerView.setAdapter(adapter);
+
+        // Atualiza visibilidade
+        if (listaFiltrada.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            tvEmptyGuardados.setVisibility(View.VISIBLE);
+            if (!query.isEmpty()) {
+                tvEmptyGuardados.setText("Nenhum anúncio encontrado");
+            } else {
+                tvEmptyGuardados.setText("Nenhum anúncio guardado");
+            }
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            tvEmptyGuardados.setVisibility(View.GONE);
+        }
+    }
+
+    private void atualizarVisibilidade() {
+        if (listaAnunciosGuardados.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            tvEmptyGuardados.setVisibility(View.VISIBLE);
+            tvEmptyGuardados.setText("Nenhum anúncio guardado");
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            tvEmptyGuardados.setVisibility(View.GONE);
+        }
+    }
+
     private void obterLocalizacaoAtual() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
@@ -146,39 +277,37 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         }
 
         Task<Location> task = fusedLocationProviderClient.getLastLocation();
-        task.addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    try {
-                        Geocoder geocoder = new Geocoder(LocalGuardadoActivity.this, Locale.getDefault());
-                        List<Address> addresses = geocoder.getFromLocation(
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                1);
+        task.addOnSuccessListener(this, location -> {
+            if (location != null) {
+                try {
+                    Geocoder geocoder = new Geocoder(LocalGuardadoActivity.this, Locale.getDefault());
+                    List<Address> addresses = geocoder.getFromLocation(
+                            location.getLatitude(),
+                            location.getLongitude(),
+                            1);
 
-                        if (addresses != null && !addresses.isEmpty()) {
-                            String cidade = addresses.get(0).getLocality();
-                            String pais = addresses.get(0).getCountryName();
+                    if (addresses != null && !addresses.isEmpty()) {
+                        String cidade = addresses.get(0).getLocality();
+                        String pais = addresses.get(0).getCountryName();
 
-                            String texto = "";
-                            if (cidade != null) texto += " " + cidade;
-                            if (pais != null) texto += ", " + pais;
+                        String texto = "";
+                        if (cidade != null) texto += " " + cidade;
+                        if (pais != null) texto += ", " + pais;
 
-                            tvLocation.setText(texto.trim());
-                        }
-                    } catch (IOException e) {
-                        tvLocation.setText("Erro ao obter localização.");
+                        tvLocation.setText(texto.trim());
                     }
-                } else {
-                    tvLocation.setText("Localização não disponível.");
+                } catch (IOException e) {
+                    tvLocation.setText("Erro ao obter localização.");
                 }
+            } else {
+                tvLocation.setText("Localização não disponível.");
             }
         });
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
