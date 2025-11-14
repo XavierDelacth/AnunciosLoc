@@ -212,8 +212,8 @@
                     android:gravity="center"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#FFFFFF"
-                    android:background="@drawable/tab_selected_left" />
+                    android:textColor="#757575"
+                    android:background="@drawable/tab_unselected_left" />
 
                 <TextView
                     android:id="@+id/tv_tab_public_keys"
@@ -223,8 +223,8 @@
                     android:text="@string/public_keys"
                     android:gravity="center"
                     android:textSize="16sp"
-                    android:textColor="#757575"
-                    android:background="@drawable/tab_unselected_right"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/tab_selected_right"
                     android:clickable="true"
                     android:focusable="true" />
             </LinearLayout>
