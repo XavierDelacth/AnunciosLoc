@@ -42,10 +42,6 @@
         <activity android:name=".MapaActivity" android:exported="false" />
         <activity android:name=".NotificacoesActivity" android:exported="false" />
         <activity android:name=".AlterarSenhaActivity" android:exported="false"  />
-        <activity android:name=".AdicionarKeyActivity" android:exported="false" />
-        <activity android:name=".AddValorChaveExistenteActivity" android:exported="false"  />
-        <activity android:name=".CriarNovaChaveActivity" android:exported="false" />
-
     </application>
 
 </manifest>

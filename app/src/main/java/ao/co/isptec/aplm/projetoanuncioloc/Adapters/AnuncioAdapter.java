@@ -1,7 +1,6 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,12 +8,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.R;
-import ao.co.isptec.aplm.projetoanuncioloc.VisualizarAnuncioActivity;
+import ao.co.isptec.aplm.projetoanuncioloc.VisualizarAnuncioDialog;
 
 public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHolder> {
 
@@ -33,35 +33,37 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         return new ViewHolder(view);
     }
 
+    // AnuncioAdapter.java — onBindViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Anuncio a = lista.get(position);
         holder.tvTitulo.setText(a.titulo);
         holder.tvDescricao.setText(a.descricao);
 
-        // BOOKMARK
+        // BOOKMARK NA LISTA (permanece igual)
         holder.btnSalvar.setImageResource(a.salvo ? R.drawable.ic_bookmark_salvo : R.drawable.ic_bookmark_nao_salvo);
 
-        // VER MAIS AUTOMÁTICO
-        holder.tvDescricao.post(() -> {
-            if (holder.tvDescricao.getLineCount() > 2) {
-                holder.btnVerMais.setVisibility(View.VISIBLE);
-            } else {
-                holder.btnVerMais.setVisibility(View.GONE);
+        // CLIQUE NO ITEM INTEIRO → abre tela completa (ATUALIZADO)
+        holder.itemView.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos != RecyclerView.NO_POSITION) {
+                Anuncio anuncio = lista.get(pos);
+                // NOVO: Passe position e listener (lambda que atualiza a lista)
+                VisualizarAnuncioDialog dialog = VisualizarAnuncioDialog.newInstance(
+                        anuncio,
+                        pos,
+                        (positionCallback, saved) -> {
+                            // Atualiza o objeto original na lista
+                            lista.get(positionCallback).salvo = saved;
+                            // Notifica a mudança no adapter
+                            AnuncioAdapter.this.notifyItemChanged(positionCallback);
+                        }
+                );
+                dialog.show(((AppCompatActivity) context).getSupportFragmentManager(), "VisualizarAnuncio");
             }
         });
 
-        // CLIQUE NO ITEM → abre tela completa
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, VisualizarAnuncioActivity.class);
-            intent.putExtra("anuncio", a); // AGORA FUNCIONA!
-            context.startActivity(intent);
-        });
-
-        // CLIQUE NO "VER MAIS"
-        holder.btnVerMais.setOnClickListener(v -> holder.itemView.performClick());
-
-        // CLIQUE NO BOOKMARK
+        // CLIQUE NO BOOKMARK (permanece igual — já atualiza a lista local)
         holder.btnSalvar.setOnClickListener(v -> {
             a.salvo = !a.salvo;
             notifyItemChanged(position);
@@ -76,15 +78,14 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
 
     // VIEWHOLDER CORRIGIDO
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitulo, tvDescricao, btnVerMais;
+        TextView tvTitulo, tvDescricao;
         ImageView btnSalvar;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tv_titulo);
             tvDescricao = itemView.findViewById(R.id.tv_descricao);
-            btnVerMais = itemView.findViewById(R.id.btn_ver_mais); // AQUI ESTAVA FALTANDO
-            btnSalvar = itemView.findViewById(R.id.btn_salvar);
+             btnSalvar = itemView.findViewById(R.id.btn_salvar);
         }
     }
 }

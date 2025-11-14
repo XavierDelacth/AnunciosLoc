@@ -1,383 +1,461 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f1f5f9"
-    android:fillViewport="true">
+    android:background="#80000000">
 
-    <LinearLayout
+    <!-- Dialog Card com bordas arredondadas -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="24dp"
+        app:cardBackgroundColor="@android:color/white">
 
-        <!-- Header -->
-        <androidx.cardview.widget.CardView
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:elevation="4dp"
-            app:cardBackgroundColor="@android:color/white"
-            app:cardCornerRadius="0dp">
+            android:layout_height="match_parent">
 
-            <LinearLayout
+            <!-- HEADER COM IMAGEM E BOTÃO FECHAR -->
+            <RelativeLayout
+                android:id="@+id/header_container"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
+                android:layout_height="220dp"
+                android:layout_alignParentTop="true">
 
-                <TextView
-                    android:layout_width="279dp"
+                <!-- IMAGEM -->
+                <ImageView
+                    android:id="@+id/img_announcement"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Imagem do anúncio"
+                    android:background="#E8F5E9" />
+
+                <!-- OVERLAY COM BOTÃO FECHAR -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="Anúncio"
-                    android:textColor="@color/verde_principal"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_alignParentTop="true"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:elevation="8dp">
 
-                <Button
-                    android:id="@+id/btnLogout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:background="@android:color/transparent"
-                    android:text="x"
-                    android:textColor="@color/preto_texto"
-                    android:textStyle="bold"
-                    android:drawablePadding="8dp"/>
+                    <!-- BOTÃO FECHAR (X) -->
+                    <ImageButton
+                        android:id="@+id/btn_close"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_margin="16dp"
+                        android:background="@drawable/ic_arrow_back_green"
+                        android:contentDescription="Fechar"
+                        android:padding="16dp"
+                        app:tint="@color/verde_principal"
+                        android:elevation="8dp" />
 
-            </LinearLayout>
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
 
-        </androidx.cardview.widget.CardView>
+                </LinearLayout>
 
-        <!-- Card do Anúncio Principal -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:elevation="8dp"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="@android:color/white">
+            </RelativeLayout>
 
-            <LinearLayout
+            <!-- CONTEÚDO COM SCROLL -->
+            <ScrollView
+                android:id="@+id/content_scroll"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="match_parent"
+                android:layout_below="@id/header_container"
+                android:fillViewport="true"
+                android:scrollbars="vertical"
+                android:fadeScrollbars="false">
 
-                <!-- Header do Anúncio -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp"
-                    android:background="?android:attr/selectableItemBackground">
+                    android:padding="24dp">
 
+                    <!-- TÍTULO GIGANTE -->
                     <TextView
                         android:id="@+id/announcementTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Apartamento T2 para Arrendar no Centro"
+                        android:text="Apartamento T2 para Arrendar"
                         android:textColor="@color/verde_principal"
-                        android:textSize="20sp"
+                        android:textSize="28sp"
                         android:textStyle="bold"
-                        android:lineSpacingExtra="4dp"
-                        android:layout_marginBottom="8dp" />
+                        android:lineSpacingExtra="6dp"
+                        android:layout_marginBottom="16dp" />
 
-                    <!-- Meta informações -->
-                    <LinearLayout
+                    <!-- Divider verde -->
+                    <View
+                        android:layout_width="80dp"
+                        android:layout_height="5dp"
+                        android:background="@color/verde_principal"
+                        android:layout_marginBottom="24dp" />
+
+                    <!-- DESCRIÇÃO/MENSAGEM -->
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:id="@+id/publisherAvatar"
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:background="#6366f1"
-                                android:text="CS"
-                                android:textColor="@android:color/white"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:layout_marginEnd="8dp" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:id="@+id/publisherName"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Carlos Santos"
-                                    android:textColor="#1e293b"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:id="@+id/publishTime"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Há 2 horas"
-                                    android:textColor="#64748b"
-                                    android:textSize="12sp" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@color/branco"
-                            android:text="📍 Largo da Independência"
-                            android:textColor="#6366f1"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:padding="8dp"
-                            android:gravity="center" />
-
-                    </LinearLayout>
-
-                    <!-- Badge da Política -->
-                    <TextView
-                        android:id="@+id/policyBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@color/branco"
-                        android:text="👥 Whitelist: Estudantes"
-                        android:textColor="#065f46"
-                        android:textSize="12sp"
+                        android:text="Mensagem"
+                        android:textColor="@color/verde_principal"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="6dp"
-                        android:gravity="center" />
-
-                </LinearLayout>
-
-                <!-- Conteúdo do Anúncio -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
+                        android:layout_marginBottom="8dp" />
 
                     <TextView
                         android:id="@+id/announcementContent"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="texto ou imagem do anuncio"
+                        android:lineSpacingExtra="8dp"
+                        android:text="Excelente apartamento T2 situado no coração da cidade..."
                         android:textColor="#1e293b"
                         android:textSize="16sp"
-                        android:lineSpacingExtra="8dp"
-                        android:layout_marginBottom="20dp" />
+                        android:layout_marginBottom="24dp" />
+
+                    <!-- CARD DE INFORMAÇÕES -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#F8F9FA">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="       Informações do Anúncio"
+                                android:textColor="#1e293b"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="16dp" />
+
+                            <!-- Grid de Informações -->
+                            <GridLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:columnCount="2"
+                                android:alignmentMode="alignBounds"
+                                android:useDefaultMargins="true">
+
+                                <!-- Local -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Local"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvLocal"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Largo da Independência"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <!-- Tipo de Restrição -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Tipo de Restrição"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvTipoRestricao"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Whitelist"
+                                        android:textColor="#065f46"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold"
+                                        android:background="@color/branco"
+                                        android:padding="4dp" />
+                                </LinearLayout>
+
+                                <!-- Data Início -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Data Início"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvDataInicio"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="12/11/2025"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <!-- Data Fim -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Data Fim"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvDataFim"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="15/11/2025"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <!-- Hora Início -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Hora Início"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvHoraInicio"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="09:00"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <!-- Hora Fim -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Hora Fim"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvHoraFim"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="18:00"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                                <!-- Modo de Entrega -->
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_columnWeight="1"
+                                    android:orientation="vertical"
+                                    android:padding="8dp"
+                                    android:layout_columnSpan="2">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Modo de Entrega"
+                                        android:textColor="#64748b"
+                                        android:textSize="12sp"
+                                        android:layout_marginBottom="4dp" />
+
+                                    <TextView
+                                        android:id="@+id/tvModoEntrega"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Centralizado"
+                                        android:textColor="#1e293b"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+
+                            </GridLayout>
+
+                        </LinearLayout>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- CHAVES DE PERFIL -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Chaves de Perfil"
+                        android:textColor="@color/verde_principal"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/card_chaves_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="@android:color/white">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <!-- Barra de Pesquisa (SEM BOTÃO +) -->
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginBottom="16dp"
+                                app:cardCornerRadius="8dp"
+                                app:cardElevation="2dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingStart="12dp"
+                                    android:paddingEnd="12dp">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@android:drawable/ic_menu_search"
+                                        app:tint="#9E9E9E" />
+
+                                    <EditText
+                                        android:id="@+id/etPesquisarChaves"
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:background="@null"
+                                        android:hint="Pesquisar chaves..."
+                                        android:imeOptions="actionSearch"
+                                        android:inputType="text"
+                                        android:paddingStart="8dp"
+                                        android:paddingEnd="8dp"
+                                        android:textColor="#212121"
+                                        android:textColorHint="#9E9E9E"
+                                        android:textSize="14sp" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+
+                            <!-- Lista de Chaves (RecyclerView) -->
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rv_chaves_restricoes"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:clipToPadding="false"
+                                android:nestedScrollingEnabled="false"
+                                tools:itemCount="3"
+                                tools:listitem="@layout/item_profile_key" />
+
+                            <!-- Estado Vazio -->
+                            <LinearLayout
+                                android:id="@+id/layout_empty_chaves"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="20dp"
+                                android:gravity="center"
+                                android:orientation="vertical"
+                                android:visibility="gone"
+                                android:padding="24dp">
+
+                                <ImageView
+                                    android:layout_width="64dp"
+                                    android:layout_height="64dp"
+                                    android:alpha="0.3"
+                                    android:contentDescription="Sem chaves"
+                                    android:src="@drawable/ic_key"
+                                    app:tint="#BDBDBD" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="12dp"
+                                    android:text="Nenhuma restrição definida"
+                                    android:textColor="#9E9E9E"
+                                    android:textSize="14sp" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </androidx.cardview.widget.CardView>
 
                 </LinearLayout>
 
-            </LinearLayout>
+            </ScrollView>
 
-        </androidx.cardview.widget.CardView>
+        </RelativeLayout>
 
-        <!-- Seção de Filtros -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:elevation="4dp"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="@android:color/white">
+    </androidx.cardview.widget.CardView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="🎯 Filtros Aplicados"
-                    android:textColor="#1e293b"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
-                <GridLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:columnCount="2"
-                    android:rowCount="2"
-                    android:alignmentMode="alignBounds"
-                    android:columnOrderPreserved="false"
-                    android:useDefaultMargins="true">
-
-                    <!-- Localização -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="4dp"
-                        android:elevation="2dp"
-                        app:cardCornerRadius="8dp"
-                        app:cardBackgroundColor="#f8fafc">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="12dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Localização"
-                                android:textColor="#64748b"
-                                android:textSize="12sp"
-                                android:layout_marginBottom="4dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Largo da Independência"
-                                android:textColor="#1e293b"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                    </androidx.cardview.widget.CardView>
-
-                    <!-- Tipo de Política -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="4dp"
-                        android:elevation="2dp"
-                        app:cardCornerRadius="8dp"
-                        app:cardBackgroundColor="#f8fafc">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="12dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Tipo de Política"
-                                android:textColor="#64748b"
-                                android:textSize="12sp"
-                                android:layout_marginBottom="4dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:background="@color/branco"
-                                android:text="Whitelist"
-                                android:textColor="#065f46"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:padding="4dp" />
-
-                        </LinearLayout>
-
-                    </androidx.cardview.widget.CardView>
-
-                    <!-- Público-Alvo -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="4dp"
-                        android:elevation="2dp"
-                        app:cardCornerRadius="8dp"
-                        app:cardBackgroundColor="#f8fafc">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="12dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Público-Alvo"
-                                android:textColor="#64748b"
-                                android:textSize="12sp"
-                                android:layout_marginBottom="4dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="profissao=estudante"
-                                android:textColor="#1e293b"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                    </androidx.cardview.widget.CardView>
-
-                    <!-- Modo de Entrega -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:layout_margin="4dp"
-                        android:elevation="2dp"
-                        app:cardCornerRadius="8dp"
-                        app:cardBackgroundColor="#f8fafc">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="12dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Modo de Entrega"
-                                android:textColor="#64748b"
-                                android:textSize="12sp"
-                                android:layout_marginBottom="4dp" />
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Centralizado"
-                                android:textColor="#1e293b"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                        </LinearLayout>
-
-                    </androidx.cardview.widget.CardView>
-
-                </GridLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-    </LinearLayout>
-
-</ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

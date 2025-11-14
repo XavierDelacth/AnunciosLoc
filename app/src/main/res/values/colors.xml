@@ -27,6 +27,7 @@
     <color name="teal_600">#00ACC1</color>
     <color name="teal_500">#26C6DA</color>
     <color name="teal_900">#004D40</color>
+    <color name="teal_50">#E0F2F1</color>
 
     <!-- Cores de Fundo -->
     <color name="gradient_start">#00897B</color>

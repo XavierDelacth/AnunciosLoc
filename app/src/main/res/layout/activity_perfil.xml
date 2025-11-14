@@ -33,9 +33,9 @@
                 android:contentDescription="Voltar"
                 android:padding="8dp"
                 android:src="@drawable/ic_arrow_back"
-                android:tint="@color/white"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:tint="@color/white" />
 
             <!-- Botão Logout (DIREITA) -->
             <ImageButton
@@ -47,9 +47,9 @@
                 android:contentDescription="@string/logout"
                 android:padding="8dp"
                 android:src="@drawable/ic_logout"
-                android:tint="@color/white"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:tint="@color/white" />
 
             <!-- Foto de Perfil -->
             <de.hdodenhof.circleimageview.CircleImageView
@@ -101,7 +101,7 @@
                         android:contentDescription="@string/edit_username"
                         android:padding="4dp"
                         android:src="@drawable/ic_edit"
-                        android:tint="@color/white" />
+                        app:tint="@color/white" />
                 </LinearLayout>
 
                 <!-- Input de Edição (oculto) -->
@@ -136,7 +136,7 @@
                         android:contentDescription="@string/save"
                         android:padding="8dp"
                         android:src="@drawable/ic_check"
-                        android:tint="@color/white" />
+                        app:tint="@color/white" />
 
                     <ImageButton
                         android:id="@+id/btn_cancel_username"
@@ -147,7 +147,7 @@
                         android:contentDescription="@string/cancel"
                         android:padding="8dp"
                         android:src="@drawable/ic_close"
-                        android:tint="@color/white" />
+                        app:tint="@color/white" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -253,8 +253,8 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:src="@drawable/ic_search"
-                            android:tint="@color/gray_500"
-                            android:contentDescription="@string/search" />
+                            android:contentDescription="@string/search"
+                            app:tint="@color/gray_500" />
 
                         <EditText
                             android:id="@+id/et_search_keys"
@@ -281,13 +281,14 @@
 
                     <ImageButton
                         android:id="@+id/btn_add_key"
+                        android:onClick="showAddKeyDialog"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="?attr/selectableItemBackground"
                         android:contentDescription="@string/add_key"
                         android:padding="12dp"
                         android:src="@drawable/ic_add"
-                        android:tint="@color/white" />
+                        app:tint="@color/white" />
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
@@ -318,7 +319,7 @@
                     android:alpha="0.3"
                     android:contentDescription="@string/no_keys"
                     android:src="@drawable/ic_key"
-                    android:tint="@color/gray_400" />
+                    app:tint="@color/gray_400" />
 
                 <TextView
                     android:layout_width="wrap_content"

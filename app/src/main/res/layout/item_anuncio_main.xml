@@ -60,10 +60,10 @@
 
         <!-- Bookmark -->
         <ImageView
-            android:id="@+id/btn_salvar"
+            android:id="@+id/btn_excluir"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/bookmark_selector"
+            android:src="@drawable/ic_delete"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_gravity="top"
             android:layout_marginTop="8dp"

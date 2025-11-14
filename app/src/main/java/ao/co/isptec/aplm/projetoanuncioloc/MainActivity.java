@@ -10,6 +10,12 @@ import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.activity.OnBackPressedCallback;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import java.util.Arrays;
+import ao.co.isptec.aplm.projetoanuncioloc.Adapters.MainAnuncioAdapter;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -27,7 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private CardView cardLocais, cardAnuncios;
     private TextView tabCriados, tabGuardados, tvLocation;
     private ImageView btnProfile, btnNotification;
-
+    private RecyclerView rvAnunciosMain;
+    private MainAnuncioAdapter adapter;
+    private List<Anuncio> listaAnuncios = new ArrayList<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
@@ -41,12 +49,14 @@ public class MainActivity extends AppCompatActivity {
         setupTabs();
         selectTab(true);
 
+
         // Inicializa provedor de localização
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Tenta obter localização
         obterLocalizacaoAtual();
 
+        setupListaAnuncios();
         // Compatível com back gesture (Android 13+)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -69,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
         tvLocation = findViewById(R.id.tvLocation);
+        rvAnunciosMain = findViewById(R.id.recyclerView);
     }
 
     private void setupClickListeners() {
@@ -111,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ============================
-    // 📍 LOCALIZAÇÃO ATUAL
+    //  LOCALIZAÇÃO ATUAL
     // ============================
     private void obterLocalizacaoAtual() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -155,6 +166,48 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+
+    private void setupListaAnuncios() {
+        // Simula anúncios recebidos (baseado no PDF: Alice arrenda imóvel no Largo)
+        // Usa data atual: 13/11/2025
+        Anuncio anuncio1 = new Anuncio(
+                "Apartamento T2 para Arrendar - Vista Mar!",
+                "Excelente T2 mobilado no coração da cidade, perto do Largo da Independência. 2 quartos, cozinha equipada. Contacte via app!",
+                "Largo da Independência", // Local do PDF
+                null, // Sem imagem por agora
+                "13/11/2025", "15/11/2025", // Datas
+                "09:00", "18:00", // Horas
+                "Whitelist", // Restrição
+                "Centralizado" // Modo (infraestrutura 4G/WiFi)
+        );
+        // Adiciona chaves de exemplo (opcional)
+        anuncio1.addChave("Idade", Arrays.asList("18-30", "30-50"));
+
+        Anuncio anuncio2 = new Anuncio(
+                "Ginásio Camama I - Aulas Grátis Hoje!",
+                "Venha experimentar aulas de fitness no Ginásio do Camama I. Horário especial para novos membros.",
+                "Ginásio do Camama I",
+                null,
+                "13/11/2025", "13/11/2025",
+                "14:00", "20:00",
+                "Nenhuma",
+                "Descentralizado" // WiFi Direct ad-hoc
+        );
+
+        // NOVA: Adiciona chaves ao segundo anúncio para teste (ex.: Gênero e Interesse)
+        anuncio2.addChave("Gênero", Arrays.asList("Feminino", "Masculino"));
+        anuncio2.addChave("Interesse", Arrays.asList("Fitness", "Yoga"));
+
+        listaAnuncios.add(anuncio1);
+        listaAnuncios.add(anuncio2);
+
+        // Setup RecyclerView
+        rvAnunciosMain.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new MainAnuncioAdapter(this, listaAnuncios);
+        rvAnunciosMain.setAdapter(adapter);
+
     }
 
     @Override

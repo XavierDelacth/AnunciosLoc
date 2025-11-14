@@ -12,6 +12,7 @@
     <string name="entrar">Entrar</string>
 
     <!-- Profile Screen -->
+    <string name="back">Voltar</string>
     <string name="logout">Sair</string>
     <string name="edit_username">Editar nome</string>
     <string name="username">Nome de utilizador</string>
@@ -62,4 +63,6 @@
     <!-- Misc -->
     <string name="values_count">%1$d valores disponíveis</string>
     <string name="selected_count">• %1$d selecionado(s)</string>
+    <string name="select">Selecionar</string>
+    <string name="values_unit">%1$d valores</string>
 </resources>

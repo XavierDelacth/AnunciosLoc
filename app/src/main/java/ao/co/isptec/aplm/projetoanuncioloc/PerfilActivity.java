@@ -107,6 +107,12 @@ public class PerfilActivity extends AppCompatActivity {
         allKeys.add(createKey("Interesse", new String[]{
                 "Tecnologia", "Desporto", "Música", "Cinema", "Livros", "Viagens"
         }));
+
+        allKeysStatic.clear();
+        allKeysStatic.addAll(allKeys); // COPIA PARA STATIC
+
+        mySelectedKeysStatic.clear();
+        mySelectedKeysStatic.putAll(mySelectedKeys);
     }
 
     private ProfileKey createKey(String name, String[] values) {
@@ -325,6 +331,12 @@ public class PerfilActivity extends AppCompatActivity {
                     mySelectedKeys.put(keyName, selected);
                 }
 
+                if (selected.isEmpty()) {
+                    mySelectedKeysStatic.remove(keyName);
+                } else {
+                    mySelectedKeysStatic.put(keyName, new ArrayList<>(selected));
+                }
+
                 adapter.notifyDataSetChanged();
 
                 // Update list if in my keys tab
@@ -335,22 +347,31 @@ public class PerfilActivity extends AppCompatActivity {
             }
         }
     }
-
     private void showAddKeyDialog() {
-        Intent intent = new Intent(this, AdicionarKeyActivity.class);
-        startActivityForResult(intent, 99);
+        AdicionarKeyDialog dialog = AdicionarKeyDialog.newInstance(allKeys, mySelectedKeys);
+        dialog.setOnKeyAddedListener((keyName, values) -> {
+            ProfileKey existingKey = findKeyByName(keyName);
+            if (existingKey == null) {
+                existingKey = new ProfileKey(keyName, values);
+                allKeys.add(existingKey);
+                allKeysStatic.add(existingKey); // SALVA NA STATIC
+            } else {
+                existingKey.getAvailableValues().addAll(values);
+            }
+            updateKeysList();
+            Toast.makeText(this, "Chave adicionada!", Toast.LENGTH_SHORT).show();
+        });
+        dialog.show(getSupportFragmentManager(), "AddKeyDialog");
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            allKeys.clear();
-            allKeys.addAll(allKeysStatic);
-            mySelectedKeys.clear();
-            mySelectedKeys.putAll(mySelectedKeysStatic);
-            updateKeysList();
+
+    private ProfileKey findKeyByName(String keyName) {
+        for (ProfileKey key : allKeys) {
+            if (key.getName().equals(keyName)) {
+                return key;
+            }
         }
+        return null;  // Não encontrou a chave
     }
 
 }

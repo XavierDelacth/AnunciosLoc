@@ -137,6 +137,47 @@
         android:paddingHorizontal="16dp"
         android:layout_marginBottom="12dp">
 
+        <!-- Card Anúncios -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardAnuncios"
+            android:layout_width="140dp"
+            android:layout_height="110dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@raw/megaphone1"
+                    />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Anúncios"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/verde_principal"
+                    android:layout_marginTop="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Adicionar anúncio"
+                    android:textSize="13sp"
+                    android:textColor="@color/cinza_texto" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Card Locais -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardLocais"
@@ -173,46 +214,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Gerir locais"
-                    android:textSize="13sp"
-                    android:textColor="@color/cinza_texto" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Card Anúncios -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardAnuncios"
-            android:layout_width="140dp"
-            android:layout_height="110dp"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="6dp"
-            app:cardBackgroundColor="@color/white">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/ic_megaphone"
-                    app:tint="@color/azul_anuncio" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Anúncios"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/verde_principal"
-                    android:layout_marginTop="4dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Gerir anúncios"
                     android:textSize="13sp"
                     android:textColor="@color/cinza_texto" />
             </LinearLayout>
