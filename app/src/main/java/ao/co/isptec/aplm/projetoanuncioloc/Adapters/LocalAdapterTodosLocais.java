@@ -3,7 +3,6 @@ package ao.co.isptec.aplm.projetoanuncioloc.Adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,22 +11,20 @@ import java.util.Locale;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
 import ao.co.isptec.aplm.projetoanuncioloc.R;
 
-public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalViewHolder> {
+public class LocalAdapterTodosLocais extends RecyclerView.Adapter<LocalAdapterTodosLocais.LocalViewHolder> {
 
     private List<Local> listaLocais;
-    private OnLocalActionListener listener;
+    private OnLocalClickListener listener;
 
-    public interface OnLocalActionListener {
+    public interface OnLocalClickListener {
         void onLocalClick(Local local, int position);
-        void onEditClick(Local local, int position);
-        void onDeleteClick(Local local, int position);
     }
 
-    public LocalAdapter(List<Local> listaLocais) {
+    public LocalAdapterTodosLocais(List<Local> listaLocais) {
         this.listaLocais = listaLocais;
     }
 
-    public void setOnLocalActionListener(OnLocalActionListener listener) {
+    public void setOnLocalClickListener(OnLocalClickListener listener) {
         this.listener = listener;
     }
 
@@ -35,7 +32,7 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalViewHol
     @Override
     public LocalViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_local_criado_por_si, parent, false);
+                .inflate(R.layout.item_todos_locais, parent, false);
         return new LocalViewHolder(view);
     }
 
@@ -52,7 +49,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalViewHol
 
     class LocalViewHolder extends RecyclerView.ViewHolder {
         TextView tvNome, tvRaio, tvLat, tvLng, tvTipo;
-        ImageView btnEditar, btnExcluir;
 
         public LocalViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -61,8 +57,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalViewHol
             tvLat = itemView.findViewById(R.id.tv_lat);
             tvLng = itemView.findViewById(R.id.tv_lng);
             tvTipo = itemView.findViewById(R.id.tv_tipo);
-            btnEditar = itemView.findViewById(R.id.btnEditarLocal);
-            btnExcluir = itemView.findViewById(R.id.btnExcluirLocal);
         }
 
         public void bind(Local local, int position) {
@@ -94,20 +88,6 @@ public class LocalAdapter extends RecyclerView.Adapter<LocalAdapter.LocalViewHol
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onLocalClick(local, position);
-                }
-            });
-
-            // Click no botão Editar
-            btnEditar.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onEditClick(local, position);
-                }
-            });
-
-            // Click no botão Excluir
-            btnExcluir.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onDeleteClick(local, position);
                 }
             });
         }

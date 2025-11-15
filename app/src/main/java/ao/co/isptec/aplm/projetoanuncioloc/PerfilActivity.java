@@ -30,12 +30,11 @@ public class PerfilActivity extends AppCompatActivity {
     public static Map<String, List<String>> mySelectedKeysStatic = new HashMap<>();
     // UI Components
     private ImageButton btnLogout, btnEditUsername,btnBack,  btnSaveUsername, btnCancelUsername, btnAddKey;
-    private TextView tvUsername;
+    private TextView tvUsername, btnTabMyKeys, btnTabPublicKeys;
     private EditText etUsername, etSearchKeys;
     private LinearLayout layoutUsername, layoutEditUsername, layoutEmptyState;
-    private Button btnChangePassword, btnTabMyKeys, btnTabPublicKeys;
+    private Button btnChangePassword;
     private RecyclerView rvKeys;
-
     // Data
     private String username = "João Silva";
     private boolean isMyKeysTab = true;
@@ -69,8 +68,8 @@ public class PerfilActivity extends AppCompatActivity {
         btnChangePassword = findViewById(R.id.btn_change_password);
         btnBack = findViewById(R.id.btn_back);  // ← ADICIONA ESTA LINHA
         // Keys Section
-        btnTabMyKeys = findViewById(R.id.btn_tab_my_keys);
-        btnTabPublicKeys = findViewById(R.id.btn_tab_public_keys);
+        btnTabMyKeys = findViewById(R.id.tv_tab_my_keys);
+        btnTabPublicKeys = findViewById(R.id.tv_tab_public_keys);
         etSearchKeys = findViewById(R.id.et_search_keys);
         btnAddKey = findViewById(R.id.btn_add_key);
         rvKeys = findViewById(R.id.rv_keys);

@@ -58,17 +58,38 @@
 
         </LinearLayout>
 
-        <!-- Bookmark -->
-        <ImageView
-            android:id="@+id/btn_excluir"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_delete"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_gravity="top"
-            android:layout_marginTop="8dp"
-            android:clickable="true"
-            android:focusable="true" />
+        <!-- Botões de ação (Editar e Excluir) -->
+        <LinearLayout
+            android:id="@+id/layoutAcoes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Botão Editar -->
+            <ImageView
+                android:id="@+id/btnEditarAnuncio"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_edit"
+                android:padding="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/verde_principal"
+                android:contentDescription="Editar local" />
+
+            <!-- Botão Excluir -->
+            <ImageView
+                android:id="@+id/btnExcluirAnuncio"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_delete"
+                android:padding="6dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/vermelho_cancelar"
+                android:contentDescription="Excluir local" />
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

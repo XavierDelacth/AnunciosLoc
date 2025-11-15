@@ -34,30 +34,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
 
 public class AdicionarAnunciosActivity extends AppCompatActivity implements AdicionarKeyDialog.OnKeyAddedListener {
 
-    private static final String TAG = "AActivity"; // Tag para logs
+    private static final String TAG = "AActivity";
+    public static final int REQUEST_CODE_EDIT = 1001;
+
+    // Modo da activity (criar ou editar)
+    private boolean modoEdicao = false;
+    private Anuncio anuncioParaEditar = null;
+    private int posicaoAnuncio = -1;
 
     // Views do layout
     private ImageView btnBack, btnAddLocation, btnAdicionarChave;
-    private TextView tvDataInicio, tvDataFim, tvHoraInicio, tvHoraFim, tvTipoRestricao, tvModoEntrega, tvLocalSelecionado;
+    private TextView tvDataInicio, tvDataFim, tvHoraInicio, tvHoraFim, tvTipoRestricao,
+            tvModoEntrega, tvLocalSelecionado, tvTituloTela;
     private EditText etTitulo, etMensagem, etPesquisarChaves;
-    private LinearLayout llLocal, llDataInicio, llDataFim, llHoraInicio, llHoraFim, llTipoRestricao, llModoEntrega, llImagem, layoutEmptyChaves;
+    private LinearLayout llLocal, llDataInicio, llDataFim, llHoraInicio, llHoraFim,
+            llTipoRestricao, llModoEntrega, llImagem, layoutEmptyChaves;
     private Spinner spinnerRestricao, spinnerModoEntrega, spinnerLocais;
     private CardView cardChavesContainer;
     private Button btnPublicar;
     private RecyclerView rvChavesRestricoes;
-    private ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter keyAdapter;
+    private ProfileKeyAdapter keyAdapter;
     private String localSelecionado = null;
     private String caminhoImagem = null;
 
     // Para restrições (chaves públicas)
     private Map<String, List<String>> restricoesPerfil = new HashMap<>();
-    private List<ProfileKey> allKeys; // Chaves públicas
-    private List<ProfileKey> chavesFiltradas = new ArrayList<>(); // Para search
+    private List<ProfileKey> allKeys;
+    private List<ProfileKey> chavesFiltradas = new ArrayList<>();
 
     // Launchers
     private final ActivityResultLauncher<Intent> localLauncher = registerForActivityResult(
@@ -70,6 +79,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
                     if (nome != null && !nome.isEmpty()) {
                         localSelecionado = nome;
                         tvLocalSelecionado.setText(nome);
+                        tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
                         Toast.makeText(this, tipo + " adicionado: " + nome, Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "Local atualizado: " + nome);
                     }
@@ -100,6 +110,9 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         Log.d(TAG, "onCreate chamado - Activity iniciada");
         setContentView(R.layout.activity_criar_anuncios);
 
+        // Verifica se está em modo edição
+        verificarModoEdicao();
+
         initViews();
         if (!initViewsSucesso) {
             Toast.makeText(this, "Erro ao carregar layout. Verifica XML.", Toast.LENGTH_LONG).show();
@@ -107,19 +120,184 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
             return;
         }
 
-        initRestricoes(); // Inicializa chaves públicas
+        initRestricoes();
         setupSpinner();
         setupSpinnerModoEntrega();
         setupSpinnerLocais();
         setupClickListeners();
-        atualizarVisibilidadeChaves(); // Inicial: mostra lista
+        atualizarVisibilidadeChaves();
 
-        resetarDataHora(tvDataInicio, "dd/mm/aaaa");
-        resetarDataHora(tvDataFim, "dd/mm/aaaa");
-        resetarDataHora(tvHoraInicio, "hh:mm");
-        resetarDataHora(tvHoraFim, "hh:mm");
+        // Se está em modo edição, preenche os campos
+        if (modoEdicao && anuncioParaEditar != null) {
+            preencherDadosParaEdicao();
+        } else {
+            resetarDataHora(tvDataInicio, "dd/mm/aaaa");
+            resetarDataHora(tvDataFim, "dd/mm/aaaa");
+            resetarDataHora(tvHoraInicio, "hh:mm");
+            resetarDataHora(tvHoraFim, "hh:mm");
+        }
 
-        Log.d(TAG, "onCreate concluído - Placeholders definidos para datas/horas");
+        Log.d(TAG, "onCreate concluído");
+    }
+
+    private void verificarModoEdicao() {
+        Intent intent = getIntent();
+        if (intent.hasExtra("anuncio")) {
+            modoEdicao = true;
+            anuncioParaEditar = intent.getParcelableExtra("anuncio");
+            posicaoAnuncio = intent.getIntExtra("position", -1);
+            Log.d(TAG, "Modo EDIÇÃO ativado - Posição: " + posicaoAnuncio);
+        } else {
+            modoEdicao = false;
+            Log.d(TAG, "Modo CRIAÇÃO ativado");
+        }
+    }
+
+    private void preencherDadosParaEdicao() {
+        Log.d(TAG, "Preenchendo dados para edição");
+
+        // Título da tela
+        if (tvTituloTela != null) {
+            tvTituloTela.setText("Editar Anúncio");
+        }
+
+        // Botão
+        if (btnPublicar != null) {
+            btnPublicar.setText("Salvar Alterações");
+        }
+
+        // Campos básicos
+        if (etTitulo != null) {
+            etTitulo.setText(anuncioParaEditar.titulo);
+        }
+
+        if (etMensagem != null) {
+            etMensagem.setText(anuncioParaEditar.descricao);
+        }
+
+        // Local
+        if (anuncioParaEditar.local != null && !anuncioParaEditar.local.isEmpty()) {
+            localSelecionado = anuncioParaEditar.local;
+            if (tvLocalSelecionado != null) {
+                tvLocalSelecionado.setText(localSelecionado);
+                tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
+            }
+            // Seleciona no spinner se existir
+            selecionarNoSpinnerLocais(localSelecionado);
+        }
+
+        // Imagem
+        if (anuncioParaEditar.imagem != null && !anuncioParaEditar.imagem.isEmpty()) {
+            caminhoImagem = anuncioParaEditar.imagem;
+            ImageView ivPreview = findViewById(R.id.ivPreviewImagem);
+            TextView tvHint = findViewById(R.id.tvImagemHint);
+            if (ivPreview != null && tvHint != null) {
+                ivPreview.setImageURI(Uri.parse(caminhoImagem));
+                tvHint.setText("Imagem selecionada");
+            }
+        }
+
+        // Datas e horas
+        if (tvDataInicio != null && anuncioParaEditar.dataInicio != null) {
+            tvDataInicio.setText(anuncioParaEditar.dataInicio);
+            tvDataInicio.setTextColor(getColor(android.R.color.black));
+        }
+
+        if (tvDataFim != null && anuncioParaEditar.dataFim != null) {
+            tvDataFim.setText(anuncioParaEditar.dataFim);
+            tvDataFim.setTextColor(getColor(android.R.color.black));
+        }
+
+        if (tvHoraInicio != null && anuncioParaEditar.horaInicio != null) {
+            tvHoraInicio.setText(anuncioParaEditar.horaInicio);
+            tvHoraInicio.setTextColor(getColor(android.R.color.black));
+        }
+
+        if (tvHoraFim != null && anuncioParaEditar.horaFim != null) {
+            tvHoraFim.setText(anuncioParaEditar.horaFim);
+            tvHoraFim.setTextColor(getColor(android.R.color.black));
+        }
+
+        // Tipo de restrição
+        if (anuncioParaEditar.tipoRestricao != null) {
+            if (tvTipoRestricao != null) {
+                tvTipoRestricao.setText(anuncioParaEditar.tipoRestricao);
+            }
+            selecionarNoSpinnerRestricao(anuncioParaEditar.tipoRestricao);
+        }
+
+        // Modo de entrega
+        if (anuncioParaEditar.modoEntrega != null) {
+            if (tvModoEntrega != null) {
+                tvModoEntrega.setText(anuncioParaEditar.modoEntrega);
+            }
+            selecionarNoSpinnerModoEntrega(anuncioParaEditar.modoEntrega);
+        }
+
+        // Chaves de restrição
+        if (anuncioParaEditar.getChavesPerfil() != null && !anuncioParaEditar.getChavesPerfil() .isEmpty()) {
+            restricoesPerfil.clear();
+            restricoesPerfil.putAll(anuncioParaEditar.getChavesPerfil() );
+
+            // Marca os valores selecionados nas chaves
+            for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
+                String keyName = entry.getKey();
+                List<String> selectedValues = entry.getValue();
+
+                for (ProfileKey key : allKeys) {
+                    if (key.getName().equals(keyName)) {
+                        for (String value : selectedValues) {
+                            key.toggleValue(value);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (keyAdapter != null) {
+                keyAdapter.notifyDataSetChanged();
+            }
+        }
+
+        Log.d(TAG, "Dados preenchidos para edição");
+    }
+
+    private void selecionarNoSpinnerLocais(String local) {
+        if (spinnerLocais == null) return;
+
+        ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinnerLocais.getAdapter();
+        if (adapter != null) {
+            for (int i = 0; i < adapter.getCount(); i++) {
+                if (adapter.getItem(i).equals(local)) {
+                    spinnerLocais.setSelection(i, false);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void selecionarNoSpinnerRestricao(String restricao) {
+        if (spinnerRestricao == null) return;
+
+        String[] restricoes = {"Whitelist", "Blacklist"};
+        for (int i = 0; i < restricoes.length; i++) {
+            if (restricoes[i].equals(restricao)) {
+                spinnerRestricao.setSelection(i, false);
+                break;
+            }
+        }
+    }
+
+    private void selecionarNoSpinnerModoEntrega(String modo) {
+        if (spinnerModoEntrega == null) return;
+
+        String[] modos = {"Centralizado", "Descentralizado"};
+        for (int i = 0; i < modos.length; i++) {
+            if (modos[i].equals(modo)) {
+                spinnerModoEntrega.setSelection(i, false);
+                break;
+            }
+        }
     }
 
     private boolean initViewsSucesso = true;
@@ -129,140 +307,86 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         initViewsSucesso = true;
 
         btnBack = findViewById(R.id.btnBack);
-        if (btnBack == null) { Log.e(TAG, "btnBack não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "btnBack OK"); }
+        if (btnBack == null) { Log.e(TAG, "btnBack não encontrado!"); initViewsSucesso = false; }
+
+        // Título da tela (pode não existir no XML atual, será adicionado depois se necessário)
+        tvTituloTela = findViewById(R.id.tvTitulo);
 
         llLocal = findViewById(R.id.llLocal);
-        if (llLocal == null) { Log.e(TAG, "llLocal não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llLocal OK"); }
+        if (llLocal == null) { Log.e(TAG, "llLocal não encontrado!"); initViewsSucesso = false; }
 
         btnAddLocation = findViewById(R.id.btnAddLocation);
-        if (btnAddLocation == null) { Log.e(TAG, "btnAddLocation não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "btnAddLocation OK"); }
+        if (btnAddLocation == null) { Log.e(TAG, "btnAddLocation não encontrado!"); initViewsSucesso = false; }
 
         tvLocalSelecionado = findViewById(R.id.tvLocalSelecionado);
-        if (tvLocalSelecionado == null) { Log.e(TAG, "tvLocalSelecionado não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvLocalSelecionado OK"); }
+        if (tvLocalSelecionado == null) { Log.e(TAG, "tvLocalSelecionado não encontrado!"); initViewsSucesso = false; }
 
         etTitulo = findViewById(R.id.etTitulo);
-        if (etTitulo == null) { Log.e(TAG, "etTitulo não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "etTitulo OK"); }
+        if (etTitulo == null) { Log.e(TAG, "etTitulo não encontrado!"); initViewsSucesso = false; }
 
         etMensagem = findViewById(R.id.etMensagem);
-        if (etMensagem == null) { Log.e(TAG, "etMensagem não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "etMensagem OK"); }
+        if (etMensagem == null) { Log.e(TAG, "etMensagem não encontrado!"); initViewsSucesso = false; }
 
         llImagem = findViewById(R.id.llImagem);
-        if (llImagem == null) { Log.e(TAG, "llImagem não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llImagem OK"); }
+        if (llImagem == null) { Log.e(TAG, "llImagem não encontrado!"); initViewsSucesso = false; }
 
         llDataInicio = findViewById(R.id.llDataInicio);
-        if (llDataInicio == null) { Log.e(TAG, "llDataInicio não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llDataInicio OK"); }
-
         llDataFim = findViewById(R.id.llDataFim);
-        if (llDataFim == null) { Log.e(TAG, "llDataFim não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llDataFim OK"); }
-
         llHoraInicio = findViewById(R.id.llHoraInicio);
-        if (llHoraInicio == null) { Log.e(TAG, "llHoraInicio não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llHoraInicio OK"); }
-
         llHoraFim = findViewById(R.id.llHoraFim);
-        if (llHoraFim == null) { Log.e(TAG, "llHoraFim não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llHoraFim OK"); }
 
         tvDataInicio = findViewById(R.id.tvDataInicio);
-        if (tvDataInicio == null) { Log.e(TAG, "tvDataInicio não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvDataInicio OK"); }
-
         tvDataFim = findViewById(R.id.tvDataFim);
-        if (tvDataFim == null) { Log.e(TAG, "tvDataFim não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvDataFim OK"); }
-
         tvHoraInicio = findViewById(R.id.tvHoraInicio);
-        if (tvHoraInicio == null) { Log.e(TAG, "tvHoraInicio não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvHoraInicio OK"); }
-
         tvHoraFim = findViewById(R.id.tvHoraFim);
-        if (tvHoraFim == null) { Log.e(TAG, "tvHoraFim não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvHoraFim OK"); }
 
         llTipoRestricao = findViewById(R.id.llTipoRestricao);
-        if (llTipoRestricao == null) { Log.e(TAG, "llTipoRestricao não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llTipoRestricao OK"); }
-
         tvTipoRestricao = findViewById(R.id.tvTipoRestricao);
-        if (tvTipoRestricao == null) { Log.e(TAG, "tvTipoRestricao não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvTipoRestricao OK"); }
-
         spinnerRestricao = findViewById(R.id.spinnerRestricao);
-        if (spinnerRestricao == null) { Log.e(TAG, "spinnerRestricao não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "spinnerRestricao OK"); }
 
         llModoEntrega = findViewById(R.id.llModoEntrega);
-        if (llModoEntrega == null) { Log.e(TAG, "llModoEntrega não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "llModoEntrega OK"); }
-
         tvModoEntrega = findViewById(R.id.tvModoEntrega);
-        if (tvModoEntrega == null) { Log.e(TAG, "tvModoEntrega não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "tvModoEntrega OK"); }
-
         spinnerModoEntrega = findViewById(R.id.spinnerModoEntrega);
-        if (spinnerModoEntrega == null) { Log.e(TAG, "spinnerModoEntrega não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "spinnerModoEntrega OK"); }
 
         spinnerLocais = findViewById(R.id.spinnerLocais);
-        if (spinnerLocais == null) { Log.e(TAG, "spinnerLocais não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "spinnerLocais OK"); }
-
         btnPublicar = findViewById(R.id.btnPublicar);
-        if (btnPublicar == null) { Log.e(TAG, "btnPublicar não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "btnPublicar OK"); }
 
-        // Views para chaves públicas
         etPesquisarChaves = findViewById(R.id.etPesquisarChaves);
-        if (etPesquisarChaves == null) { Log.e(TAG, "etPesquisarChaves não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "etPesquisarChaves OK"); }
-
         btnAdicionarChave = findViewById(R.id.btnAdicionarChave);
-        if (btnAdicionarChave == null) { Log.e(TAG, "btnAdicionarChave não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "btnAdicionarChave OK"); }
-
         rvChavesRestricoes = findViewById(R.id.rv_chaves_restricoes);
-        if (rvChavesRestricoes == null) { Log.e(TAG, "rv_chaves_restricoes não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "rv_chaves_restricoes OK"); }
-
         layoutEmptyChaves = findViewById(R.id.layout_empty_chaves);
-        if (layoutEmptyChaves == null) { Log.e(TAG, "layout_empty_chaves não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "layout_empty_chaves OK"); }
-
         cardChavesContainer = findViewById(R.id.card_chaves_container);
-        if (cardChavesContainer == null) { Log.e(TAG, "card_chaves_container não encontrado!"); initViewsSucesso = false; } else { Log.d(TAG, "card_chaves_container OK"); }
 
-        // Textos padrão
         if (tvTipoRestricao != null) {
             tvTipoRestricao.setText("Whitelist");
-            Log.d(TAG, "tvTipoRestricao setado");
-        } else {
-            Log.e(TAG, "Não setou tvTipoRestricao (null)");
         }
 
         if (tvModoEntrega != null) {
             tvModoEntrega.setText("Centralizado");
-            Log.d(TAG, "tvModoEntrega setado");
-        } else {
-            Log.e(TAG, "Não setou tvModoEntrega (null)");
         }
 
-        if (initViewsSucesso) {
-            Log.d(TAG, "initViews concluído - Todas views OK!");
-        } else {
-            Log.e(TAG, "initViews FALHOU - Alguma view null!");
-        }
+        Log.d(TAG, "initViews concluído - Status: " + (initViewsSucesso ? "OK" : "FALHOU"));
     }
 
     private void initRestricoes() {
-        Log.d(TAG, "initRestricoes chamado - Inicializando chaves públicas");
+        Log.d(TAG, "initRestricoes chamado");
         allKeys = new ArrayList<>();
-        // Exemplos mock
         allKeys.add(new ProfileKey("Gênero", Arrays.asList("Masculino", "Feminino", "Outro")));
         allKeys.add(new ProfileKey("Idade", Arrays.asList("18-24", "25-34", "35+")));
         allKeys.add(new ProfileKey("Clube Favorito", Arrays.asList("Real Madrid", "Barcelona", "Benfica")));
 
         chavesFiltradas.clear();
         chavesFiltradas.addAll(allKeys);
-        Log.d(TAG, "Chaves públicas carregadas: " + allKeys.size() + " itens");
 
-        // Setup RecyclerView
         if (rvChavesRestricoes != null && keyAdapter == null) {
             rvChavesRestricoes.setLayoutManager(new LinearLayoutManager(this));
-            // Use o ProfileKeyAdapter do package Adapters (showOnlySelected = false para mostrar todas)
-            keyAdapter = new ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter(
-                    this, chavesFiltradas, false);
+            keyAdapter = new ProfileKeyAdapter(this, chavesFiltradas, false);
 
-            // Define o listener para cliques nos valores
             keyAdapter.setOnValueClickListener((keyName, value) -> {
-                Log.d(TAG, "Valor clicado: " + keyName + " -> " + value);
-                // Encontra a chave e toggle o valor
                 for (ProfileKey key : allKeys) {
                     if (key.getName().equals(keyName)) {
                         key.toggleValue(value);
 
-                        // Atualiza o mapa de restrições
                         if (key.hasSelectedValues()) {
                             restricoesPerfil.put(keyName, new ArrayList<>(key.getSelectedValues()));
                         } else {
@@ -272,16 +396,11 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
                     }
                 }
                 keyAdapter.notifyDataSetChanged();
-                Log.d(TAG, "Restrições atualizadas: " + restricoesPerfil);
             });
 
             rvChavesRestricoes.setAdapter(keyAdapter);
-            Log.d(TAG, "RecyclerView configurado");
-        } else if (keyAdapter != null) {
-            keyAdapter.notifyDataSetChanged();
         }
 
-        // TextWatcher para busca
         if (etPesquisarChaves != null) {
             etPesquisarChaves.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -294,75 +413,50 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         if (cardChavesContainer != null) {
             cardChavesContainer.setVisibility(View.VISIBLE);
         }
-        Log.d(TAG, "initRestricoes concluído - Chaves visíveis");
     }
 
     private void setupClickListeners() {
-        Log.d(TAG, "setupClickListeners chamado - Configurando listeners");
-        btnBack.setOnClickListener(v -> {
-            Log.d(TAG, "Botão Back clicado - Finalizando activity");
-            finish();
-        });
+        Log.d(TAG, "setupClickListeners chamado");
+
+        btnBack.setOnClickListener(v -> finish());
+
         if (btnAddLocation != null) {
             btnAddLocation.setOnClickListener(v -> {
-                Intent intent = new Intent(AdicionarAnunciosActivity.this, AdicionarGPSDialog.class);
+                Intent intent = new Intent(AdicionarAnunciosActivity.this, AdicionarLocalActivity.class);
                 localLauncher.launch(intent);
             });
         }
 
-        llImagem.setOnClickListener(v -> {
-            Log.d(TAG, "llImagem clicado - Abrindo galeria");
-            abrirGaleriaImagem();
-        });
-        llDataInicio.setOnClickListener(v -> {
-            Log.d(TAG, "llDataInicio clicado - Abrindo DatePicker");
-            showDatePicker(tvDataInicio);
-        });
-        llDataFim.setOnClickListener(v -> {
-            Log.d(TAG, "llDataFim clicado - Abrindo DatePicker");
-            showDatePicker(tvDataFim);
-        });
-        llHoraInicio.setOnClickListener(v -> {
-            Log.d(TAG, "llHoraInicio clicado - Abrindo TimePicker");
-            showTimePicker(tvHoraInicio);
-        });
-        llHoraFim.setOnClickListener(v -> {
-            Log.d(TAG, "llHoraFim clicado - Abrindo TimePicker");
-            showTimePicker(tvHoraFim);
-        });
+        llImagem.setOnClickListener(v -> abrirGaleriaImagem());
+        llDataInicio.setOnClickListener(v -> showDatePicker(tvDataInicio));
+        llDataFim.setOnClickListener(v -> showDatePicker(tvDataFim));
+        llHoraInicio.setOnClickListener(v -> showTimePicker(tvHoraInicio));
+        llHoraFim.setOnClickListener(v -> showTimePicker(tvHoraFim));
+
         btnPublicar.setOnClickListener(v -> {
-            Log.d(TAG, "btnPublicar clicado - Validando e publicando anúncio");
-            publicarAnuncio();
+            if (modoEdicao) {
+                salvarAlteracoes();
+            } else {
+                publicarAnuncio();
+            }
         });
 
-        // Listener para botão adicionar chave pública
-        btnAdicionarChave.setOnClickListener(v -> {
-            Log.d(TAG, "btnAdicionarChave clicado - Abrindo dialog");
-            abrirAdicionarKeyDialog();
-        });
+        btnAdicionarChave.setOnClickListener(v -> abrirAdicionarKeyDialog());
 
         if (llTipoRestricao != null && spinnerRestricao != null) {
-            llTipoRestricao.setOnClickListener(v -> {
-                spinnerRestricao.performClick();
-            });
+            llTipoRestricao.setOnClickListener(v -> spinnerRestricao.performClick());
         }
+
         if (llModoEntrega != null && spinnerModoEntrega != null) {
-            llModoEntrega.setOnClickListener(v -> {
-                spinnerModoEntrega.performClick();
-            });
+            llModoEntrega.setOnClickListener(v -> spinnerModoEntrega.performClick());
         }
 
         if (llLocal != null && spinnerLocais != null) {
-            llLocal.setOnClickListener(v ->
-                    spinnerLocais.performClick());
+            llLocal.setOnClickListener(v -> spinnerLocais.performClick());
         }
-
-        Log.d(TAG, "setupClickListeners concluído");
     }
 
-    // Filtro para pesquisa em chaves públicas
     private void filtrarChaves(String query) {
-        Log.d(TAG, "Filtrando chaves com query: " + query);
         chavesFiltradas.clear();
         if (query.isEmpty()) {
             chavesFiltradas.addAll(allKeys);
@@ -377,13 +471,9 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
             keyAdapter.updateKeys(chavesFiltradas);
         }
         atualizarVisibilidadeChaves();
-        Log.d(TAG, "Filtro concluído - Itens filtrados: " + chavesFiltradas.size());
     }
 
-    // Atualiza visibilidade do RV e empty state
     private void atualizarVisibilidadeChaves() {
-        Log.d(TAG, "Atualizando visibilidade - Itens: " + chavesFiltradas.size());
-        // Mostra as chaves se houver itens filtrados, independente de seleções
         if (chavesFiltradas.isEmpty()) {
             rvChavesRestricoes.setVisibility(View.GONE);
             layoutEmptyChaves.setVisibility(View.VISIBLE);
@@ -393,58 +483,42 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         }
     }
 
-    // Abrir galeria para imagem
     private void abrirGaleriaImagem() {
-        Log.d(TAG, "Abrindo galeria de imagens");
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         imagemLauncher.launch(intent);
     }
 
-    // Date picker
     private void showDatePicker(TextView textView) {
-        Log.d(TAG, "Abrindo DatePicker para: " + textView.getId());
         Calendar calendar = Calendar.getInstance();
         new DatePickerDialog(this, (view, year, month, day) -> {
             String date = String.format("%02d/%02d/%04d", day, month + 1, year);
             textView.setText(date);
-            Log.d(TAG, "Data selecionada: " + date);
+            textView.setTextColor(getColor(android.R.color.black));
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    // Time picker
     private void showTimePicker(TextView textView) {
-        Log.d(TAG, "Abrindo TimePicker para: " + textView.getId());
         Calendar calendar = Calendar.getInstance();
         new TimePickerDialog(this, (view, hour, minute) -> {
             String time = String.format("%02d:%02d", hour, minute);
             textView.setText(time);
-            Log.d(TAG, "Hora selecionada: " + time);
+            textView.setTextColor(getColor(android.R.color.black));
         }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
     }
 
-    // Setup para restrição
     private void setupSpinner() {
-        Log.d(TAG, "setupSpinner chamado - Configurando restrição com update visual");
         if (spinnerRestricao != null && tvTipoRestricao != null) {
             String[] restricoes = {"Whitelist", "Blacklist"};
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, restricoes);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerRestricao.setAdapter(adapter);
 
-            // Remove qualquer listener anterior
-            spinnerRestricao.setOnItemSelectedListener(null);
-
-            // Define o listener ANTES da seleção inicial
             spinnerRestricao.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     String selected = restricoes[position];
-                    Log.d(TAG, "Restrição selecionada: " + selected + " (posição " + position + ")");
-
-                    // Atualiza a TextView imediatamente
                     tvTipoRestricao.setText(selected);
 
-                    // Gerencia visibilidade do card de chaves
                     if ("Nenhuma".equals(selected)) {
                         if (cardChavesContainer != null) {
                             cardChavesContainer.setVisibility(View.GONE);
@@ -458,88 +532,61 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
                 }
 
                 @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    Log.d(TAG, "onNothingSelected para restrição");
-                }
+                public void onNothingSelected(AdapterView<?> parent) {}
             });
 
-            // Define a seleção inicial (índice 0 = Whitelist)
             spinnerRestricao.setSelection(0, false);
-            Log.d(TAG, "Spinner restrição configurado");
         }
     }
 
     private void setupSpinnerModoEntrega() {
-        Log.d(TAG, "setupSpinnerModoEntrega chamado - Configurando modo com update visual");
         if (spinnerModoEntrega != null && tvModoEntrega != null) {
             String[] modos = {"Centralizado", "Descentralizado"};
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, modos);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerModoEntrega.setAdapter(adapter);
 
-            // Remove qualquer listener anterior
-            spinnerModoEntrega.setOnItemSelectedListener(null);
-
-            // Define o listener ANTES da seleção inicial
             spinnerModoEntrega.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    String selected = modos[position];
-                    Log.d(TAG, "Modo selecionado: " + selected + " (posição " + position + ")");
-
-                    // Atualiza a TextView imediatamente
-                    tvModoEntrega.setText(selected);
+                    tvModoEntrega.setText(modos[position]);
                 }
 
                 @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    Log.d(TAG, "onNothingSelected para modo");
-                }
+                public void onNothingSelected(AdapterView<?> parent) {}
             });
 
-            // Define a seleção inicial (índice 0 = Centralizado)
             spinnerModoEntrega.setSelection(0, false);
-            Log.d(TAG, "Spinner modo entrega configurado");
         }
     }
 
     private void setupSpinnerLocais() {
-        Log.d(TAG, "setupSpinnerLocais chamado - Configurando locais");
         if (spinnerLocais != null && tvLocalSelecionado != null) {
             String[] locais = {"Benguela", "Largo da Independência", "Belas Shopping", "Ginásio do Camama I"};
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locais);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerLocais.setAdapter(adapter);
 
-            // Remove qualquer listener anterior
-            spinnerLocais.setOnItemSelectedListener(null);
-
-            // Define o listener ANTES da seleção inicial
             spinnerLocais.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     localSelecionado = locais[position];
-                    Log.d(TAG, "Local selecionado: " + localSelecionado + " (posição " + position + ")");
-
-                    // Atualiza a TextView imediatamente
                     tvLocalSelecionado.setText(localSelecionado);
+                    tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
                 }
 
                 @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    Log.d(TAG, "onNothingSelected para local");
-                }
+                public void onNothingSelected(AdapterView<?> parent) {}
             });
 
-            // Define a seleção inicial (índice 0 = Benguela)
-            spinnerLocais.setSelection(0, false);
-            Log.d(TAG, "Spinner locais configurado");
+            // Não define seleção padrão se está em modo edição
+            if (!modoEdicao) {
+                spinnerLocais.setSelection(0, false);
+            }
         }
     }
 
-    // Abrir dialog de chave
     private void abrirAdicionarKeyDialog() {
-        Log.d(TAG, "Abrindo AdicionarKeyDialog");
         AdicionarKeyDialog dialog = AdicionarKeyDialog.newInstance(allKeys, restricoesPerfil);
         dialog.setOnKeyAddedListener(this);
         dialog.show(getSupportFragmentManager(), "AdicionarKeyDialog");
@@ -547,7 +594,6 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
 
     @Override
     public void onKeyAdded(String keyName, List<String> values) {
-        Log.d(TAG, "Chave adicionada via callback: " + keyName + " com valores: " + values);
         restricoesPerfil.put(keyName, values);
         filtrarChaves(etPesquisarChaves.getText().toString());
         if (keyAdapter != null) {
@@ -557,7 +603,75 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         Toast.makeText(this, "Chave pública adicionada: " + keyName, Toast.LENGTH_SHORT).show();
     }
 
-    // Publicar anúncio
+    // SALVAR ALTERAÇÕES (modo edição)
+    private void salvarAlteracoes() {
+        Log.d(TAG, "salvarAlteracoes chamado");
+
+        String titulo = etTitulo.getText().toString().trim();
+        String mensagem = etMensagem.getText().toString().trim();
+        String dataInicio = tvDataInicio.getText().toString();
+        String dataFim = tvDataFim.getText().toString();
+        String horaInicio = tvHoraInicio.getText().toString();
+        String horaFim = tvHoraFim.getText().toString();
+        String restricao = tvTipoRestricao.getText().toString();
+        String modoEntrega = tvModoEntrega.getText().toString();
+
+        // Validações
+        if (localSelecionado == null || localSelecionado.equals("Selecionar um local")) {
+            Toast.makeText(this, "Por favor, adicione um local de propagação", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (titulo.isEmpty()) {
+            Toast.makeText(this, "Digite um título para o anúncio", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (mensagem.isEmpty()) {
+            Toast.makeText(this, "Escreva uma mensagem para o anúncio", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (dataInicio.equals("dd/mm/aaaa") || dataFim.equals("dd/mm/aaaa")) {
+            Toast.makeText(this, "Selecione as datas de início e fim", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (horaInicio.equals("hh:mm") || horaFim.equals("hh:mm")) {
+            Toast.makeText(this, "Selecione os horários", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!"Nenhuma".equals(restricao) && restricoesPerfil.isEmpty()) {
+            Toast.makeText(this, "Adicione pelo menos uma chave pública de restrição", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Atualiza o anúncio existente
+        anuncioParaEditar.titulo = titulo;
+        anuncioParaEditar.descricao = mensagem;
+        anuncioParaEditar.local = localSelecionado;
+        anuncioParaEditar.imagem = caminhoImagem;
+        anuncioParaEditar.dataInicio = dataInicio;
+        anuncioParaEditar.dataFim = dataFim;
+        anuncioParaEditar.horaInicio = horaInicio;
+        anuncioParaEditar.horaFim = horaFim;
+        anuncioParaEditar.tipoRestricao = restricao;
+        anuncioParaEditar.modoEntrega = modoEntrega;
+
+        // Atualiza chaves
+        anuncioParaEditar.getChavesPerfil().clear();
+        for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
+            anuncioParaEditar.addChave(entry.getKey(), entry.getValue());
+        }
+
+        // Retorna resultado para MainActivity
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("anuncio_editado", anuncioParaEditar);
+        resultIntent.putExtra("position", posicaoAnuncio);
+        setResult(RESULT_OK, resultIntent);
+
+        Toast.makeText(this, "Anúncio atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Anúncio editado e retornado");
+        finish();
+    }
+
+    // PUBLICAR ANÚNCIO (modo criação)
     private void publicarAnuncio() {
         Log.d(TAG, "publicarAnuncio chamado - Iniciando validações");
         String titulo = etTitulo.getText().toString().trim();
@@ -622,8 +736,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
 
     private boolean salvarAnuncio(Anuncio anuncio) {
         Log.d(TAG, "salvarAnuncio chamado - Salvando: " + anuncio.titulo);
-        // TODO: Implementar salvamento no BD ou servidor (F4 do PDF)
-        // Por agora, simula sucesso
+        // TODO: Implementar salvamento no BD ou servidor
         return true;
     }
 
@@ -650,10 +763,9 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         TextView tvHint = findViewById(R.id.tvImagemHint);
         tvHint.setText("Toque para adicionar uma imagem");
 
-        // Limpa chaves públicas e suas seleções
         restricoesPerfil.clear();
         for (ProfileKey key : allKeys) {
-            key.getSelectedValues().clear();  // Limpa seleções de cada chave
+            key.getSelectedValues().clear();
         }
         chavesFiltradas.clear();
         chavesFiltradas.addAll(allKeys);

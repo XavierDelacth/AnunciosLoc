@@ -35,7 +35,7 @@ import java.util.Locale;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.AnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 
-public class LocalGuardadoActivity extends AppCompatActivity {
+public class AnuncioGuardadoActivity extends AppCompatActivity {
 
     private CardView cardLocais, cardAnuncios, cardTabs;
     private TextView tabCriados, tabGuardados, tvLocation, tvEmptyGuardados;
@@ -70,7 +70,7 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                Intent intent = new Intent(LocalGuardadoActivity.this, MainActivity.class);
+                Intent intent = new Intent(AnuncioGuardadoActivity.this, MainActivity.class);
                 intent.putExtra("fromGuardados", true);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
@@ -280,7 +280,7 @@ public class LocalGuardadoActivity extends AppCompatActivity {
         task.addOnSuccessListener(this, location -> {
             if (location != null) {
                 try {
-                    Geocoder geocoder = new Geocoder(LocalGuardadoActivity.this, Locale.getDefault());
+                    Geocoder geocoder = new Geocoder(AnuncioGuardadoActivity.this, Locale.getDefault());
                     List<Address> addresses = geocoder.getFromLocation(
                             location.getLatitude(),
                             location.getLongitude(),

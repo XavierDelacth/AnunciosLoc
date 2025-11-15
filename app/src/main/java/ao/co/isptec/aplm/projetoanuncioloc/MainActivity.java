@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
         tabGuardados.setOnClickListener(v -> {
             selectTab(false);
-            Intent intent = new Intent(this, LocalGuardadoActivity.class);
+            Intent intent = new Intent(this, AnuncioGuardadoActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
