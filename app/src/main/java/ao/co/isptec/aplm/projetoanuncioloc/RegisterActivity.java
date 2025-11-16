@@ -15,6 +15,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 
+import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class RegisterActivity extends AppCompatActivity {
 
     private TextInputEditText etUsername, etPassword, etConfirmPassword;
@@ -44,14 +50,35 @@ public class RegisterActivity extends AppCompatActivity {
 
             if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
                 Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
-            } else if (!password.equals(confirmPassword)) {
-                Toast.makeText(this, "As senhas não coincidem", Toast.LENGTH_SHORT).show();
-            } else {
-                // TODO: Chamar API do servidor (F1 - Registrar)
-                Toast.makeText(this, "Registro bem-sucedido!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-                finish();
+                return;
             }
+
+            if (!password.equals(confirmPassword)) {
+                Toast.makeText(this, "As senhas não coincidem", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // CHAMA API
+            User user = new User(username, password);
+            Call<User> call = RetrofitClient.getApiService().register(user);
+
+            call.enqueue(new Callback<User>() {
+                @Override
+                public void onResponse(Call<User> call, Response<User> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Toast.makeText(RegisterActivity.this, "Registro bem-sucedido!", Toast.LENGTH_LONG).show();
+                        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+                        finish();
+                    } else {
+                        Toast.makeText(RegisterActivity.this, "Erro no servidor", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<User> call, Throwable t) {
+                    Toast.makeText(RegisterActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
         });
     }
 }

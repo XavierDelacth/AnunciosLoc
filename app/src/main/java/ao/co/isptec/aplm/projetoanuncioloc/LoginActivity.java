@@ -1,6 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -14,6 +15,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.LoginRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -42,16 +50,46 @@ public class LoginActivity extends AppCompatActivity {
 
             if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
                 Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_SHORT).show();
-            } else {
-                // Simulação de login bem-sucedido
-                Toast.makeText(this, "Login bem-sucedido!", Toast.LENGTH_SHORT).show();
-
-                // VAI PARA A TELA PRINCIPAL
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                intent.putExtra("username", username); // opcional
-                startActivity(intent);
-                finish(); // impede voltar ao login com botão "voltar"
+                return;
             }
+
+            // CHAMA API
+            LoginRequest request = new LoginRequest(username, password);
+            Call<User> call = RetrofitClient.getApiService().login(request);
+
+            call.enqueue(new Callback<User>() {
+                @Override
+                public void onResponse(Call<User> call, Response<User> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        User user = response.body();
+                        String jwt = user.getSessionId();
+                        Long userId = user.getId();
+
+                        // SALVA NO SHARED PREFERENCES
+                        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                        prefs.edit()
+                                .putLong("userId", userId)
+                                .putString("jwt", jwt)
+                                .putString("username", user.getUsername())
+                                .apply();
+
+                        Toast.makeText(LoginActivity.this, "Login bem-sucedido!", Toast.LENGTH_LONG).show();
+
+                        // VAI PARA MAIN
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra("username", user.getUsername());
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Usuário ou senha incorretos", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<User> call, Throwable t) {
+                    Toast.makeText(LoginActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
         });
     }
 }
