@@ -60,7 +60,7 @@ public class RegisterActivity extends AppCompatActivity {
 
             // CHAMA API
             User user = new User(username, password);
-            Call<User> call = RetrofitClient.getApiService().register(user);
+            Call<User> call = RetrofitClient.getApiService(this).register(user);
 
             call.enqueue(new Callback<User>() {
                 @Override

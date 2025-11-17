@@ -2,6 +2,7 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -16,6 +17,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.MainAnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -27,6 +33,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import android.view.View;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,6 +50,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1);  // -1 = erro
+        if (userId == -1) {
+            // Volta para login
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
         initViews();
         setupClickListeners();
@@ -227,5 +243,35 @@ public class MainActivity extends AppCompatActivity {
                 tvLocation.setText("Permissão de localização negada.");
             }
         }
+    }
+
+
+
+    private void carregarAnuncios() {
+        Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
+        if (userId == -1) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // Chama API com userId
+      //  Call<List<Anuncio>> call = RetrofitClient.getApiService(this).getAnuncios(userId);
+       /* call.enqueue(new Callback<List<Anuncio>>() {
+            @Override
+            public void onResponse(Call<List<Anuncio>> call, Response<List<Anuncio>> response) {
+                if (response.isSuccessful()) {
+                    listaAnuncios = response.body();
+                    adapter = new MainAnuncioAdapter(MainActivity.this, listaAnuncios);
+                    rvAnunciosMain.setAdapter(adapter);
+                    atualizarVisibilidade();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Anuncio>> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
+            }
+        });*/
     }
 }

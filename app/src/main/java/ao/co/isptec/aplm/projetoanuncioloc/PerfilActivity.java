@@ -1,6 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,6 +23,10 @@ import java.util.Map;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class PerfilActivity extends AppCompatActivity {
@@ -48,6 +53,21 @@ public class PerfilActivity extends AppCompatActivity {
         setContentView(R.layout.activity_perfil);
 
         initializeViews();
+
+
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        String username = prefs.getString("username", "Usuário");
+
+        // Mostra no TextView
+        tvUsername.setText(username);
+
+        // Validação de login
+        Long userId = prefs.getLong("userId", -1L);
+        if (userId == -1L) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
         initializeData();
         setupRecyclerView();
         setupListeners();
@@ -142,15 +162,7 @@ public class PerfilActivity extends AppCompatActivity {
 
     private void setupListeners() {
         // Logout
-        btnLogout.setOnClickListener(v -> {
-            // Limpar dados de login (SharedPreferences, se tiveres)
-            getSharedPreferences("login", MODE_PRIVATE).edit().clear().apply();
-
-            Intent intent = new Intent(PerfilActivity.this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        });
+        btnLogout.setOnClickListener(v -> logout());
 
         // Em setupListeners() do PerfilActivity.java
         btnChangePassword.setOnClickListener(v -> {
@@ -371,6 +383,31 @@ public class PerfilActivity extends AppCompatActivity {
             }
         }
         return null;  // Não encontrou a chave
+    }
+
+    private void logout() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
+        if (userId == -1L) {
+            Toast.makeText(this, "Erro: Faça login novamente", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Call<Void> call = RetrofitClient.getApiService(this).logout(userId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                prefs.edit().clear().apply();  // LIMPA SHARED PREFS
+                Toast.makeText(PerfilActivity.this, "Logout realizado com sucesso!", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(PerfilActivity.this, LoginActivity.class));
+                finishAffinity();  // Fecha todas as telas
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(PerfilActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }

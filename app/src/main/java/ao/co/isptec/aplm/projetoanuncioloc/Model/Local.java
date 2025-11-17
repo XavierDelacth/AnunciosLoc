@@ -1,9 +1,13 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Model;  // Ajusta a package se necessário
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Local {
+
+    @SerializedName("id")
     private long id;  // Para BD futura (ex.: @PrimaryKey autoGenerate = true em Room)
     private String nome;  // Ex: "Largo da Independência" (único, obrigatório)
     private double latitude;  // Coordenada GPS

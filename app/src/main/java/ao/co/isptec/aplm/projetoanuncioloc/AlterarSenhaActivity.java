@@ -1,5 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -9,6 +11,13 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AlterarSenhaRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class AlterarSenhaActivity extends AppCompatActivity {
 
@@ -68,7 +77,35 @@ public class AlterarSenhaActivity extends AppCompatActivity {
             return;
         }
 
-        Toast.makeText(this, "Senha alterada com sucesso!", Toast.LENGTH_LONG).show();
-        finish();
+        // PEGA USERID DO SHARED PREFERENCES
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1);
+        if (userId == -1) {
+            Toast.makeText(this, "Erro: Faça login novamente", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // CHAMA O BACKEND
+        AlterarSenhaRequest req = new AlterarSenhaRequest(atual, nova);
+        Call<User> call = RetrofitClient.getApiService(this).alterarSenha(userId, req);
+
+        call.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(AlterarSenhaActivity.this, "Senha alterada com sucesso!", Toast.LENGTH_LONG).show();
+                    finish();
+                } else {
+                    Toast.makeText(AlterarSenhaActivity.this, "Erro: Senha atual incorreta ou servidor", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                Toast.makeText(AlterarSenhaActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

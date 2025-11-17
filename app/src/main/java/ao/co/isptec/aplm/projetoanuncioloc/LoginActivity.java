@@ -55,7 +55,7 @@ public class LoginActivity extends AppCompatActivity {
 
             // CHAMA API
             LoginRequest request = new LoginRequest(username, password);
-            Call<User> call = RetrofitClient.getApiService().login(request);
+            Call<User> call = RetrofitClient.getApiService(this).login(request);
 
             call.enqueue(new Callback<User>() {
                 @Override
@@ -64,13 +64,14 @@ public class LoginActivity extends AppCompatActivity {
                         User user = response.body();
                         String jwt = user.getSessionId();
                         Long userId = user.getId();
+                        String username = user.getUsername();
 
                         // SALVA NO SHARED PREFERENCES
                         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
                         prefs.edit()
                                 .putLong("userId", userId)
                                 .putString("jwt", jwt)
-                                .putString("username", user.getUsername())
+                                .putString("username", username)
                                 .apply();
 
                         Toast.makeText(LoginActivity.this, "Login bem-sucedido!", Toast.LENGTH_LONG).show();

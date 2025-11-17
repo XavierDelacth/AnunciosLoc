@@ -2,6 +2,7 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -30,6 +31,12 @@ import java.util.List;
 import java.util.Locale;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;  // Import da interface comum
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCallback {
 
@@ -121,12 +128,48 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                 double lng = Double.parseDouble(lngStr);
                 int raio = Integer.parseInt(raioStr);
 
-                // Callback com método GPS
-                if (listener != null) {
-                    listener.onLocalAddedGPS(nome, lat, lng, raio);
+                // PEGA USERID DO SHARED PREFS
+                SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+                Long userId = prefs.getLong("userId", -1L);
+                if (userId == -1L) {
+                    Toast.makeText(requireContext(), "Erro: Faça login novamente", Toast.LENGTH_LONG).show();
+                    return;
                 }
-                Toast.makeText(requireContext(), "Local GPS adicionado!", Toast.LENGTH_SHORT).show();
-                dismiss();
+
+                // CRIA OBJETO PARA ENVIO
+                LocalRequest request = new LocalRequest(
+                        nome,
+                        "GPS",
+                        lat,
+                        lng,
+                        raio,
+                        null  // wifiIds = null para GPS
+                );
+
+                // ENVIA PARA O BACKEND
+                Call<Local> call = RetrofitClient.getApiService(requireContext()).criarLocal(request, userId);
+                call.enqueue(new Callback<Local>() {
+                    @Override
+                    public void onResponse(Call<Local> call, Response<Local> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Toast.makeText(requireContext(), "Local GPS adicionado com sucesso!", Toast.LENGTH_LONG).show();
+
+                            // AVISA A ACTIVITY QUE ADICIONOU (atualiza lista)
+                            if (listener != null) {
+                                listener.onLocalAddedGPS(nome, lat, lng, raio);
+                            }
+                            dismiss();
+                        } else {
+                            Toast.makeText(requireContext(), "Erro no servidor: " + response.message(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Local> call, Throwable t) {
+                        Toast.makeText(requireContext(), "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+
             } catch (NumberFormatException e) {
                 Toast.makeText(requireContext(), "Verifique os valores numéricos", Toast.LENGTH_SHORT).show();
             }
