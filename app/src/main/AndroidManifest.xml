@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:usesCleartextTraffic="true"
@@ -22,7 +23,7 @@
         <!-- TUA CHAVE DO GOOGLE MAPS -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyA5uayP0OH9bCkCxT6ArplGm0ct6B54tL4" />
+            android:value="AIzaSyCdUFNVoG0VaUQx-fnd3r-VamMcxjZQtPY" />
 
         <!-- Activities -->
         <activity android:name=".LoginActivity" android:exported="true">
