@@ -17,6 +17,15 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import java.util.Arrays;
 
+import android.content.SharedPreferences;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;
 
 public class AdicionarWIFIDialog extends DialogFragment {
@@ -140,7 +149,7 @@ public class AdicionarWIFIDialog extends DialogFragment {
             Log.e(TAG, "btnGps é null - não pode configurar listener!");
         }
 
-        // Botão adicionar WiFi
+        // ✅ CORREÇÃO PRINCIPAL: Botão adicionar WiFi - AGORA COM CHAMADA À API
         if (btnAdicionarWiFi != null) {
             btnAdicionarWiFi.setOnClickListener(v -> {
                 Log.d(TAG, "Botão adicionar WiFi clicado");
@@ -162,18 +171,47 @@ public class AdicionarWIFIDialog extends DialogFragment {
                     return;
                 }
 
-                // Callback com método WiFi
-                if (listener != null) {
-                    listener.onLocalAddedWiFi(nome, Arrays.asList(ssid));
-                    Log.d(TAG, "Local WiFi '" + nome + "' adicionado via callback");
-                    Toast.makeText(requireContext(),
-                            "Local WiFi '" + nome + "' (SSID: " + ssid + ") adicionado!",
-                            Toast.LENGTH_SHORT).show();
-                    dismiss();
-                } else {
-                    Log.e(TAG, "Listener é null - não pode adicionar local");
-                    Toast.makeText(requireContext(), "Erro: listener não configurado", Toast.LENGTH_SHORT).show();
+                // ✅ PEGA USERID DO SHARED PREFS (igual ao GPS)
+                SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+                Long userId = prefs.getLong("userId", -1L);
+                if (userId == -1L) {
+                    Toast.makeText(requireContext(), "Erro: Faça login novamente", Toast.LENGTH_LONG).show();
+                    return;
                 }
+
+                // ✅ CRIA OBJETO PARA ENVIO (tipo WIFI)
+                LocalRequest request = new LocalRequest(
+                        nome,
+                        "WIFI",  // Tipo WIFI
+                        null,    // latitude = null para WiFi
+                        null,    // longitude = null para WiFi
+                        null,    // raio = null para WiFi
+                        Arrays.asList(ssid)  // wifiIds com o SSID
+                );
+
+                // ✅ ENVIA PARA O BACKEND (igual ao GPS)
+                Call<Local> call = RetrofitClient.getApiService(requireContext()).criarLocal(request, userId);
+                call.enqueue(new Callback<Local>() {
+                    @Override
+                    public void onResponse(Call<Local> call, Response<Local> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Toast.makeText(requireContext(), "Local WiFi adicionado com sucesso!", Toast.LENGTH_LONG).show();
+
+                            // ✅ AVISA A ACTIVITY QUE ADICIONOU (atualiza lista)
+                            if (listener != null) {
+                                listener.onLocalAddedWiFi(nome, Arrays.asList(ssid));
+                            }
+                            dismiss();
+                        } else {
+                            Toast.makeText(requireContext(), "Erro no servidor: " + response.message(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Local> call, Throwable t) {
+                        Toast.makeText(requireContext(), "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
             });
         }
 

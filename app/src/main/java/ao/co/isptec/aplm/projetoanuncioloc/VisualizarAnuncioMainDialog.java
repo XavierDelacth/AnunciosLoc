@@ -123,7 +123,7 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
         tvHoraInicio = view.findViewById(R.id.tvHoraInicio);
         tvHoraFim = view.findViewById(R.id.tvHoraFim);
         tvModoEntrega = view.findViewById(R.id.tvModoEntrega);
-        etPesquisarChaves = view.findViewById(R.id.etPesquisarChaves);
+        //etPesquisarChaves = view.findViewById(R.id.etPesquisarChaves);
         rvChavesRestricoes = view.findViewById(R.id.rv_chaves_restricoes);
         layoutEmptyChaves = view.findViewById(R.id.layout_empty_chaves);
         cardChavesContainer = view.findViewById(R.id.card_chaves_container);
@@ -133,6 +133,7 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
         Log.d(TAG, "Configurando listeners no diálogo");
         btnClose.setOnClickListener(v -> dismiss());
 
+        /*
         if (etPesquisarChaves != null) {
             etPesquisarChaves.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -141,7 +142,7 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
                 }
                 @Override public void afterTextChanged(Editable s) {}
             });
-        }
+        }*/
     }
 
     private void preencherDados() {
@@ -163,6 +164,15 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
             }
         } else {
             imgAnnouncement.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
+
+        // Configurar cor do tipo de restrição
+        if ("Whitelist".equals(anuncio.getTipoRestricao())) {
+            tvTipoRestricao.setBackgroundColor(getResources().getColor(R.color.verde_principal));
+            tvTipoRestricao.setTextColor(getResources().getColor(R.color.white));
+        } else if ("Blacklist".equals(anuncio.getTipoRestricao())) {
+            tvTipoRestricao.setBackgroundColor(getResources().getColor(R.color.vermelho_cancelar));
+            tvTipoRestricao.setTextColor(getResources().getColor(R.color.white));
         }
 
         // Informações

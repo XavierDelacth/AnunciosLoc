@@ -76,6 +76,6 @@ public interface ApiService {
     Call<List<AnuncioResponse>> getMeusAnuncios(@Query("userId") Long userId);
 
     // Eliminar Anúncio
-    @DELETE("anuncios/{id}")
+    @DELETE("/api/anuncios/{id}")
     Call<Void> eliminarAnuncio(@Path("id") Long id);
 }

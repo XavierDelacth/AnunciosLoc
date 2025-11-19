@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -52,6 +53,7 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
     private RecyclerView recyclerView;
     private AnuncioAdapter adapter;
     private List<Anuncio> listaAnunciosGuardados;
+    private TextView badgeNotificacao;
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
@@ -73,6 +75,7 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
 
         // Carrega anúncios guardados da API
         carregarAnunciosGuardados();
+        carregarContagemNotificacoes();
 
         // Localização atual
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -108,6 +111,7 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
 
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
+        badgeNotificacao = findViewById(R.id.badgeNotificacao);
     }
 
     private void setupRecyclerView() {
@@ -350,5 +354,53 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
                 tvLocation.setText("Permissão de localização negada.");
             }
         }
+    }
+
+    private void carregarContagemNotificacoes() {
+        Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
+        if (userId == -1) {
+            Log.e("NOTIFICACOES", "UserId não encontrado");
+            return;
+        }
+
+        Log.d("NOTIFICACOES", "Carregando contagem para userId: " + userId);
+
+        Call<Integer> call = RetrofitClient.getApiService(this).getContagemNotificacoes(userId);
+        call.enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(Call<Integer> call, Response<Integer> response) {
+                Log.d("NOTIFICACOES", "Resposta recebida. Código: " + response.code());
+
+                if (response.isSuccessful() && response.body() != null) {
+                    int contagem = response.body();
+                    Log.d("NOTIFICACOES", "Contagem de notificações: " + contagem);
+                    atualizarBadgeNotificacao(contagem);
+                } else {
+                    Log.e("NOTIFICACOES", "Resposta não sucedida. Código: " + response.code());
+                    atualizarBadgeNotificacao(0);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Integer> call, Throwable t) {
+                Log.e("NOTIFICACOES", "Erro de rede: " + t.getMessage());
+                atualizarBadgeNotificacao(0);
+            }
+        });
+    }
+
+    private void atualizarBadgeNotificacao(int contagem) {
+        runOnUiThread(() -> {
+            Log.d("NOTIFICACOES", "Atualizando badge com: " + contagem);
+
+            if (contagem > 0) {
+                badgeNotificacao.setText(String.valueOf(contagem));
+                badgeNotificacao.setVisibility(View.VISIBLE);
+            } else {
+                // Mostra "0" em vez de esconder
+                badgeNotificacao.setText("0");
+                badgeNotificacao.setVisibility(View.VISIBLE);
+            }
+        });
     }
 }

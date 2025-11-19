@@ -13,7 +13,8 @@ import java.util.List;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.R;
-import ao.co.isptec.aplm.projetoanuncioloc.VisualizarAnuncioDialog;
+import ao.co.isptec.aplm.projetoanuncioloc.VisualizarAnuncioMainDialog;
+
 
 public class MainAnuncioAdapter extends RecyclerView.Adapter<MainAnuncioAdapter.ViewHolder> {
 
@@ -25,7 +26,6 @@ public class MainAnuncioAdapter extends RecyclerView.Adapter<MainAnuncioAdapter.
     public interface OnActionClickListener {
         void onEditClick(Anuncio anuncio, int position);
         void onDeleteClick(Anuncio anuncio, int position);
-
         void onSaveClick(Anuncio anuncio, int position);
     }
 
@@ -77,19 +77,25 @@ public class MainAnuncioAdapter extends RecyclerView.Adapter<MainAnuncioAdapter.
             holder.layoutAcoes.setVisibility(View.GONE);
         }
 
-        // CLIQUE NO ITEM INTEIRO → abre tela completa
+        // CLIQUE NO ITEM INTEIRO → abre o VisualizarAnuncioMainDialog (MUDANÇA AQUI)
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
                 Anuncio anuncio = lista.get(pos);
-                VisualizarAnuncioDialog dialog = VisualizarAnuncioDialog.newInstance(
+
+                // Usar VisualizarAnuncioMainDialog em vez do VisualizarAnuncioDialog
+                VisualizarAnuncioMainDialog dialog = VisualizarAnuncioMainDialog.newInstance(
                         anuncio,
                         pos,
-                        (positionCallback, saved) -> {
-                            // Callback para atualizações (se necessário)
+                        new VisualizarAnuncioMainDialog.BookmarkCallback() {
+                            @Override
+                            public void onBookmarkChanged(int position, boolean saved) {
+                                // Callback vazio pois na MainActivity não usamos bookmark
+                                // Mas mantemos a interface para compatibilidade
+                            }
                         }
                 );
-                dialog.show(((AppCompatActivity) context).getSupportFragmentManager(), "VisualizarAnuncio");
+                dialog.show(((AppCompatActivity) context).getSupportFragmentManager(), "VisualizarAnuncioMain");
             }
         });
     }
