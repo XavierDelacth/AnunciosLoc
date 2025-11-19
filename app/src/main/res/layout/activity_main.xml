@@ -63,16 +63,18 @@
                     android:padding="8dp"
                     app:tint="@color/white" />
                 <TextView
+                    android:id="@+id/badgeNotificacao"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:background="@drawable/badge_notification"
-                    android:text="4"
+                    android:text="0"
                     android:textColor="@color/white"
                     android:textSize="10sp"
                     android:gravity="center"
                     android:layout_gravity="top|end"
                     android:layout_marginTop="4dp"
-                    android:layout_marginEnd="4dp" />
+                    android:layout_marginEnd="4dp"
+                    android:visibility="visible"/>
             </FrameLayout>
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>

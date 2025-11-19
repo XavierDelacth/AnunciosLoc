@@ -38,6 +38,9 @@ public interface ApiService {
     @DELETE("/api/notificacoes")
     Call<Void> limparNotificacoes(@Query("userId") Long userId);
 
+    @GET("/api/notificacoes/count")
+    Call<Integer> getContagemNotificacoes(@Query("userId") Long userId);
+
     @POST("/api/locais")
     Call<Local> criarLocal(@Body LocalRequest request, @Query("userId") Long userId);
 

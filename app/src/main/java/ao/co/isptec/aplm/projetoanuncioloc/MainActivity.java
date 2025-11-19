@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private MainAnuncioAdapter adapter;
     private List<Anuncio> listaAnuncios = new ArrayList<>();
     private FusedLocationProviderClient fusedLocationProviderClient;
+    private TextView badgeNotificacao;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     private boolean gpsAtivado = false;
@@ -98,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         carregarAnuncios();
+        carregarContagemNotificacoes();
 
         // Compatível com back gesture (Android 13+)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -123,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
         tvLocation = findViewById(R.id.tvLocation);
         tvEmptyAnuncios = findViewById(R.id.tvEmptyAnuncios);
         rvAnunciosMain = findViewById(R.id.recyclerView);
+        badgeNotificacao = findViewById(R.id.badgeNotificacao);
     }
 
     private void setupClickListeners() {
@@ -486,6 +489,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Verifica se precisamos tentar obter localização novamente
         verificarEstadoLocalizacao();
+        carregarContagemNotificacoes();
     }
 
     @Override
@@ -628,6 +632,55 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(MainActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private void carregarContagemNotificacoes() {
+        Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
+        if (userId == -1) {
+            Log.e("NOTIFICACOES", "UserId não encontrado");
+            return;
+        }
+
+        Log.d("NOTIFICACOES", "Carregando contagem para userId: " + userId);
+
+        Call<Integer> call = RetrofitClient.getApiService(this).getContagemNotificacoes(userId);
+        call.enqueue(new Callback<Integer>() {
+            @Override
+            public void onResponse(Call<Integer> call, Response<Integer> response) {
+                Log.d("NOTIFICACOES", "Resposta recebida. Código: " + response.code());
+
+                if (response.isSuccessful() && response.body() != null) {
+                    int contagem = response.body();
+                    Log.d("NOTIFICACOES", "Contagem de notificações: " + contagem);
+                    atualizarBadgeNotificacao(contagem);
+                } else {
+                    Log.e("NOTIFICACOES", "Resposta não sucedida. Código: " + response.code());
+                    atualizarBadgeNotificacao(0);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Integer> call, Throwable t) {
+                Log.e("NOTIFICACOES", "Erro de rede: " + t.getMessage());
+                atualizarBadgeNotificacao(0);
+            }
+        });
+    }
+
+    private void atualizarBadgeNotificacao(int contagem) {
+        runOnUiThread(() -> {
+            Log.d("NOTIFICACOES", "Atualizando badge com: " + contagem);
+
+            if (contagem > 0) {
+                badgeNotificacao.setText(String.valueOf(contagem));
+                badgeNotificacao.setVisibility(View.VISIBLE);
+            } else {
+                // Mostra "0" em vez de esconder
+                badgeNotificacao.setText("0");
+                badgeNotificacao.setVisibility(View.VISIBLE);
             }
         });
     }
