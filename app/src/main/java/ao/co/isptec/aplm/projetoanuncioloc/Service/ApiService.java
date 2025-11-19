@@ -3,6 +3,8 @@ package ao.co.isptec.aplm.projetoanuncioloc.Service;
 import java.util.List;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.AlterarSenhaRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.LoginRequest;
@@ -36,7 +38,6 @@ public interface ApiService {
     @DELETE("/api/notificacoes")
     Call<Void> limparNotificacoes(@Query("userId") Long userId);
 
-
     @POST("/api/locais")
     Call<Local> criarLocal(@Body LocalRequest request, @Query("userId") Long userId);
 
@@ -51,4 +52,27 @@ public interface ApiService {
 
     @DELETE("/api/locais/{id}")
     Call<Void> excluirLocal(@Path("id") Long id);
+
+
+    // Anúncios Guardados - CORRIGIDOS
+    @GET("/api/guardados/usuario/{usuarioId}")
+    Call<List<AnuncioResponse>> listarAnunciosGuardados(@Path("usuarioId") Long usuarioId);
+
+    @DELETE("/api/guardados/usuario/{usuarioId}/anuncio/{anuncioId}")
+    Call<Void> removerAnuncioGuardado(@Path("usuarioId") Long usuarioId, @Path("anuncioId") Long anuncioId);
+
+    @POST("/api/guardados/usuario/{usuarioId}/anuncio/{anuncioId}")
+    Call<Void> guardarAnuncio(@Path("usuarioId") Long usuarioId, @Path("anuncioId") Long anuncioId);
+
+    @GET("/api/guardados/usuario/{usuarioId}/anuncio/{anuncioId}/verificar")
+    Call<Boolean> verificarAnuncioGuardado(@Path("usuarioId") Long usuarioId, @Path("anuncioId") Long anuncioId);
+
+
+    // Meus Anúncios
+    @GET("/api/anuncios/meus")
+    Call<List<AnuncioResponse>> getMeusAnuncios(@Query("userId") Long userId);
+
+    // Eliminar Anúncio
+    @DELETE("anuncios/{id}")
+    Call<Void> eliminarAnuncio(@Path("id") Long id);
 }

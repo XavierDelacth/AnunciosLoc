@@ -31,9 +31,16 @@ public class NotificacaoAdapter extends RecyclerView.Adapter<NotificacaoAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Notificacao n = lista.get(position);
+
         holder.tvTitulo.setText(n.getTitulo());
         holder.tvDescricao.setText(n.getDescricao());
-        holder.tvData.setText(n.getDataEnvio().toString().replace("T", " ").substring(0, 19));
+
+        String data = n.getDataEnvio();
+        if (data != null && data.length() >= 19) {
+            holder.tvData.setText(data.replace("T", " ").substring(0, 19));
+        } else {
+            holder.tvData.setText("Agora mesmo");
+        }
     }
 
     @Override

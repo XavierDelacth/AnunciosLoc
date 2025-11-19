@@ -1,24 +1,17 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import ao.co.isptec.aplm.projetoanuncioloc.Adapters.AnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.NotificacaoAdapter;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
@@ -29,7 +22,7 @@ public class NotificacoesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private NotificacaoAdapter adapter;
-    private List<Notificacao> listaNotificacoes;
+    private List<Notificacao> listaNotificacoes = new ArrayList<>();
     private Button btnClearNotifications;
     private TextView tvEmpty;
 
@@ -38,51 +31,54 @@ public class NotificacoesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notificacao);
 
-        // Só precisamos de um TextView ou nada (o Toast já mostra)
-        TextView tvEmpty = findViewById(R.id.tvEmpty);
-        if (tvEmpty != null) tvEmpty.setText("Carregando...");
+        recyclerView = findViewById(R.id.recyclerNotifications);
+        tvEmpty = findViewById(R.id.tvEmpty);
+        btnClearNotifications = findViewById(R.id.btnClearNotifications);
 
-        // CHAMA O GET COM TOAST
-        carregarNotificacoesComToast();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        btnClearNotifications.setOnClickListener(v -> limparNotificacoes());
+
+        carregarNotificacoes();
     }
 
-    private void carregarNotificacoesComToast() {
+    private void carregarNotificacoes() {
+        tvEmpty.setText("Carregando...");
+        tvEmpty.setVisibility(View.VISIBLE);
+        recyclerView.setVisibility(View.GONE);
+
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
-
-        // LOG 1: Verifica se userId está correto
-        Log.d("NOTIF_DEBUG", "userId do SharedPreferences: " + userId);
-
         if (userId == -1L) {
-            Toast.makeText(this, "Erro: userId não encontrado", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Erro: usuário não encontrado", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        Call<List<Notificacao>> call = RetrofitClient.getApiService(this).getNotificacoes(userId);
-
-        // LOG 2: URL exata que está sendo chamada
-        Log.d("NOTIF_DEBUG", "URL chamada: " + call.request().url().toString());
-
-        call.enqueue(new Callback<List<Notificacao>>() {
+        RetrofitClient.getApiService(this).getNotificacoes(userId).enqueue(new Callback<List<Notificacao>>() {
             @Override
             public void onResponse(Call<List<Notificacao>> call, Response<List<Notificacao>> response) {
-                // LOG 3: Status e corpo
-                Log.d("NOTIF_DEBUG", "Status: " + response.code());
-                Log.d("NOTIF_DEBUG", "Body: " + (response.body() != null ? response.body().toString() : "null"));
+                if (response.isSuccessful() && response.body() != null) {
+                    listaNotificacoes = response.body();
 
-                int count = response.body() != null ? response.body().size() : 0;
-                String msg = count > 0
-                        ? "Você tem " + count + " notificação" + (count > 1 ? "s" : "")
-                        : "Nenhuma notificação (ou erro)";
+                    adapter = new NotificacaoAdapter(NotificacoesActivity.this, listaNotificacoes);
+                    recyclerView.setAdapter(adapter);
 
-                Toast.makeText(NotificacoesActivity.this, msg, Toast.LENGTH_LONG).show();
+                    Toast.makeText(NotificacoesActivity.this,
+                            "Você tem " + listaNotificacoes.size() + " notificação" +
+                                    (listaNotificacoes.size() > 1 ? "s" : ""), Toast.LENGTH_LONG).show();
+
+                    atualizarVisibilidade();
+                } else {
+                    tvEmpty.setText("Nenhuma notificação encontrada");
+                    tvEmpty.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onFailure(Call<List<Notificacao>> call, Throwable t) {
-                Log.e("NOTIF_DEBUG", "Erro: " + t.getMessage());
-                Toast.makeText(NotificacoesActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                tvEmpty.setText("Sem conexão");
+                tvEmpty.setVisibility(View.VISIBLE);
+                Toast.makeText(NotificacoesActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -90,17 +86,15 @@ public class NotificacoesActivity extends AppCompatActivity {
     private void limparNotificacoes() {
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
-        if (userId == -1L) return;
 
-        Call<Void> call = RetrofitClient.getApiService(this).limparNotificacoes(userId);
-        call.enqueue(new Callback<Void>() {
+        RetrofitClient.getApiService(this).limparNotificacoes(userId).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     listaNotificacoes.clear();
                     adapter.notifyDataSetChanged();
+                    Toast.makeText(NotificacoesActivity.this, "Limpo!", Toast.LENGTH_SHORT).show();
                     atualizarVisibilidade();
-                    Toast.makeText(NotificacoesActivity.this, "Notificações limpas!", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -115,6 +109,7 @@ public class NotificacoesActivity extends AppCompatActivity {
         if (listaNotificacoes.isEmpty()) {
             recyclerView.setVisibility(View.GONE);
             tvEmpty.setVisibility(View.VISIBLE);
+            tvEmpty.setText("Nenhuma notificação");
             btnClearNotifications.setVisibility(View.GONE);
         } else {
             recyclerView.setVisibility(View.VISIBLE);

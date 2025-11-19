@@ -20,10 +20,16 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
 
     private Context context;
     private List<Anuncio> lista;
+    private OnBookmarkClickListener onBookmarkClickListener;
 
-    public AnuncioAdapter(Context context, List<Anuncio> lista) {
+    public interface OnBookmarkClickListener {
+        void onBookmarkClick(Anuncio anuncio, int position);
+    }
+
+    public AnuncioAdapter(Context context, List<Anuncio> lista, OnBookmarkClickListener listener) {
         this.context = context;
         this.lista = lista;
+        this.onBookmarkClickListener = listener;
     }
 
     @NonNull
@@ -33,41 +39,41 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         return new ViewHolder(view);
     }
 
-    // AnuncioAdapter.java — onBindViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Anuncio a = lista.get(position);
         holder.tvTitulo.setText(a.titulo);
         holder.tvDescricao.setText(a.descricao);
 
-        // BOOKMARK NA LISTA (permanece igual)
-        holder.btnSalvar.setImageResource(a.salvo ? R.drawable.ic_bookmark_salvo : R.drawable.ic_bookmark_nao_salvo);
+        // BOOKMARK NA LISTA (sempre salvo = true na tela de guardados)
+        holder.btnSalvar.setImageResource(R.drawable.ic_bookmark_salvo);
 
-        // CLIQUE NO ITEM INTEIRO → abre tela completa (ATUALIZADO)
+        // CLIQUE NO ITEM INTEIRO → abre tela completa
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
                 Anuncio anuncio = lista.get(pos);
-                // NOVO: Passe position e listener (lambda que atualiza a lista)
                 VisualizarAnuncioDialog dialog = VisualizarAnuncioDialog.newInstance(
                         anuncio,
                         pos,
                         (positionCallback, saved) -> {
-                            // Atualiza o objeto original na lista
-                            lista.get(positionCallback).salvo = saved;
-                            // Notifica a mudança no adapter
-                            AnuncioAdapter.this.notifyItemChanged(positionCallback);
+                            // Se desguardou no dialog, remove da lista
+                            if (!saved) {
+                                lista.remove(positionCallback);
+                                AnuncioAdapter.this.notifyItemRemoved(positionCallback);
+                            }
                         }
                 );
                 dialog.show(((AppCompatActivity) context).getSupportFragmentManager(), "VisualizarAnuncio");
             }
         });
 
-        // CLIQUE NO BOOKMARK (permanece igual — já atualiza a lista local)
+        // CLIQUE NO BOOKMARK → remove dos guardados
         holder.btnSalvar.setOnClickListener(v -> {
-            a.salvo = !a.salvo;
-            notifyItemChanged(position);
-            Toast.makeText(context, a.salvo ? "Guardado!" : "Removido!", Toast.LENGTH_SHORT).show();
+            int pos = holder.getAdapterPosition();
+            if (pos != RecyclerView.NO_POSITION) {
+                onBookmarkClickListener.onBookmarkClick(lista.get(pos), pos);
+            }
         });
     }
 
@@ -76,7 +82,13 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         return lista.size();
     }
 
-    // VIEWHOLDER CORRIGIDO
+    // Método para remover item da lista
+    public void removeItem(int position) {
+        lista.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    // VIEWHOLDER
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvDescricao;
         ImageView btnSalvar;
@@ -85,7 +97,7 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tv_titulo);
             tvDescricao = itemView.findViewById(R.id.tv_descricao);
-             btnSalvar = itemView.findViewById(R.id.btn_salvar);
+            btnSalvar = itemView.findViewById(R.id.btn_salvar);
         }
     }
 }

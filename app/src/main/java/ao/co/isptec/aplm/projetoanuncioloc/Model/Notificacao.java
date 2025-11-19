@@ -1,6 +1,6 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Model;
+
 import com.google.gson.annotations.SerializedName;
-import java.time.LocalDateTime;
 
 public class Notificacao {
     private Long id;
@@ -15,14 +15,15 @@ public class Notificacao {
     @SerializedName("anuncioId")
     private Long anuncioId;
 
+    // MUDOU AQUI: String em vez de LocalDateTime
     @SerializedName("dataEnvio")
-    private LocalDateTime dataEnvio;
+    private String dataEnvio;
 
     // Getters
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
-    public String getTitulo() { return titulo; }
-    public String getDescricao() { return descricao; }
+    public String getTitulo() { return titulo != null ? titulo : "Sem título"; }
+    public String getDescricao() { return descricao != null ? descricao : "Sem descrição"; }
     public Long getAnuncioId() { return anuncioId; }
-    public LocalDateTime getDataEnvio() { return dataEnvio; }
+    public String getDataEnvio() { return dataEnvio; }
 }

@@ -1,7 +1,9 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -13,6 +15,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -28,14 +31,19 @@ import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.AnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.ApiService;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
-public class AnuncioGuardadoActivity extends AppCompatActivity {
+public class AnuncioGuardadoActivity extends AppCompatActivity implements AnuncioAdapter.OnBookmarkClickListener {
 
     private CardView cardLocais, cardAnuncios, cardTabs;
     private TextView tabCriados, tabGuardados, tvLocation, tvEmptyGuardados;
@@ -57,10 +65,14 @@ public class AnuncioGuardadoActivity extends AppCompatActivity {
         setupClickListeners();
         setupTabs();
         setupSearch();
-        selectTab(false); // Começa na aba "Guardados"
+        selectTab(false);
 
-        // Inicializa lista de anúncios guardados
-        setupListaAnunciosGuardados();
+        // Inicializa lista vazia
+        listaAnunciosGuardados = new ArrayList<>();
+        setupRecyclerView();
+
+        // Carrega anúncios guardados da API
+        carregarAnunciosGuardados();
 
         // Localização atual
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -96,6 +108,94 @@ public class AnuncioGuardadoActivity extends AppCompatActivity {
 
         btnProfile = findViewById(R.id.btnProfile);
         btnNotification = findViewById(R.id.btnNotification);
+    }
+
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new AnuncioAdapter(this, listaAnunciosGuardados, this);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void carregarAnunciosGuardados() {
+        Long usuarioId = getUserIdFromSharedPreferences();
+        if (usuarioId == -1) {
+            Toast.makeText(this, "Usuário não identificado", Toast.LENGTH_SHORT).show();
+            atualizarVisibilidade();
+            return;
+        }
+
+        ApiService apiService = RetrofitClient.getApiService(this);
+        Call<List<AnuncioResponse>> call = apiService.listarAnunciosGuardados(usuarioId);
+
+        call.enqueue(new Callback<List<AnuncioResponse>>() {
+            @Override
+            public void onResponse(Call<List<AnuncioResponse>> call, Response<List<AnuncioResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    listaAnunciosGuardados.clear();
+                    for (AnuncioResponse anuncioResponse : response.body()) {
+                        listaAnunciosGuardados.add(anuncioResponse.toAnuncio());
+                    }
+                    adapter.notifyDataSetChanged();
+                    atualizarVisibilidade();
+                } else {
+                    Toast.makeText(AnuncioGuardadoActivity.this, "Erro ao carregar anúncios guardados", Toast.LENGTH_SHORT).show();
+                    atualizarVisibilidade();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<AnuncioResponse>> call, Throwable t) {
+                Toast.makeText(AnuncioGuardadoActivity.this, "Falha na conexão: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                atualizarVisibilidade();
+            }
+        });
+    }
+
+    // Implementação do OnBookmarkClickListener
+    @Override
+    public void onBookmarkClick(Anuncio anuncio, int position) {
+        removerAnuncioGuardado(anuncio, position);
+    }
+
+    private void removerAnuncioGuardado(Anuncio anuncio, int position) {
+        Long usuarioId = getUserIdFromSharedPreferences();
+        if (usuarioId == -1) {
+            Toast.makeText(this, "Usuário não identificado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (anuncio.id == null) {
+            Toast.makeText(this, "Anúncio sem ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ApiService apiService = RetrofitClient.getApiService(this);
+        Call<Void> call = apiService.removerAnuncioGuardado(usuarioId, anuncio.id);
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // Remove da lista local
+                    listaAnunciosGuardados.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    atualizarVisibilidade();
+                    Toast.makeText(AnuncioGuardadoActivity.this, "Anúncio removido dos guardados", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(AnuncioGuardadoActivity.this, "Erro ao remover anúncio", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(AnuncioGuardadoActivity.this, "Falha na conexão: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private Long getUserIdFromSharedPreferences() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        return prefs.getLong("userId", -1);
     }
 
     private void setupClickListeners() {
@@ -153,72 +253,6 @@ public class AnuncioGuardadoActivity extends AppCompatActivity {
         });
     }
 
-    private void setupListaAnunciosGuardados() {
-        listaAnunciosGuardados = new ArrayList<>();
-
-        // ANÚNCIOS SIMULADOS (todos com salvo = true)
-
-        // Anúncio 1: Pizza
-        Anuncio anuncio1 = new Anuncio(
-                "Pizza 50% OFF",
-                "Largo da Independência - Só hoje! Venha experimentar a melhor pizza de Luanda com ingredientes frescos. Entrega grátis no local.",
-                true, // SALVO
-                "Largo da Independência",
-                "",
-                "12/11/2025",
-                "12/11/2025",
-                "18:00",
-                "23:00",
-                "Whitelist",
-                "Centralizado"
-        );
-        anuncio1.addChave("Idade", Arrays.asList("18-24", "25-34"));
-        listaAnunciosGuardados.add(anuncio1);
-
-        // Anúncio 2: Terreno
-        Anuncio anuncio2 = new Anuncio(
-                "Terreno no Sun City",
-                "500m² com vista mar. Ideal para construção residencial. Preço negociável: 150.000 Kz.",
-                true, // SALVO
-                "Belas Shopping",
-                "",
-                "13/11/2025",
-                "30/11/2025",
-                "09:00",
-                "17:00",
-                "Blacklist",
-                "Descentralizado"
-        );
-        anuncio2.addChave("Interesses", Arrays.asList("Imóveis", "Investimentos"));
-        listaAnunciosGuardados.add(anuncio2);
-
-        // Anúncio 3: iPhone
-        Anuncio anuncio3 = new Anuncio(
-                "iPhone 15 Pro 256GB",
-                "Novo, lacrado, com nota fiscal. Cor: Titânio Preto. Inclui carregador original, cabo USB-C, fones AirPods Pro 2ª geração grátis.",
-                true, // SALVO
-                "Ginásio do Camama I",
-                "",
-                "12/11/2025",
-                "20/11/2025",
-                "10:00",
-                "20:00",
-                "Whitelist",
-                "Centralizado"
-        );
-        anuncio3.addChave("Gênero", Arrays.asList("Masculino", "Feminino"));
-        anuncio3.addChave("Interesses", Arrays.asList("Tecnologia"));
-        listaAnunciosGuardados.add(anuncio3);
-
-        // Setup RecyclerView
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new AnuncioAdapter(this, listaAnunciosGuardados);
-        recyclerView.setAdapter(adapter);
-
-        // Atualiza visibilidade
-        atualizarVisibilidade();
-    }
-
     private void filtrarAnuncios(String query) {
         if (adapter == null) return;
 
@@ -238,7 +272,7 @@ public class AnuncioGuardadoActivity extends AppCompatActivity {
         }
 
         // Atualiza adapter com lista filtrada
-        adapter = new AnuncioAdapter(this, listaFiltrada);
+        adapter = new AnuncioAdapter(this, listaFiltrada, this);
         recyclerView.setAdapter(adapter);
 
         // Atualiza visibilidade

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Anuncio implements Parcelable {
+
+    public Long id;
     public String titulo;
     public String descricao;  // Mensagem do anúncio
     public boolean salvo;     // Para bookmark na lista
@@ -27,9 +29,10 @@ public class Anuncio implements Parcelable {
     private Map<String, List<String>> chavesPerfil = new HashMap<>();
 
     // CONSTRUTOR PARA DADOS DE TESTE (mantido e expandido com novos campos)
-    public Anuncio(String titulo, String descricao, boolean salvo, String local, String imagem,
+    public Anuncio(Long id, String titulo, String descricao, boolean salvo, String local, String imagem,
                    String dataInicio, String dataFim, String horaInicio, String horaFim,
                    String tipoRestricao, String modoEntrega) {
+        this.id = id;
         this.titulo = titulo;
         this.descricao = descricao;
         this.salvo = salvo;
@@ -45,10 +48,10 @@ public class Anuncio implements Parcelable {
     }
 
     // CONSTRUTOR COMPLETO (para uso no AdicionarAnunciosActivity)
-    public Anuncio(String titulo, String descricao, String local, String imagem,
+    public Anuncio(Long id,String titulo, String descricao, String local, String imagem,
                    String dataInicio, String dataFim, String horaInicio, String horaFim,
                    String tipoRestricao, String modoEntrega) {
-        this(titulo, descricao, false, local, imagem, dataInicio, dataFim, horaInicio, horaFim, tipoRestricao, modoEntrega);
+        this(id ,titulo, descricao, false, local, imagem, dataInicio, dataFim, horaInicio, horaFim, tipoRestricao, modoEntrega);
     }
 
     // CONSTRUTOR DO PARCELABLE (atualizado com novos campos)

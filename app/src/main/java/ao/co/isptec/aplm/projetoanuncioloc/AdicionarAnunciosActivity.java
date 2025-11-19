@@ -716,7 +716,7 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         }
 
         Log.d(TAG, "Validações OK - Criando Anuncio");
-        Anuncio novoAnuncio = new Anuncio(titulo, mensagem, localSelecionado, caminhoImagem,
+        Anuncio novoAnuncio = new Anuncio(null, titulo, mensagem, localSelecionado, caminhoImagem,
                 dataInicio, dataFim, horaInicio, horaFim, restricao, modoEntrega);
         for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
             novoAnuncio.addChave(entry.getKey(), entry.getValue());

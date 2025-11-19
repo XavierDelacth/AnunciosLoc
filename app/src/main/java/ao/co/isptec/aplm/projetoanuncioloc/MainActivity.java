@@ -41,6 +41,7 @@ import java.util.Locale;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.MainAnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             obterLocalizacaoAtual();
         }
 
-        setupListaAnuncios();
+        carregarAnuncios();
 
         // Compatível com back gesture (Android 13+)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -289,41 +290,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupListaAnuncios() {
-        // Simula anúncios recebidos (baseado no PDF)
-        Anuncio anuncio1 = new Anuncio(
-                "Apartamento T2 para Arrendar - Vista Mar!",
-                "Excelente T2 mobilado no coração da cidade, perto do Largo da Independência. 2 quartos, cozinha equipada. Contacte via app!",
-                "Largo da Independência",
-                null,
-                "13/11/2025", "15/11/2025",
-                "09:00", "18:00",
-                "Whitelist",
-                "Centralizado"
-        );
-        anuncio1.addChave("Idade", Arrays.asList("18-30", "30-50"));
 
-        Anuncio anuncio2 = new Anuncio(
-                "Ginásio Camama I - Aulas Grátis Hoje!",
-                "Venha experimentar aulas de fitness no Ginásio do Camama I. Horário especial para novos membros.",
-                "Ginásio do Camama I",
-                null,
-                "13/11/2025", "13/11/2025",
-                "14:00", "20:00",
-                "Nenhuma",
-                "Descentralizado"
-        );
-        anuncio2.addChave("Gênero", Arrays.asList("Feminino", "Masculino"));
-        anuncio2.addChave("Interesse", Arrays.asList("Fitness", "Yoga"));
-
-        listaAnuncios.add(anuncio1);
-        listaAnuncios.add(anuncio2);
 
         // Setup RecyclerView
         rvAnunciosMain.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MainAnuncioAdapter(this, listaAnuncios);
+        adapter = new MainAnuncioAdapter(this, listaAnuncios, true, null); // ← MUDAR AQUI
         rvAnunciosMain.setAdapter(adapter);
 
-        // Atualiza visibilidade
         atualizarVisibilidade();
     }
 
@@ -445,33 +418,7 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void carregarAnuncios() {
-        Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
-        if (userId == -1) {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-            return;
-        }
 
-        // Chama API com userId
-        // Call<List<Anuncio>> call = RetrofitClient.getApiService(this).getAnuncios(userId);
-        /* call.enqueue(new Callback<List<Anuncio>>() {
-            @Override
-            public void onResponse(Call<List<Anuncio>> call, Response<List<Anuncio>> response) {
-                if (response.isSuccessful()) {
-                    listaAnuncios = response.body();
-                    adapter = new MainAnuncioAdapter(MainActivity.this, listaAnuncios);
-                    rvAnunciosMain.setAdapter(adapter);
-                    atualizarVisibilidade();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<Anuncio>> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
-            }
-        });*/
-    }
 
     private boolean isGPSEnabled() {
         try {
@@ -588,5 +535,100 @@ public class MainActivity extends AppCompatActivity {
                 == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                         == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void carregarAnuncios() {
+        Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
+        if (userId == -1) return;
+
+        // Inicializa o adapter com o listener de ações - MUDAR false para true
+        rvAnunciosMain.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new MainAnuncioAdapter(this, listaAnuncios, true, new MainAnuncioAdapter.OnActionClickListener() { // ← MUDAR AQUI
+            @Override
+            public void onEditClick(Anuncio anuncio, int position) {
+                // Implementar edição se necessário
+                Toast.makeText(MainActivity.this, "Editar: " + anuncio.titulo, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onDeleteClick(Anuncio anuncio, int position) {
+                // CHAMA O MÉTODO PARA ELIMINAR O ANÚNCIO
+                eliminarAnuncio(anuncio, position);
+            }
+
+            @Override
+            public void onSaveClick(Anuncio anuncio, int position) {
+                // Implementar salvar/guardar se necessário
+                Toast.makeText(MainActivity.this, "Guardar: " + anuncio.titulo, Toast.LENGTH_SHORT).show();
+            }
+        });
+        rvAnunciosMain.setAdapter(adapter);
+
+        // Resto do código para carregar anúncios...
+        Call<List<AnuncioResponse>> call = RetrofitClient.getApiService(this).getMeusAnuncios(userId);
+        call.enqueue(new Callback<List<AnuncioResponse>>() {
+            @Override
+            public void onResponse(Call<List<AnuncioResponse>> call, Response<List<AnuncioResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    listaAnuncios.clear();
+
+                    for (AnuncioResponse responseItem : response.body()) {
+                        Anuncio anuncio = responseItem.toAnuncio();
+                        listaAnuncios.add(anuncio);
+                    }
+
+                    adapter.notifyDataSetChanged();
+                    atualizarVisibilidade();
+                } else {
+                    Toast.makeText(MainActivity.this, "Erro ao carregar anúncios", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<AnuncioResponse>> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void eliminarAnuncio(Anuncio anuncio, int position) {
+        if (anuncio == null || anuncio.id == null) {
+            Toast.makeText(this, "Erro: Anúncio inválido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Mostra diálogo de confirmação
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Eliminar Anúncio")
+                .setMessage("Tem certeza que deseja eliminar o anúncio \"" + anuncio.titulo + "\"?")
+                .setPositiveButton("Eliminar", (dialog, which) -> {
+                    // Chama a API para eliminar
+                    chamarApiEliminarAnuncio(anuncio.id, position);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void chamarApiEliminarAnuncio(Long anuncioId, int position) {
+        Call<Void> call = RetrofitClient.getApiService(this).eliminarAnuncio(anuncioId);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    // Remove da lista local
+                    listaAnuncios.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    atualizarVisibilidade();
+                    Toast.makeText(MainActivity.this, "Anúncio eliminado com sucesso", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Erro ao eliminar anúncio", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
