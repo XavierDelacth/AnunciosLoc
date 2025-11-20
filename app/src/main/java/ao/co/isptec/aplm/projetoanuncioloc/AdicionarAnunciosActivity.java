@@ -3,6 +3,8 @@ package ao.co.isptec.aplm.projetoanuncioloc;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -27,6 +29,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -36,10 +39,14 @@ import java.util.Map;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.ApiService;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -856,8 +863,181 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
 
     private boolean salvarAnuncio(Anuncio anuncio) {
         Log.d(TAG, "salvarAnuncio chamado - Salvando: " + anuncio.titulo);
-        // TODO: Implementar salvamento no BD ou servidor
-        return true;
+
+        // Obter userId do SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
+
+        if (userId == -1L) {
+            Toast.makeText(this, "Erro: Usuário não logado", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // Buscar o ID do local selecionado
+        buscarLocalIdEEnviarAnuncio(anuncio, userId);
+        return true; // Retorna true pois o processo foi iniciado
+    }
+
+    private void buscarLocalIdEEnviarAnuncio(Anuncio anuncio, Long userId) {
+        ApiService apiService = RetrofitClient.getApiService(this);
+
+        Call<List<Local>> call = apiService.getTodosLocais();
+        call.enqueue(new Callback<List<Local>>() {
+            @Override
+            public void onResponse(Call<List<Local>> call, Response<List<Local>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Long localId = null;
+                    for (Local local : response.body()) {
+                        if (local.getNome().equals(anuncio.local)) {
+                            localId = local.getId();
+                            break;
+                        }
+                    }
+
+                    if (localId != null) {
+                        enviarAnuncioParaBackend(anuncio, userId, localId);
+                    } else {
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Local não encontrado", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(AdicionarAnunciosActivity.this,
+                            "Erro ao buscar local", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Local>> call, Throwable t) {
+                Toast.makeText(AdicionarAnunciosActivity.this,
+                        "Falha na rede ao buscar local", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void enviarAnuncioParaBackend(Anuncio anuncio, Long userId, Long localId) {
+        ApiService apiService = RetrofitClient.getApiService(this);
+
+        // Preparar os dados para multipart - CORRIGIDO conforme AnuncioResponse
+        RequestBody userIdBody = RequestBody.create(MediaType.parse("text/plain"), userId.toString());
+        RequestBody localIdBody = RequestBody.create(MediaType.parse("text/plain"), localId.toString());
+        RequestBody tituloBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.titulo);
+        RequestBody descricaoBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.descricao);
+        RequestBody dataInicioBody = RequestBody.create(MediaType.parse("text/plain"), formatarDataParaBackend(anuncio.dataInicio));
+        RequestBody dataFimBody = RequestBody.create(MediaType.parse("text/plain"), formatarDataParaBackend(anuncio.dataFim));
+        RequestBody horaInicioBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaInicio);
+        RequestBody horaFimBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaFim);
+        RequestBody policyTypeBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.tipoRestricao);
+        RequestBody modoEntregaBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.modoEntrega);
+
+        // Preparar chaves e valores do perfil - CORRIGIDO
+        List<MultipartBody.Part> perfilChaveParts = new ArrayList<>();
+        List<MultipartBody.Part> perfilValorParts = new ArrayList<>();
+
+        if (anuncio.getChavesPerfil() != null) {
+            for (Map.Entry<String, List<String>> entry : anuncio.getChavesPerfil().entrySet()) {
+                String chave = entry.getKey();
+                for (String valor : entry.getValue()) {
+                    perfilChaveParts.add(MultipartBody.Part.createFormData("perfilChave", chave));
+                    perfilValorParts.add(MultipartBody.Part.createFormData("perfilValor", valor));
+                }
+            }
+        }
+
+        // Preparar imagem se existir
+        MultipartBody.Part imagemPart = null;
+        if (caminhoImagem != null && !caminhoImagem.isEmpty() && !caminhoImagem.startsWith("http")) {
+            try {
+                File file = new File(getRealPathFromURI(Uri.parse(caminhoImagem)));
+                if (file.exists()) {
+                    RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+                    imagemPart = MultipartBody.Part.createFormData("imagem", file.getName(), requestFile);
+                    Log.d(TAG, "Imagem anexada: " + file.getAbsolutePath());
+                } else {
+                    Log.w(TAG, "Arquivo de imagem não encontrado: " + caminhoImagem);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao processar imagem: " + e.getMessage());
+            }
+        } else if (caminhoImagem != null && caminhoImagem.startsWith("http")) {
+            Log.d(TAG, "Imagem já é uma URL, não anexando ao multipart");
+        }
+
+        Log.d(TAG, "Enviando anúncio para backend...");
+        Log.d(TAG, "Título: " + anuncio.titulo);
+        Log.d(TAG, "Local ID: " + localId);
+        Log.d(TAG, "Chaves: " + perfilChaveParts.size());
+
+        Call<AnuncioResponse> call = apiService.criarAnuncio(
+                userIdBody, localIdBody, tituloBody, descricaoBody,
+                dataInicioBody, dataFimBody, horaInicioBody, horaFimBody,
+                policyTypeBody, modoEntregaBody, perfilChaveParts, perfilValorParts, imagemPart
+        );
+
+        call.enqueue(new Callback<AnuncioResponse>() {
+            @Override
+            public void onResponse(Call<AnuncioResponse> call, Response<AnuncioResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    AnuncioResponse anuncioResponse = response.body();
+                    Log.d(TAG, "Anúncio criado com sucesso! ID: " + anuncioResponse.getId());
+                    Toast.makeText(AdicionarAnunciosActivity.this,
+                            "Anúncio publicado com sucesso!", Toast.LENGTH_SHORT).show();
+
+                    // Retornar resultado para atualizar a lista na MainActivity
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("anuncio_criado", true);
+                    setResult(RESULT_OK, resultIntent);
+                    finish();
+                } else {
+                    try {
+                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
+                        Log.e(TAG, "Erro ao criar anúncio: " + response.code() + " - " + errorBody);
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Erro ao publicar anúncio: " + response.code() + " - " + errorBody, Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Erro ao ler errorBody: " + e.getMessage());
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Erro ao publicar anúncio: " + response.code(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AnuncioResponse> call, Throwable t) {
+                Log.e(TAG, "Falha ao criar anúncio: " + t.getMessage());
+                Toast.makeText(AdicionarAnunciosActivity.this,
+                        "Falha na rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
+    private String formatarDataParaBackend(String data) {
+        if (data == null || data.isEmpty() || data.equals("dd/mm/aaaa")) return "";
+
+        try {
+            // Converte de "dd/mm/aaaa" para "aaaa-mm-dd"
+            String[] partes = data.split("/");
+            if (partes.length == 3) {
+                return partes[2] + "-" + partes[1] + "-" + partes[0];
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao formatar data: " + data, e);
+        }
+        return data;
+    }
+
+    // Método auxiliar para obter o caminho real do arquivo
+    private String getRealPathFromURI(Uri contentUri) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if (cursor != null) {
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            String path = cursor.getString(column_index);
+            cursor.close();
+            return path;
+        }
+        return contentUri.getPath();
     }
 
     private void limparCampos() {

@@ -14,6 +14,7 @@ import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LoginRequest;
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -32,6 +33,24 @@ public interface ApiService {
 
     @POST("/api/users/login")
     Call<User> login(@Body LoginRequest request);
+
+    @Multipart
+    @POST("/api/anuncios")
+    Call<AnuncioResponse> criarAnuncio(
+            @Part("userId") RequestBody userId,
+            @Part("localId") RequestBody localId,
+            @Part("titulo") RequestBody titulo,
+            @Part("descricao") RequestBody descricao,
+            @Part("dataInicio") RequestBody dataInicio,
+            @Part("dataFim") RequestBody dataFim,
+            @Part("horaInicio") RequestBody horaInicio,
+            @Part("horaFim") RequestBody horaFim,
+            @Part("policyType") RequestBody policyType,
+            @Part("modoEntrega") RequestBody modoEntrega,
+            @Part List<MultipartBody.Part> perfilChave,
+            @Part List<MultipartBody.Part> perfilValor,
+            @Part MultipartBody.Part imagem
+    );
 
     @PATCH("/api/users/{id}/alterar-senha")
     Call<User> alterarSenha(@Path("id") Long id, @Body AlterarSenhaRequest request);
