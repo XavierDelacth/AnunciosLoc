@@ -16,6 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,24 +32,24 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-
 public class PerfilActivity extends AppCompatActivity {
 
-    public static List<ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey> allKeysStatic = new ArrayList<>();
-    public static Map<String, List<String>> mySelectedKeysStatic = new HashMap<>();
     // UI Components
-    private ImageButton btnLogout, btnEditUsername,btnBack,  btnSaveUsername, btnCancelUsername, btnAddKey;
+    private ImageButton btnLogout, btnEditUsername, btnBack, btnSaveUsername, btnCancelUsername, btnAddKey;
     private TextView tvUsername, btnTabMyKeys, btnTabPublicKeys;
     private EditText etUsername, etSearchKeys;
     private LinearLayout layoutUsername, layoutEditUsername, layoutEmptyState;
     private Button btnChangePassword;
     private RecyclerView rvKeys;
+
     // Data
-    private String username = "João Silva";
     private boolean isMyKeysTab = true;
     private ProfileKeyAdapter adapter;
     private List<ProfileKey> allKeys;
     private Map<String, List<String>> mySelectedKeys;
+
+    // Chave para SharedPreferences
+    private static final String PREFS_SELECTIONS = "my_profile_selections";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,11 +58,8 @@ public class PerfilActivity extends AppCompatActivity {
 
         initializeViews();
 
-
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         String username = prefs.getString("username", "Usuário");
-
-        // Mostra no TextView
         tvUsername.setText(username);
 
         // Validação de login
@@ -68,10 +69,11 @@ public class PerfilActivity extends AppCompatActivity {
             finish();
             return;
         }
+
         initializeData();
         setupRecyclerView();
         setupListeners();
-        updateKeysList();
+        carregarPerfisDoBackend();
     }
 
     private void initializeViews() {
@@ -86,7 +88,7 @@ public class PerfilActivity extends AppCompatActivity {
         layoutUsername = findViewById(R.id.layout_username);
         layoutEditUsername = findViewById(R.id.layout_edit_username);
         btnChangePassword = findViewById(R.id.btn_change_password);
-        btnBack = findViewById(R.id.btn_back);  // ← ADICIONA ESTA LINHA
+
         // Keys Section
         btnTabMyKeys = findViewById(R.id.tv_tab_my_keys);
         btnTabPublicKeys = findViewById(R.id.tv_tab_public_keys);
@@ -96,60 +98,44 @@ public class PerfilActivity extends AppCompatActivity {
         layoutEmptyState = findViewById(R.id.layout_empty_state);
     }
 
+    // ✅ CARREGA PERFIS DO BACKEND (CATÁLOGO PÚBLICO)
+    private void carregarPerfisDoBackend() {
+        Call<List<ProfileKey>> call = RetrofitClient.getApiService(this).getAllPerfis();
+        call.enqueue(new Callback<List<ProfileKey>>() {
+            @Override
+            public void onResponse(Call<List<ProfileKey>> call, Response<List<ProfileKey>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allKeys.clear();
+                    allKeys.addAll(response.body());
+
+                    // ✅ RESTAURA AS SELEÇÕES PESSOAIS DO USUÁRIO
+                    restaurarSelecoesPessoais();
+
+                    updateKeysList();
+                } else {
+                    Toast.makeText(PerfilActivity.this, "Erro ao carregar perfis", Toast.LENGTH_SHORT).show();
+                    updateKeysList();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ProfileKey>> call, Throwable t) {
+                Toast.makeText(PerfilActivity.this, "Falha na rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                updateKeysList();
+            }
+        });
+    }
+
+    // ✅ INICIALIZA DADOS
     private void initializeData() {
-        // Initialize my selected keys
-        mySelectedKeys = new HashMap<>();
-        List<String> clubValues = new ArrayList<>();
-        clubValues.add("Real Madrid");
-        mySelectedKeys.put("Clube", clubValues);
-
-        List<String> professionValues = new ArrayList<>();
-        professionValues.add("Estudante");
-        mySelectedKeys.put("Profissao", professionValues);
-
-        List<String> interestValues = new ArrayList<>();
-        interestValues.add("Tecnologia");
-        interestValues.add("Música");
-        mySelectedKeys.put("Interesse", interestValues);
-
-        // Initialize all available keys
         allKeys = new ArrayList<>();
-        allKeys.add(createKey("Clube", new String[]{
-                "Real Madrid", "Barcelona", "1º de Agosto", "Petro de Luanda", "Benfica", "Porto"
-        }));
-        allKeys.add(createKey("Profissao", new String[]{
-                "Estudante", "Professor", "Engenheiro", "Médico", "Designer", "Programador"
-        }));
-        allKeys.add(createKey("Cidade", new String[]{
-                "Luanda", "Benguela", "Huambo", "Lobito", "Namibe", "Lubango"
-        }));
-        allKeys.add(createKey("Interesse", new String[]{
-                "Tecnologia", "Desporto", "Música", "Cinema", "Livros", "Viagens"
-        }));
+        mySelectedKeys = new HashMap<>();
 
-        allKeysStatic.clear();
-        allKeysStatic.addAll(allKeys); // COPIA PARA STATIC
-
-        mySelectedKeysStatic.clear();
-        mySelectedKeysStatic.putAll(mySelectedKeys);
+        // Carrega seleções salvas do usuário
+        carregarSelecoesSalvas();
     }
 
-    private ProfileKey createKey(String name, String[] values) {
-        ProfileKey key = new ProfileKey(name);
-        List<String> availableValues = new ArrayList<>();
-        for (String value : values) {
-            availableValues.add(value);
-        }
-        key.setAvailableValues(availableValues);
-
-        // Set selected values if exist
-        if (mySelectedKeys.containsKey(name)) {
-            key.setSelectedValues(mySelectedKeys.get(name));
-        }
-
-        return key;
-    }
-
+    // ✅ CONFIGURA RECYCLERVIEW
     private void setupRecyclerView() {
         adapter = new ProfileKeyAdapter(this, new ArrayList<>(), isMyKeysTab);
         adapter.setOnValueClickListener((keyName, value) -> {
@@ -160,18 +146,18 @@ public class PerfilActivity extends AppCompatActivity {
         rvKeys.setAdapter(adapter);
     }
 
+    // ✅ CONFIGURA LISTENERS
     private void setupListeners() {
         // Logout
         btnLogout.setOnClickListener(v -> logout());
 
-        // Em setupListeners() do PerfilActivity.java
+        // Change Password
         btnChangePassword.setOnClickListener(v -> {
             Intent intent = new Intent(PerfilActivity.this, AlterarSenhaActivity.class);
             startActivity(intent);
         });
 
         // Edit Username
-        // Em setupListeners()
         btnEditUsername.setOnClickListener(v -> {
             layoutUsername.setVisibility(View.GONE);
             layoutEditUsername.setVisibility(View.VISIBLE);
@@ -188,70 +174,35 @@ public class PerfilActivity extends AppCompatActivity {
             String novoNome = etUsername.getText().toString().trim();
             if (!novoNome.isEmpty()) {
                 tvUsername.setText(novoNome);
+                // Aqui você pode salvar o novo nome no backend se quiser
             }
             layoutEditUsername.setVisibility(View.GONE);
             layoutUsername.setVisibility(View.VISIBLE);
         });
 
-        // Change Password
-        btnChangePassword.setOnClickListener(v -> showPasswordDialog());
-
         // Tabs
         btnTabMyKeys.setOnClickListener(v -> switchTab(true));
         btnTabPublicKeys.setOnClickListener(v -> switchTab(false));
 
-        // Dentro de setupListeners()
-        btnBack.setOnClickListener(v -> finish());  // ← VOLTA PARA A TELA ANTERIOR
+        // Back
+        btnBack.setOnClickListener(v -> finish());
+
         // Search
         etSearchKeys.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterKeys(s.toString());
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
         });
 
         // Add Key
-        btnAddKey.setOnClickListener(v -> showAddKeyDialog());  // ← ADICIONA ESTA LINHA!
+        btnAddKey.setOnClickListener(v -> showAddKeyDialog());
     }
 
-    private void showEditUsername() {
-        layoutUsername.setVisibility(View.GONE);
-        layoutEditUsername.setVisibility(View.VISIBLE);
-        etUsername.setText(username);
-        etUsername.requestFocus();
-    }
-
-    private void saveUsername() {
-        String newUsername = etUsername.getText().toString().trim();
-        if (newUsername.isEmpty()) {
-            Toast.makeText(this, "Nome não pode estar vazio", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        username = newUsername;
-        tvUsername.setText(username);
-        cancelEditUsername();
-        Toast.makeText(this, "Nome atualizado", Toast.LENGTH_SHORT).show();
-    }
-
-    private void cancelEditUsername() {
-        layoutUsername.setVisibility(View.VISIBLE);
-        layoutEditUsername.setVisibility(View.GONE);
-    }
-
-    private void showPasswordDialog() {
-        // Agora abre a Activity em vez do DialogFragment
-        Intent intent = new Intent(PerfilActivity.this, AlterarSenhaActivity.class);
-        startActivity(intent);
-    }
-
+    // ✅ ALTERA ENTRE ABAS
     private void switchTab(boolean isMyKeys) {
         isMyKeysTab = isMyKeys;
 
@@ -272,26 +223,25 @@ public class PerfilActivity extends AppCompatActivity {
         updateKeysList();
     }
 
-
+    // ✅ ATUALIZA LISTA DE CHAVES
     private void updateKeysList() {
-        List<ProfileKey> displayKeys;
+        List<ProfileKey> displayKeys = new ArrayList<>();
 
         if (isMyKeysTab) {
-            // Show only keys with selected values
-            displayKeys = new ArrayList<>();
+            // Mostra apenas chaves com valores selecionados
             for (ProfileKey key : allKeys) {
                 if (!key.getSelectedValues().isEmpty()) {
                     displayKeys.add(key);
                 }
             }
         } else {
-            // Show all keys
-            displayKeys = new ArrayList<>(allKeys);
+            // Mostra todas as chaves
+            displayKeys.addAll(allKeys);
         }
 
         adapter.updateKeys(displayKeys);
 
-        // Show/hide empty state
+        // Mostra/oculta estado vazio
         if (displayKeys.isEmpty()) {
             layoutEmptyState.setVisibility(View.VISIBLE);
             rvKeys.setVisibility(View.GONE);
@@ -301,6 +251,7 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
+    // ✅ FILTRA CHAVES NA BUSCA
     private void filterKeys(String query) {
         List<ProfileKey> filtered = new ArrayList<>();
 
@@ -325,32 +276,28 @@ public class PerfilActivity extends AppCompatActivity {
         adapter.updateKeys(filtered);
     }
 
+    // ✅ ALTERA SELEÇÃO DE VALORES
     private void toggleValueSelection(String keyName, String value) {
         for (ProfileKey key : allKeys) {
             if (key.getName().equals(keyName)) {
-                List<String> selected = key.getSelectedValues();
-                if (selected.contains(value)) {
-                    selected.remove(value);
+                if (key.getSelectedValues().contains(value)) {
+                    key.getSelectedValues().remove(value);
                 } else {
-                    selected.add(value);
+                    key.getSelectedValues().add(value);
                 }
 
-                // Update map
-                if (selected.isEmpty()) {
+                // Atualiza mapa de seleções
+                if (key.getSelectedValues().isEmpty()) {
                     mySelectedKeys.remove(keyName);
                 } else {
-                    mySelectedKeys.put(keyName, selected);
+                    mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
                 }
 
-                if (selected.isEmpty()) {
-                    mySelectedKeysStatic.remove(keyName);
-                } else {
-                    mySelectedKeysStatic.put(keyName, new ArrayList<>(selected));
-                }
+                // ✅ SALVA SELEÇÕES LOCALMENTE
+                salvarSelecoes();
 
                 adapter.notifyDataSetChanged();
 
-                // Update list if in my keys tab
                 if (isMyKeysTab) {
                     updateKeysList();
                 }
@@ -358,33 +305,122 @@ public class PerfilActivity extends AppCompatActivity {
             }
         }
     }
+
+    // ✅ ADICIONA NOVA CHAVE PÚBLICA
     private void showAddKeyDialog() {
         AdicionarKeyDialog dialog = AdicionarKeyDialog.newInstance(allKeys, mySelectedKeys);
         dialog.setOnKeyAddedListener((keyName, values) -> {
-            ProfileKey existingKey = findKeyByName(keyName);
-            if (existingKey == null) {
-                existingKey = new ProfileKey(keyName, values);
-                allKeys.add(existingKey);
-                allKeysStatic.add(existingKey); // SALVA NA STATIC
-            } else {
-                existingKey.getAvailableValues().addAll(values);
-            }
-            updateKeysList();
-            Toast.makeText(this, "Chave adicionada!", Toast.LENGTH_SHORT).show();
+            salvarNovaChaveNoBackend(keyName, values);
         });
         dialog.show(getSupportFragmentManager(), "AddKeyDialog");
     }
 
+    // ✅ SALVA NOVA CHAVE NO BACKEND (CATÁLOGO PÚBLICO)
+    private void salvarNovaChaveNoBackend(String keyName, List<String> values) {
+        ProfileKey existingKey = findKeyByName(keyName);
 
+        if (existingKey == null) {
+            // Chave nova - cria no catálogo público
+            Map<String, Object> request = new HashMap<>();
+            request.put("chave", keyName);
+            request.put("valores", values);
+
+            Call<ProfileKey> call = RetrofitClient.getApiService(this).criarPerfil(request);
+            call.enqueue(new Callback<ProfileKey>() {
+                @Override
+                public void onResponse(Call<ProfileKey> call, Response<ProfileKey> response) {
+                    if (response.isSuccessful()) {
+                        // Recarrega o catálogo público
+                        carregarPerfisDoBackend();
+                        Toast.makeText(PerfilActivity.this, "Chave pública adicionada!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(PerfilActivity.this, "Erro ao criar chave", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ProfileKey> call, Throwable t) {
+                    Toast.makeText(PerfilActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // Chave existente - adiciona valores ao catálogo público
+            Call<ProfileKey> call = RetrofitClient.getApiService(this).adicionarValores(keyName, values);
+            call.enqueue(new Callback<ProfileKey>() {
+                @Override
+                public void onResponse(Call<ProfileKey> call, Response<ProfileKey> response) {
+                    if (response.isSuccessful()) {
+                        // Recarrega o catálogo público
+                        carregarPerfisDoBackend();
+                        Toast.makeText(PerfilActivity.this, "Valores adicionados à chave pública!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(PerfilActivity.this, "Erro ao adicionar valores", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ProfileKey> call, Throwable t) {
+                    Toast.makeText(PerfilActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    // ✅ BUSCA CHAVE POR NOME
     private ProfileKey findKeyByName(String keyName) {
         for (ProfileKey key : allKeys) {
             if (key.getName().equals(keyName)) {
                 return key;
             }
         }
-        return null;  // Não encontrou a chave
+        return null;
     }
 
+    // ✅ 🎯 MÉTODOS CRÍTICOS: GERENCIAMENTO DE SELEÇÕES PESSOAIS
+
+    // CARREGA SELEÇÕES SALVAS DO USUÁRIO
+    private void carregarSelecoesSalvas() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE);
+        String json = prefs.getString("selections", "{}");
+
+        Gson gson = new Gson();
+        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+        Map<String, List<String>> savedSelections = gson.fromJson(json, type);
+
+        if (savedSelections != null) {
+            mySelectedKeys.clear();
+            mySelectedKeys.putAll(savedSelections);
+        }
+    }
+
+    // SALVA SELEÇÕES DO USUÁRIO LOCALMENTE
+    private void salvarSelecoes() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = gson.toJson(mySelectedKeys);
+
+        prefs.edit().putString("selections", json).apply();
+    }
+
+    // RESTAURA SELEÇÕES PESSOAIS NAS CHAVES PÚBLICAS
+    private void restaurarSelecoesPessoais() {
+        for (ProfileKey key : allKeys) {
+            // Limpa seleções anteriores e restaura as salvas
+            key.setSelectedValues(new ArrayList<>());
+
+            if (mySelectedKeys.containsKey(key.getName())) {
+                List<String> valoresSelecionados = mySelectedKeys.get(key.getName());
+                // Apenas adiciona valores que existem na chave pública
+                for (String valor : valoresSelecionados) {
+                    if (key.getAvailableValues().contains(valor)) {
+                        key.getSelectedValues().add(valor);
+                    }
+                }
+            }
+        }
+    }
+
+    // ✅ LOGOUT
     private void logout() {
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
@@ -397,10 +433,13 @@ public class PerfilActivity extends AppCompatActivity {
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
-                prefs.edit().clear().apply();  // LIMPA SHARED PREFS
+                prefs.edit().clear().apply();
+                // Também limpa as seleções locais se quiser
+                // getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE).edit().clear().apply();
+
                 Toast.makeText(PerfilActivity.this, "Logout realizado com sucesso!", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(PerfilActivity.this, LoginActivity.class));
-                finishAffinity();  // Fecha todas as telas
+                finishAffinity();
             }
 
             @Override
@@ -409,5 +448,4 @@ public class PerfilActivity extends AppCompatActivity {
             }
         });
     }
-
 }

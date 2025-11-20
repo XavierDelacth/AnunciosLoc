@@ -1,20 +1,28 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Service;
-
+import java.util.Map;
 import java.util.List;
 
-import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LoginRequest;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -77,4 +85,79 @@ public interface ApiService {
     // Eliminar Anúncio
     @DELETE("/api/anuncios/{id}")
     Call<Void> eliminarAnuncio(@Path("id") Long id);
+
+    // 🔹 PERFIS - Compatível com seu backend
+    @GET("/api/perfis")
+    Call<List<ProfileKey>> getAllPerfis();
+
+    @GET("/api/perfis/chave/{chave}")
+    Call<ProfileKey> getPerfilPorChave(@Path("chave") String chave);
+
+    @GET("/api/perfis/search")
+    Call<List<ProfileKey>> searchPerfis(@Query("q") String query);
+
+    @POST("/api/perfis")
+    Call<ProfileKey> criarPerfil(@Body Map<String, Object> request);
+
+    @POST("/api/perfis/object")
+    Call<ProfileKey> criarPerfilComObjeto(@Body ProfileKey perfil);
+
+    @PATCH("/api/perfis/chave/{chave}/valores")
+    Call<ProfileKey> adicionarValores(@Path("chave") String chave, @Body List<String> valores);
+
+    @DELETE("/api/perfis/chave/{chave}/valor/{valor}")
+    Call<ProfileKey> removerValor(@Path("chave") String chave, @Path("valor") String valor);
+
+    @DELETE("/api/perfis/chave/{chave}")
+    Call<String> removerPerfilPorChave(@Path("chave") String chave);
+
+    @Multipart
+    @POST("/api/anuncios")
+    Call<AnuncioResponse> criarAnuncio(
+            @Part("userId") retrofit2.http.Body userId,
+            @Part("localId") retrofit2.http.Body localId,
+            @Part("titulo") retrofit2.http.Body titulo,
+            @Part("descricao") retrofit2.http.Body descricao,
+            @Part("dataInicio") retrofit2.http.Body dataInicio,
+            @Part("dataFim") retrofit2.http.Body dataFim,
+            @Part("horaInicio") retrofit2.http.Body horaInicio,
+            @Part("horaFim") retrofit2.http.Body horaFim,
+            @Part("policyType") retrofit2.http.Body policyType,
+            @Part("modoEntrega") retrofit2.http.Body modoEntrega,
+            @Part List<MultipartBody.Part> perfilChave,
+            @Part List<MultipartBody.Part> perfilValor,
+            @Part MultipartBody.Part imagem
+    );
+
+    @Multipart
+    @PUT("/api/anuncios/{id}")
+    Call<AnuncioResponse> atualizarAnuncio(
+            @Path("id") Long id,
+            @Part("userId") retrofit2.http.Body userId,
+            @Part("localId") retrofit2.http.Body localId,
+            @Part("titulo") retrofit2.http.Body titulo,
+            @Part("descricao") retrofit2.http.Body descricao,
+            @Part("dataInicio") retrofit2.http.Body dataInicio,
+            @Part("dataFim") retrofit2.http.Body dataFim,
+            @Part("horaInicio") retrofit2.http.Body horaInicio,
+            @Part("horaFim") retrofit2.http.Body horaFim,
+            @Part("policyType") retrofit2.http.Body policyType,
+            @Part("modoEntrega") retrofit2.http.Body modoEntrega,
+            @Part List<MultipartBody.Part> perfilChave,
+            @Part List<MultipartBody.Part> perfilValor,
+            @Part MultipartBody.Part imagem
+    );
+
+    // Buscar anúncios próximos (centralizado)
+    @GET("/api/anuncios/centralizado/proximos")
+    Call<List<AnuncioResponse>> buscarAnunciosProximos(
+            @Query("userId") Long userId,
+            @Query("lat") Double lat,
+            @Query("lng") Double lng,
+            @Query("distanciaKm") Double distanciaKm
+    );
+
+    // Obter anúncio por ID
+    @GET("/api/anuncios/{id}")
+    Call<AnuncioResponse> getAnuncioPorId(@Path("id") Long id);
 }

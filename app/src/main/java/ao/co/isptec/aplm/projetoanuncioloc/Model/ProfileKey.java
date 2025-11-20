@@ -1,49 +1,55 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Model;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProfileKey {
+    @SerializedName("id")
+    private Long id;
+
+    @SerializedName("chave")
     private String name;
+
+    @SerializedName("valores")
     private List<String> availableValues;
+
     private List<String> selectedValues;
 
-    public ProfileKey(String name) {
-        this.name = name;
+    public ProfileKey() {
         this.availableValues = new ArrayList<>();
         this.selectedValues = new ArrayList<>();
     }
 
+    public ProfileKey(String name) {
+        this();
+        this.name = name;
+    }
+
     public ProfileKey(String name, List<String> availableValues) {
+        this();
         this.name = name;
         this.availableValues = availableValues != null ? availableValues : new ArrayList<>();
-        this.selectedValues = new ArrayList<>();
     }
 
-    public String getName() {
-        return name;
-    }
+    // Getters e Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public List<String> getAvailableValues() {
-        return availableValues;
-    }
-
+    public List<String> getAvailableValues() { return availableValues; }
     public void setAvailableValues(List<String> availableValues) {
         this.availableValues = availableValues != null ? availableValues : new ArrayList<>();
     }
 
-    public List<String> getSelectedValues() {
-        return selectedValues;
-    }
-
+    public List<String> getSelectedValues() { return selectedValues; }
     public void setSelectedValues(List<String> selectedValues) {
         this.selectedValues = selectedValues != null ? selectedValues : new ArrayList<>();
     }
 
+    // Métodos auxiliares
     public boolean isValueSelected(String value) {
         return selectedValues.contains(value);
     }
