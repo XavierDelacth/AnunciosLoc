@@ -129,6 +129,8 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
 
         // Se está em modo edição, preenche os campos
         if (modoEdicao && anuncioParaEditar != null) {
+            tvTituloTela.setText("Editar Anúncio");
+            btnPublicar.setText("Actualizar");
             preencherDadosParaEdicao();
         } else {
             resetarDataHora(tvDataInicio, "dd/mm/aaaa");
@@ -418,7 +420,12 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     private void setupClickListeners() {
         Log.d(TAG, "setupClickListeners chamado");
 
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(v -> {
+            if (modoEdicao) {
+                setResult(RESULT_CANCELED);
+            }
+            finish();
+        });
 
         if (btnAddLocation != null) {
             btnAddLocation.setOnClickListener(v -> {

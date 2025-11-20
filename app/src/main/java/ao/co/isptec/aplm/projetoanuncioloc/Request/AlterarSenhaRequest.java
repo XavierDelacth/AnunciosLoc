@@ -1,4 +1,4 @@
-package ao.co.isptec.aplm.projetoanuncioloc.Model;
+package ao.co.isptec.aplm.projetoanuncioloc.Request;
 
 public class AlterarSenhaRequest {
     private String senhaAtual;

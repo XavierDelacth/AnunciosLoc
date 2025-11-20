@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,6 +39,11 @@ public class NotificacoesActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         btnClearNotifications.setOnClickListener(v -> limparNotificacoes());
+
+        ImageView btnClose = findViewById(R.id.btnClose);
+        btnClose.setOnClickListener(v -> {
+            finish(); // volta para trás
+        });
 
         // Configurar o adapter com o listener de guardar
         adapter = new NotificacaoAdapter(this, listaNotificacoes, new NotificacaoAdapter.OnSaveClickListener() {

@@ -15,6 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.DialogFragment;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
+
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 
 
@@ -87,6 +92,19 @@ public class VisualizarAnuncioDialog extends DialogFragment {
 
         title.setText(anuncio.titulo);
         content.setText(anuncio.descricao);
+
+        String urlImagem = anuncio.getImagemUrl();  // ou anuncio.imagem
+
+        if (urlImagem != null && !urlImagem.isEmpty()) {
+            Glide.with(requireContext())
+                    .load(urlImagem)
+                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(32)))
+                    .placeholder(R.drawable.espaco_image)
+                    .error(R.drawable.espaco_image)
+                    .into(img);  // <--- este é o teu ImageView (id: img_announcement)
+        } else {
+            img.setImageResource(R.drawable.espaco_image);
+        }
 
         // === BOTÃO VOLTAR (seta verde) ===
         ImageButton btnBack = view.findViewById(R.id.btn_back);

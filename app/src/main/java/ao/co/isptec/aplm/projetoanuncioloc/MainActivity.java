@@ -48,7 +48,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
-
+    public static final int REQUEST_CODE_EDITAR_ANUNCIO = 1001;
     private CardView cardLocais, cardAnuncios;
     private TextView tabCriados, tabGuardados, tvLocation, tvEmptyAnuncios;
     private ImageView btnProfile, btnNotification;
@@ -455,6 +455,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == REQUEST_CODE_EDITAR_ANUNCIO && resultCode == RESULT_OK) {
+            // Atualiza a lista completa (mais seguro)
+            carregarAnuncios();  // já tens este método, só chama de novo
+        }
+
         if (requestCode == REQUEST_ENABLE_GPS) {
             // Usuário voltou das configurações de GPS
             if (isGPSEnabled()) {
@@ -595,45 +600,67 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+
     private void eliminarAnuncio(Anuncio anuncio, int position) {
         if (anuncio == null || anuncio.id == null) {
+            Log.e("ELIMINAR_ANUNCIO", "ERRO: Anúncio nulo ou sem ID!");
             Toast.makeText(this, "Erro: Anúncio inválido", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Mostra diálogo de confirmação
+        Log.d("ELIMINAR_ANUNCIO", "=== INICIANDO ELIMINAÇÃO ===");
+        Log.d("ELIMINAR_ANUNCIO", "Título: " + anuncio.titulo);
+        Log.d("ELIMINAR_ANUNCIO", "ID do anúncio: " + anuncio.id);
+        Log.d("ELIMINAR_ANUNCIO", "Posição na lista: " + position);
+
         new android.app.AlertDialog.Builder(this)
                 .setTitle("Eliminar Anúncio")
                 .setMessage("Tem certeza que deseja eliminar o anúncio \"" + anuncio.titulo + "\"?")
                 .setPositiveButton("Eliminar", (dialog, which) -> {
-                    // Chama a API para eliminar
-                    chamarApiEliminarAnuncio(anuncio.id, position);
+                    Log.d("ELIMINAR_ANUNCIO", "Usuário confirmou eliminação. Chamando API...");
+
+                    Call<Void> call = RetrofitClient.getApiService(this).eliminarAnuncio(anuncio.id);
+                    call.enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(Call<Void> call, Response<Void> response) {
+                            Log.d("ELIMINAR_ANUNCIO", "Resposta do servidor recebida. Código HTTP: " + response.code());
+
+                            if (response.isSuccessful()) {
+                                Log.d("ELIMINAR_ANUNCIO", "SUCESSO! Anúncio eliminado no servidor.");
+
+                                listaAnuncios.remove(position);
+                                adapter.notifyItemRemoved(position);
+                                adapter.notifyItemRangeChanged(position, listaAnuncios.size());
+
+                                Toast.makeText(MainActivity.this, "Anúncio eliminado com sucesso!", Toast.LENGTH_LONG).show();
+                                atualizarVisibilidade(); // ou atualizarVisibilidadeListaVazia()
+
+                                Log.d("ELIMINAR_ANUNCIO", "UI atualizada. Anúncio removido da posição " + position);
+                            } else {
+                                Log.e("ELIMINAR_ANUNCIO", "FALHA no servidor! Código: " + response.code());
+                                Log.e("ELIMINAR_ANUNCIO", "Mensagem: " + response.message());
+                                Toast.makeText(MainActivity.this,
+                                        "Erro do servidor: " + response.code() + " " + response.message(),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<Void> call, Throwable t) {
+                            Log.e("ELIMINAR_ANUNCIO", "FALHA TOTAL: Sem ligação ou erro de rede");
+                            Log.e("ELIMINAR_ANUNCIO", "Erro: " + t.getClass().getSimpleName() + " - " + t.getMessage());
+                            t.printStackTrace();
+
+                            Toast.makeText(MainActivity.this,
+                                    "Sem ligação à internet ou servidor offline", Toast.LENGTH_LONG).show();
+                        }
+                    });
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton("Cancelar", (dialog, which) -> {
+                    Log.d("ELIMINAR_ANUNCIO", "Usuário cancelou a eliminação");
+                })
                 .show();
-    }
-
-    private void chamarApiEliminarAnuncio(Long anuncioId, int position) {
-        Call<Void> call = RetrofitClient.getApiService(this).eliminarAnuncio(anuncioId);
-        call.enqueue(new Callback<Void>() {
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
-                    // Remove da lista local
-                    listaAnuncios.remove(position);
-                    adapter.notifyItemRemoved(position);
-                    atualizarVisibilidade();
-                    Toast.makeText(MainActivity.this, "Anúncio eliminado com sucesso", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MainActivity.this, "Erro ao eliminar anúncio", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
 

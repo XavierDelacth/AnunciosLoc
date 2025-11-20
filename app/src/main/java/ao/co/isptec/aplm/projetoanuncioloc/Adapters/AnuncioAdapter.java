@@ -10,6 +10,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.util.List;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
@@ -44,6 +49,20 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         Anuncio a = lista.get(position);
         holder.tvTitulo.setText(a.titulo);
         holder.tvDescricao.setText(a.descricao);
+
+        String urlImagem = a.getImagemUrl();
+
+        if (urlImagem != null && !urlImagem.isEmpty()) {
+            Glide.with(context)
+                    .load(urlImagem)
+                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
+                    .placeholder(R.drawable.espaco_image)
+                    .error(R.drawable.espaco_image)
+                    .into(holder.imgAnuncio);
+        } else {
+            // Se não tiver imagem, mostra o placeholder normal
+            holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
+        }
 
         // BOOKMARK NA LISTA (sempre salvo = true na tela de guardados)
         holder.btnSalvar.setImageResource(R.drawable.ic_bookmark_salvo);
@@ -91,13 +110,14 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
     // VIEWHOLDER
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvDescricao;
-        ImageView btnSalvar;
+        ImageView btnSalvar,imgAnuncio;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tv_titulo);
             tvDescricao = itemView.findViewById(R.id.tv_descricao);
             btnSalvar = itemView.findViewById(R.id.btn_salvar);
+            imgAnuncio = itemView.findViewById(R.id.img_anuncio);
         }
     }
 }

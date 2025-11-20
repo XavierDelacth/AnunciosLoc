@@ -21,6 +21,11 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -152,6 +157,18 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
         tvTitle.setText(anuncio.titulo);
         tvContent.setText(anuncio.descricao);
 
+        String urlImagem = anuncio.getImagemUrl();
+        if (urlImagem != null && !urlImagem.isEmpty()) {
+            Glide.with(this)
+                    .load(urlImagem)
+                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(32)))
+                    .placeholder(R.drawable.espaco_image)
+                    .error(R.drawable.espaco_image)
+                    .into(imgAnnouncement);
+        } else {
+            imgAnnouncement.setImageResource(R.drawable.espaco_image);
+        }
+
         // Imagem
         if (anuncio.imagem != null && !anuncio.imagem.isEmpty()) {
             try {
@@ -186,81 +203,62 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
     }
 
     private void setupChaves() {
-        Log.d(TAG, "=== Iniciando setupChaves ===");
+        Log.d(TAG, "=== INICIANDO SETUP DE RESTRIÇÕES ===");
 
         if (anuncio == null) {
-            Log.e(TAG, "Anúncio é null!");
+            Log.e(TAG, "ERRO: Anúncio é NULL!");
             mostrarEmptyState();
             return;
         }
+
+        // LOG 1: Verifica se o mapa chavesPerfil existe
+        Log.d(TAG, "chavesPerfil do anúncio: " + anuncio.getChavesPerfil());
 
         Map<String, List<String>> chavesMap = anuncio.getChavesPerfil();
 
-        if (chavesMap == null || chavesMap.isEmpty()) {
-            Log.d(TAG, "Sem chaves configuradas");
+        if (chavesMap == null) {
+            Log.e(TAG, "chavesPerfil é NULL! O backend não enviou nada.");
             mostrarEmptyState();
             return;
         }
+
+        if (chavesMap.isEmpty()) {
+            Log.w(TAG, "chavesPerfil está VAZIO! Backend enviou mapa vazio.");
+            mostrarEmptyState();
+            return;
+        }
+
+        Log.d(TAG, "SUCESSO! Recebidas " + chavesMap.size() + " chaves do servidor:");
 
         allKeys.clear();
         chavesFiltradas.clear();
 
-        Log.d(TAG, "Processando " + chavesMap.size() + " chaves do anúncio");
+        for (Map.Entry<String, List<String>> entry : chavesMap.entrySet()) {
+            String chave = entry.getKey();
+            List<String> valores = entry.getValue();
 
-        // Carrega as chaves públicas disponíveis
-        List<ProfileKey> chavesPublicas = carregarChavesPublicas();
+            Log.d(TAG, "   → Chave: '" + chave + "' | Valores: " + valores);
 
-        // Marca os valores que foram selecionados no anúncio
-        for (ProfileKey chavePublica : chavesPublicas) {
-            String nomeChave = chavePublica.getName();
-
-            Log.d(TAG, "Verificando chave pública: " + nomeChave);
-
-            // Verifica se esta chave foi usada no anúncio
-            if (chavesMap.containsKey(nomeChave)) {
-                List<String> valoresSelecionados = chavesMap.get(nomeChave);
-                Log.d(TAG, "  Encontrada no anúncio! Valores do anúncio: " + valoresSelecionados);
-
-                if (valoresSelecionados != null && !valoresSelecionados.isEmpty()) {
-                    // Cria uma cópia da chave com TODOS os valores disponíveis
-                    ProfileKey key = new ProfileKey(nomeChave, new ArrayList<>(chavePublica.getAvailableValues()));
-
-                    // CRÍTICO: Limpa qualquer seleção anterior
-                    key.getSelectedValues().clear();
-
-                    Log.d(TAG, "  Valores disponíveis na chave: " + key.getAvailableValues());
-
-                    // Adiciona apenas os valores que realmente existem e foram selecionados
-                    for (String valorSelecionado : valoresSelecionados) {
-                        if (key.getAvailableValues().contains(valorSelecionado)) {
-                            key.getSelectedValues().add(valorSelecionado);
-                            Log.d(TAG, "    ✓ Valor selecionado adicionado: " + valorSelecionado);
-                        } else {
-                            Log.w(TAG, "    ✗ Valor '" + valorSelecionado + "' NÃO existe nos valores disponíveis! Ignorando.");
-                        }
-                    }
-
-                    allKeys.add(key);
-                    Log.d(TAG, "  ✓ Chave adicionada com " + key.getSelectedValues().size() + " valores realmente selecionados");
-                    Log.d(TAG, "  Seleções finais: " + key.getSelectedValues());
-                } else {
-                    Log.d(TAG, "  Valores null ou vazios - ignorando");
-                }
-            } else {
-                Log.d(TAG, "  Não foi usada no anúncio - ignorando");
+            if (valores == null || valores.isEmpty()) {
+                Log.w(TAG, "   Valores nulos ou vazios para a chave: " + chave);
+                continue;
             }
+
+            ProfileKey key = new ProfileKey(chave, new ArrayList<>(valores));
+            key.getSelectedValues().addAll(valores);
+
+            allKeys.add(key);
+            Log.d(TAG, "   Adicionada ao dialog: " + chave + " → " + valores);
         }
 
         if (allKeys.isEmpty()) {
-            Log.d(TAG, "Nenhuma chave configurada");
+            Log.e(TAG, "NENHUMA chave válida após processamento! Empty state será mostrado.");
             mostrarEmptyState();
-            return;
+        } else {
+            Log.d(TAG, "TOTAL DE " + allKeys.size() + " chaves carregadas com sucesso! Mostrando no RecyclerView...");
+            chavesFiltradas.addAll(allKeys);
+            setupRecyclerView();
         }
-
-        chavesFiltradas.addAll(allKeys);
-        Log.d(TAG, "Total de chaves válidas: " + allKeys.size());
-
-        setupRecyclerView();
     }
 
     private List<ProfileKey> carregarChavesPublicas() {

@@ -8,15 +8,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 
-import ao.co.isptec.aplm.projetoanuncioloc.Model.LoginRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LoginRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
@@ -29,6 +25,8 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private TextView tvTabRegister;
 
+    private LoadingDialog loadingDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +36,7 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
         tvTabRegister = findViewById(R.id.tv_tab_register);
-
+        loadingDialog = new LoadingDialog(this);
         tvTabRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             finish();
@@ -53,6 +51,10 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // MOSTRA O LOADING
+            loadingDialog.setMessage("A autenticar...");
+            loadingDialog.show();
+
             // CHAMA API
             LoginRequest request = new LoginRequest(username, password);
             Call<User> call = RetrofitClient.getApiService(this).login(request);
@@ -60,6 +62,7 @@ public class LoginActivity extends AppCompatActivity {
             call.enqueue(new Callback<User>() {
                 @Override
                 public void onResponse(Call<User> call, Response<User> response) {
+                    loadingDialog.dismiss();
                     if (response.isSuccessful() && response.body() != null) {
                         User user = response.body();
                         String jwt = user.getSessionId();
@@ -88,7 +91,9 @@ public class LoginActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<User> call, Throwable t) {
+                    loadingDialog.dismiss();
                     Toast.makeText(LoginActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+
                 }
             });
         });

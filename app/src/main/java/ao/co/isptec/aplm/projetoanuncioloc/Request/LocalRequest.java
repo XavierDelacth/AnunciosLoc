@@ -1,4 +1,4 @@
-package ao.co.isptec.aplm.projetoanuncioloc.Model;
+package ao.co.isptec.aplm.projetoanuncioloc.Request;
 
 import java.util.List;
 

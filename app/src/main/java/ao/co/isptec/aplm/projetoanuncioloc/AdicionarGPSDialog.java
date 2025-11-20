@@ -26,13 +26,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-import java.util.List;
+
 import java.util.Locale;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;  // Import da interface comum
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;

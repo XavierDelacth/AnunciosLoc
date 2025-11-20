@@ -2,6 +2,9 @@ package ao.co.isptec.aplm.projetoanuncioloc.Model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +23,9 @@ public class Anuncio implements Parcelable {
     // Novos campos baseados no layout activity_adicionar_anuncios.xml
     public String dataInicio; // ex.: "12/11/2025"
     public String dataFim;    // ex.: "15/11/2025"
+
+    @SerializedName("restricoes")
+    private Map<String, String> restricoesRaw = new HashMap<>();
     public String horaInicio; // ex.: "09:00"
     public String horaFim;    // ex.: "18:00"
     public String tipoRestricao; // "Whitelist" ou "Blacklist"
@@ -79,7 +85,16 @@ public class Anuncio implements Parcelable {
         chavesPerfil.put(keyName, values);
     }
 
+    public Map<String, String> getRestricoesRaw() {
+        return restricoesRaw;
+    }
     public Map<String, List<String>> getChavesPerfil() {
+        Log.d("ANUNCIO_MODEL", "getChavesPerfil() chamado → retornando: " + chavesPerfil);
+        if (chavesPerfil == null) {
+            Log.e("ANUNCIO_MODEL", "chavesPerfil é NULL no modelo!");
+        } else if (chavesPerfil.isEmpty()) {
+            Log.w("ANUNCIO_MODEL", "chavesPerfil está VAZIO no modelo!");
+        }
         return chavesPerfil;
     }
 
@@ -99,7 +114,12 @@ public class Anuncio implements Parcelable {
     public String getTipoRestricao() { return tipoRestricao; }
     public void setTipoRestricao(String tipoRestricao) { this.tipoRestricao = tipoRestricao; }
 
+
     public String getModoEntrega() { return modoEntrega; }
+
+    public String getImagemUrl() {
+        return imagem;
+    }
     public void setModoEntrega(String modoEntrega) { this.modoEntrega = modoEntrega; }
 
     // CREATOR PARA PARCELABLE (atualizado, mas igual)

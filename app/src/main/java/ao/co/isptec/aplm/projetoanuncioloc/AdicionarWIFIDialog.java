@@ -20,7 +20,7 @@ import java.util.Arrays;
 import android.content.SharedPreferences;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;

@@ -7,12 +7,11 @@ import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import ao.co.isptec.aplm.projetoanuncioloc.Model.AlterarSenhaRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;

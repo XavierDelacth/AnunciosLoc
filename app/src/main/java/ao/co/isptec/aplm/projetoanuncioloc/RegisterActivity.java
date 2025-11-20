@@ -27,6 +27,8 @@ public class RegisterActivity extends AppCompatActivity {
     private Button btnRegister;
     private TextView tvTabLogin;
 
+    private LoadingDialog loadingDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +39,8 @@ public class RegisterActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.et_confirm_password);
         btnRegister = findViewById(R.id.btn_register);
         tvTabLogin = findViewById(R.id.tv_tab_login);
+
+        loadingDialog = new LoadingDialog(this);
 
         tvTabLogin.setOnClickListener(v -> {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
@@ -59,12 +63,16 @@ public class RegisterActivity extends AppCompatActivity {
             }
 
             // CHAMA API
+            loadingDialog.setMessage("A registar...");
+            loadingDialog.show();
+
             User user = new User(username, password);
             Call<User> call = RetrofitClient.getApiService(this).register(user);
 
             call.enqueue(new Callback<User>() {
                 @Override
                 public void onResponse(Call<User> call, Response<User> response) {
+                    loadingDialog.dismiss();
                     if (response.isSuccessful() && response.body() != null) {
                         Toast.makeText(RegisterActivity.this, "Registro bem-sucedido!", Toast.LENGTH_LONG).show();
                         startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
@@ -76,6 +84,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<User> call, Throwable t) {
+                    loadingDialog.dismiss();
                     Toast.makeText(RegisterActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });

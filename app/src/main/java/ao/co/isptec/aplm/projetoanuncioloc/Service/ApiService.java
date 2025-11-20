@@ -2,12 +2,11 @@ package ao.co.isptec.aplm.projetoanuncioloc.Service;
 
 import java.util.List;
 
-import ao.co.isptec.aplm.projetoanuncioloc.Model.AlterarSenhaRequest;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.LocalRequest;
-import ao.co.isptec.aplm.projetoanuncioloc.Model.LoginRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LoginRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
 import retrofit2.Call;
