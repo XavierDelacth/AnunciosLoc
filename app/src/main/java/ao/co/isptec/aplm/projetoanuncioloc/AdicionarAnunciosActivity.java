@@ -377,14 +377,11 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     }
 
     private void initRestricoes() {
-        Log.d(TAG, "initRestricoes chamado");
         allKeys = new ArrayList<>();
-        allKeys.add(new ProfileKey("Gênero", Arrays.asList("Masculino", "Feminino", "Outro")));
-        allKeys.add(new ProfileKey("Idade", Arrays.asList("18-24", "25-34", "35+")));
-        allKeys.add(new ProfileKey("Clube Favorito", Arrays.asList("Real Madrid", "Barcelona", "Benfica")));
+        chavesFiltradas = new ArrayList<>();
 
-        chavesFiltradas.clear();
-        chavesFiltradas.addAll(allKeys);
+        // Carregar chaves do backend
+        carregarChavesDoBackend();
 
         if (rvChavesRestricoes != null && keyAdapter == null) {
             rvChavesRestricoes.setLayoutManager(new LinearLayoutManager(this));
@@ -420,6 +417,72 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         atualizarVisibilidadeChaves();
         if (cardChavesContainer != null) {
             cardChavesContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void carregarChavesDoBackend() {
+        Log.d(TAG, "Carregando chaves do backend...");
+
+        Call<List<ProfileKey>> call = RetrofitClient.getApiService(this).getAllPerfis();
+        call.enqueue(new Callback<List<ProfileKey>>() {
+            @Override
+            public void onResponse(Call<List<ProfileKey>> call, Response<List<ProfileKey>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allKeys.clear();
+                    allKeys.addAll(response.body());
+
+                    // Se estiver em modo edição, restaurar seleções do anúncio
+                    if (modoEdicao && anuncioParaEditar != null) {
+                        restaurarSelecoesDoAnuncio();
+                    }
+
+                    chavesFiltradas.clear();
+                    chavesFiltradas.addAll(allKeys);
+
+                    if (keyAdapter != null) {
+                        keyAdapter.updateKeys(chavesFiltradas);
+                    }
+
+                    atualizarVisibilidadeChaves();
+                    Log.d(TAG, "Chaves carregadas: " + allKeys.size());
+                } else {
+                    Log.e(TAG, "Erro ao carregar chaves: " + response.code());
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ProfileKey>> call, Throwable t) {
+                Log.e(TAG, "Falha ao carregar chaves: " + t.getMessage());
+
+            }
+        });
+    }
+
+    private void restaurarSelecoesDoAnuncio() {
+        if (anuncioParaEditar.getChavesPerfil() == null) return;
+
+        for (Map.Entry<String, List<String>> entry : anuncioParaEditar.getChavesPerfil().entrySet()) {
+            String keyName = entry.getKey();
+            List<String> selectedValues = entry.getValue();
+
+            for (ProfileKey key : allKeys) {
+                if (key.getName().equals(keyName)) {
+                    // Limpar seleções anteriores e adicionar as do anúncio
+                    key.getSelectedValues().clear();
+                    for (String value : selectedValues) {
+                        if (key.getAvailableValues().contains(value)) {
+                            key.getSelectedValues().add(value);
+                        }
+                    }
+
+                    // Atualizar mapa de restrições
+                    if (!key.getSelectedValues().isEmpty()) {
+                        restricoesPerfil.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                    }
+                    break;
+                }
+            }
         }
     }
 
