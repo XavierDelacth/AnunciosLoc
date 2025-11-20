@@ -36,7 +36,13 @@ import java.util.Map;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.ApiService;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class AdicionarAnunciosActivity extends AppCompatActivity implements AdicionarKeyDialog.OnKeyAddedListener {
 
@@ -461,6 +467,22 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         if (llLocal != null && spinnerLocais != null) {
             llLocal.setOnClickListener(v -> spinnerLocais.performClick());
         }
+
+        spinnerLocais.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position > 0) {
+                    localSelecionado = (String) parent.getItemAtPosition(position);
+                    tvLocalSelecionado.setText(localSelecionado);
+                } else {
+                    localSelecionado = null;
+                    tvLocalSelecionado.setText("Selecionar local");
+                    tvLocalSelecionado.setTextColor(getColor(android.R.color.darker_gray));
+                }
+            }
+
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
     }
 
     private void filtrarChaves(String query) {
@@ -568,30 +590,58 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     }
 
     private void setupSpinnerLocais() {
-        if (spinnerLocais != null && tvLocalSelecionado != null) {
-            String[] locais = {"Benguela", "Largo da Independência", "Belas Shopping", "Ginásio do Camama I"};
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, locais);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerLocais.setAdapter(adapter);
+        ApiService apiService = RetrofitClient.getApiService(this);
 
-            spinnerLocais.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    localSelecionado = locais[position];
-                    tvLocalSelecionado.setText(localSelecionado);
-                    tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
+        Call<List<Local>> call = apiService.getTodosLocais(); // ou getLocaisDoUsuario(userId) se quiseres só os do user
+
+        call.enqueue(new Callback<List<Local>>() {
+            @Override
+            public void onResponse(Call<List<Local>> call, Response<List<Local>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Local> locais = response.body();
+
+                    List<String> nomesLocais = new ArrayList<>();
+                    nomesLocais.add("Selecionar local"); // posição 0 = nenhum selecionado
+
+                    for (Local local : locais) {
+                        nomesLocais.add(local.getNome());
+                    }
+
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            AdicionarAnunciosActivity.this,
+                            android.R.layout.simple_spinner_item,
+                            nomesLocais
+                    );
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spinnerLocais.setAdapter(adapter);
+
+                    // Se já tinhas um local selecionado (edição), mantém
+                    if (localSelecionado != null) {
+                        int pos = nomesLocais.indexOf(localSelecionado);
+                        if (pos > 0) spinnerLocais.setSelection(pos);
+                    }
+                } else {
+                    Toast.makeText(AdicionarAnunciosActivity.this,
+                            "Erro ao carregar locais", Toast.LENGTH_SHORT).show();
                 }
+            }
 
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {}
-            });
+            @Override
+            public void onFailure(Call<List<Local>> call, Throwable t) {
+                // Este método é OBRIGATÓRIO!
+                Log.e("AActivity", "Falha ao carregar locais: " + t.getMessage());
+                Toast.makeText(AdicionarAnunciosActivity.this,
+                        "Sem ligação à internet. Verifique a rede.", Toast.LENGTH_LONG).show();
+
+            }
+        });
 
             // Não define seleção padrão se está em modo edição
             if (!modoEdicao) {
                 spinnerLocais.setSelection(0, false);
             }
-        }
     }
+
 
     private void abrirAdicionarKeyDialog() {
         AdicionarKeyDialog dialog = AdicionarKeyDialog.newInstance(allKeys, restricoesPerfil);
