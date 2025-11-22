@@ -25,6 +25,7 @@ import ao.co.isptec.aplm.projetoanuncioloc.Adapters.LocalAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.LocalAdapterTodosLocais;
 import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -59,6 +60,7 @@ public class AdicionarLocalActivity extends AppCompatActivity implements OnLocal
 
     // Controle de tab ativa
     private boolean isTabTodosAtiva = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -394,51 +396,97 @@ public class AdicionarLocalActivity extends AppCompatActivity implements OnLocal
     }
 
     private void editarLocalGPS(Local local, int position) {
-        // Cria o dialog GPS passando os dados do local para edição
         EditarGPSDialog dialog = EditarGPSDialog.newInstance(local, (nomeEditado, latEditada, lngEditada, raioEditado) -> {
-            // Atualiza o local na lista
-            local.setNome(nomeEditado);
-            local.setLatitude(latEditada);
-            local.setLongitude(lngEditada);
-            local.setRaio(raioEditado);
+            // Criar request para atualização
+            LocalRequest request = new LocalRequest(
+                    nomeEditado,
+                    "GPS",
+                    latEditada,
+                    lngEditada,
+                    raioEditado,
+                    null
+            );
 
-            // Notifica os adapters
-            adapterCriados.notifyItemChanged(position);
-            int posicaoTodos = listaTodosLocais.indexOf(local);
-            if (posicaoTodos != -1) {
-                adapterTodos.notifyItemChanged(posicaoTodos);
-            }
+            // Chamar API para atualizar
+            Call<Local> call = RetrofitClient.getApiService(this).atualizarLocal(local.getId(), request);
+            call.enqueue(new Callback<Local>() {
+                @Override
+                public void onResponse(Call<Local> call, Response<Local> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        // Atualiza o local na lista
+                        local.setNome(nomeEditado);
+                        local.setLatitude(latEditada);
+                        local.setLongitude(lngEditada);
+                        local.setRaio(raioEditado);
 
-            Toast.makeText(this, "Local atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                        // Notifica os adapters
+                        adapterCriados.notifyItemChanged(position);
+                        int posicaoTodos = listaTodosLocais.indexOf(local);
+                        if (posicaoTodos != -1) {
+                            adapterTodos.notifyItemChanged(posicaoTodos);
+                        }
+
+                        Toast.makeText(AdicionarLocalActivity.this, "Local atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(AdicionarLocalActivity.this, "Erro ao atualizar local", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<Local> call, Throwable t) {
+                    Toast.makeText(AdicionarLocalActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         dialog.show(getSupportFragmentManager(), "EditarGPSDialog");
     }
 
     private void editarLocalWiFi(Local local, int position) {
-        // Cria o dialog WiFi passando os dados do local para edição
-        String ssidAtual = local.getWifiIds() != null && !local.getWifiIds().isEmpty()
-                ? local.getWifiIds().get(0)
-                : "";
+        EditarWiFiDialog dialog = EditarWiFiDialog.newInstance(local, (nomeEditado, ssidEditado) -> {
+            // Criar request para atualização
+            LocalRequest request = new LocalRequest(
+                    nomeEditado,
+                    "WIFI",
+                    null,
+                    null,
+                    null,
+                    Arrays.asList(ssidEditado)
+            );
 
-        EditarWiFiDialog dialog = EditarWiFiDialog.newInstance(local.getNome(), ssidAtual,
-                (nomeEditado, ssidsEditados) -> {
-                    // Atualiza o local na lista
-                    local.setNome(nomeEditado);
-                    local.setWifiIds(ssidsEditados);
+            // Chamar API para atualizar
+            Call<Local> call = RetrofitClient.getApiService(this).atualizarLocal(local.getId(), request);
+            call.enqueue(new Callback<Local>() {
+                @Override
+                public void onResponse(Call<Local> call, Response<Local> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        // Atualiza o local na lista
+                        local.setNome(nomeEditado);
+                        local.setWifiIds(Arrays.asList(ssidEditado));
 
-                    // Notifica os adapters
-                    adapterCriados.notifyItemChanged(position);
-                    int posicaoTodos = listaTodosLocais.indexOf(local);
-                    if (posicaoTodos != -1) {
-                        adapterTodos.notifyItemChanged(posicaoTodos);
+                        // Notifica os adapters
+                        adapterCriados.notifyItemChanged(position);
+                        int posicaoTodos = listaTodosLocais.indexOf(local);
+                        if (posicaoTodos != -1) {
+                            adapterTodos.notifyItemChanged(posicaoTodos);
+                        }
+
+                        Toast.makeText(AdicionarLocalActivity.this, "Local atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(AdicionarLocalActivity.this, "Erro ao atualizar local", Toast.LENGTH_SHORT).show();
                     }
+                }
 
-                    Toast.makeText(this, "Local atualizado com sucesso!", Toast.LENGTH_SHORT).show();
-                });
+                @Override
+                public void onFailure(Call<Local> call, Throwable t) {
+                    Toast.makeText(AdicionarLocalActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
 
         dialog.show(getSupportFragmentManager(), "EditarWiFiDialog");
     }
+
 
     // EXCLUIR LOCAL
     private void confirmarExclusao(Local local, int position) {

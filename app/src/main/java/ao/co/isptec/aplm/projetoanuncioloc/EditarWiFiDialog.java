@@ -1,71 +1,59 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
-import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+
 import java.util.Arrays;
-import java.util.List;
+
+import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class EditarWiFiDialog extends DialogFragment {
 
+    private Local local;
+    private OnLocalEditadoListener listener;
+
     private EditText etNomeLocalWiFi, etSSID;
-    private Button btnCancelarWiFi, btnSalvarWiFi;
-    private ImageView btnFecharWiFi;
+    private Button btnCancelar, btnSalvar;
 
-    // Dados para edição
-    private String nomeAtual;
-    private String ssidAtual;
-
-    // Callback para retornar dados editados
-    public interface OnLocalWiFiEditadoListener {
-        void onLocalWiFiEditado(String nome, List<String> ssids);
+    public interface OnLocalEditadoListener {
+        void onLocalEditado(String nomeEditado, String ssidEditado);
     }
 
-    private OnLocalWiFiEditadoListener listener;
-
-    public static EditarWiFiDialog newInstance(String nome, String ssid, OnLocalWiFiEditadoListener listener) {
+    // MUDANÇA: Receber Local em vez de strings separadas
+    public static EditarWiFiDialog newInstance(Local local, OnLocalEditadoListener listener) {
         EditarWiFiDialog dialog = new EditarWiFiDialog();
-        dialog.nomeAtual = nome;
-        dialog.ssidAtual = ssid;
+        Bundle args = new Bundle();
+        args.putSerializable("local", local);
+        dialog.setArguments(args);
         dialog.listener = listener;
         return dialog;
     }
 
-    @NonNull
     @Override
-    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        }
-        return dialog;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (getDialog() != null && getDialog().getWindow() != null) {
-            getDialog().getWindow().setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            local = (Local) getArguments().getSerializable("local");
         }
     }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_add_wifi, container, false);
         initViews(view);
         preencherDados();
@@ -76,56 +64,76 @@ public class EditarWiFiDialog extends DialogFragment {
     private void initViews(View view) {
         etNomeLocalWiFi = view.findViewById(R.id.etNomeLocalWiFi);
         etSSID = view.findViewById(R.id.etSSID);
-        btnCancelarWiFi = view.findViewById(R.id.btnCancelarWiFi);
-        btnSalvarWiFi = view.findViewById(R.id.btnAdicionarWiFi);  // Reutiliza botão "Adicionar"
-        btnFecharWiFi = view.findViewById(R.id.btnFecharWiFi);
+        btnCancelar = view.findViewById(R.id.btnCancelarWiFi);
 
-        // Altera texto do botão para "Salvar"
-        btnSalvarWiFi.setText("Salvar");
+        // CORREÇÃO: Usar ID correto
+        btnSalvar = view.findViewById(R.id.btnAdicionarWiFi);
 
-        // Esconde botão GPS (não precisa alternar em modo edição)
+        // Mudar texto do botão para "Salvar"
+        btnSalvar.setText("Salvar");
+
+        // Esconder botão GPS pois estamos editando WiFi
         Button btnGps = view.findViewById(R.id.btnGpsToggle);
         if (btnGps != null) {
             btnGps.setVisibility(View.GONE);
         }
+
+        // Esconder botão WiFi toggle
+        Button btnWifiToggle = view.findViewById(R.id.btnWifiToggle);
+        if (btnWifiToggle != null) {
+            btnWifiToggle.setVisibility(View.GONE);
+        }
     }
 
     private void preencherDados() {
-        if (nomeAtual != null) {
-            etNomeLocalWiFi.setText(nomeAtual);
-        }
-        if (ssidAtual != null) {
-            etSSID.setText(ssidAtual);
+        if (local != null) {
+            etNomeLocalWiFi.setText(local.getNome());
+            // Obter o primeiro SSID (assumindo que WiFi tem pelo menos um)
+            if (local.getWifiIds() != null && !local.getWifiIds().isEmpty()) {
+                etSSID.setText(local.getWifiIds().get(0));
+            }
         }
     }
 
     private void setupClickListeners() {
-        btnFecharWiFi.setOnClickListener(v -> dismiss());
-        btnCancelarWiFi.setOnClickListener(v -> dismiss());
+        btnCancelar.setOnClickListener(v -> dismiss());
 
-        btnSalvarWiFi.setOnClickListener(v -> {
+        btnSalvar.setOnClickListener(v -> {
             String nome = etNomeLocalWiFi.getText().toString().trim();
             String ssid = etSSID.getText().toString().trim();
 
-            // Validação
             if (nome.isEmpty() || ssid.isEmpty()) {
-                if (nome.isEmpty()) {
-                    etNomeLocalWiFi.setError("Nome obrigatório");
-                    etNomeLocalWiFi.requestFocus();
-                }
-                if (ssid.isEmpty()) {
-                    etSSID.setError("SSID obrigatório");
-                    if (nome.isEmpty()) etSSID.requestFocus();
-                }
                 Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Callback com dados editados
-            if (listener != null) {
-                listener.onLocalWiFiEditado(nome, Arrays.asList(ssid));
+            // Atualizar local via API
+            atualizarLocalNoBackend(nome, ssid);
+        });
+    }
+
+    private void atualizarLocalNoBackend(String nome, String ssid) {
+        LocalRequest request = new LocalRequest(nome, "WIFI", null, null, null, Arrays.asList(ssid));
+
+        Call<Local> call = RetrofitClient.getApiService(requireContext()).atualizarLocal(local.getId(), request);
+        call.enqueue(new Callback<Local>() {
+            @Override
+            public void onResponse(Call<Local> call, Response<Local> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(requireContext(), "Local WiFi atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                    if (listener != null) {
+                        listener.onLocalEditado(nome, ssid);
+                    }
+                    dismiss();
+                } else {
+                    Toast.makeText(requireContext(), "Erro ao atualizar local: " + response.message(), Toast.LENGTH_SHORT).show();
+                }
             }
-            dismiss();
+
+            @Override
+            public void onFailure(Call<Local> call, Throwable t) {
+                Toast.makeText(requireContext(), "Falha na rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

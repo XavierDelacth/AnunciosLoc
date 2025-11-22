@@ -2,10 +2,11 @@ package ao.co.isptec.aplm.projetoanuncioloc.Model;  // Ajusta a package se neces
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Local {
+public class Local implements Serializable {
     @SerializedName("id")
     private long id;
 

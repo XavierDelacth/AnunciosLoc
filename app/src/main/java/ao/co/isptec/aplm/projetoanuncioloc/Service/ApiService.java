@@ -67,20 +67,7 @@ public interface ApiService {
     @GET("/api/notificacoes/count")
     Call<Integer> getContagemNotificacoes(@Query("userId") Long userId);
 
-    @POST("/api/locais")
-    Call<Local> criarLocal(@Body LocalRequest request, @Query("userId") Long userId);
 
-    @GET("/api/locais/user/{userId}")
-    Call<List<Local>> getLocaisDoUsuario(@Path("userId") Long userId);
-
-    @GET("/api/locais")
-    Call<List<Local>> getTodosLocais();
-
-    @GET("/api/locais/search")
-    Call<List<Local>> searchLocais(@Query("query") String query);
-
-    @DELETE("/api/locais/{id}")
-    Call<Void> excluirLocal(@Path("id") Long id);
 
 
     // Anúncios Guardados - CORRIGIDOS
@@ -105,7 +92,7 @@ public interface ApiService {
     @DELETE("/api/anuncios/{id}")
     Call<Void> eliminarAnuncio(@Path("id") Long id);
 
-    // 🔹 PERFIS - Compatível com seu backend
+    // PERFIS - Compatível com seu backend
     @GET("/api/perfis")
     Call<List<ProfileKey>> getAllPerfis();
 
@@ -179,4 +166,19 @@ public interface ApiService {
     // Obter anúncio por ID
     @GET("/api/anuncios/{id}")
     Call<AnuncioResponse> getAnuncioPorId(@Path("id") Long id);
+
+    // Locais
+    @POST("/api/locais")
+    Call<Local> criarLocal(@Body LocalRequest request, @Query("userId") Long userId);
+    @GET("/api/locais/user/{userId}")
+    Call<List<Local>> getLocaisDoUsuario(@Path("userId") Long userId);
+    @GET("/api/locais")
+    Call<List<Local>> getTodosLocais();
+    @GET("/api/locais/search")
+    Call<List<Local>> searchLocais(@Query("query") String query);
+    @DELETE("/api/locais/{id}")
+    Call<Void> excluirLocal(@Path("id") Long id);
+    @PUT("/api/locais/{id}")
+    Call<Local> atualizarLocal(@Path("id") Long id, @Body LocalRequest request);
+
 }
