@@ -58,6 +58,15 @@ public interface ApiService {
     @POST("/api/users/logout/{userId}")
     Call<Void> logout(@Path("userId") Long userId);
 
+        @GET("/api/users/{id}/perfil")
+        Call<java.util.Map<String, String>> getUserPerfis(@Path("id") Long id);
+
+        @POST("/api/users/{id}/perfil")
+        Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> adicionarPerfil(@Path("id") Long id, @Query("chave") String chave, @Query("valor") String valor);
+
+        @DELETE("/api/users/{id}/perfil/{chave}/{valor}")
+        Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> removerPerfilValor(@Path("id") Long id, @Path("chave") String chave, @Path("valor") String valor);
+
     @GET("/api/notificacoes")
     Call<List<Notificacao>> getNotificacoes(@Query("userId") Long userId);
 

@@ -18,6 +18,14 @@ import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -76,6 +84,41 @@ public class LoginActivity extends AppCompatActivity {
                                 .putString("jwt", jwt)
                                 .putString("username", username)
                                 .apply();
+
+                            // BUSCA OS PERFIS DO UTILIZADOR NO SERVIDOR e salva localmente
+                            RetrofitClient.getApiService(LoginActivity.this).getUserPerfis(userId)
+                                    .enqueue(new Callback<Map<String, String>>() {
+                                        @Override
+                                        public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> resp) {
+                                            if (resp.isSuccessful() && resp.body() != null) {
+                                                Map<String, String> serverMap = resp.body();
+                                                // converte Map<String, String(comma-separated)> para Map<String, List<String>>
+                                                Map<String, List<String>> selections = new HashMap<>();
+                                                for (Map.Entry<String, String> e : serverMap.entrySet()) {
+                                                    String k = e.getKey();
+                                                    String v = e.getValue();
+                                                    if (v == null || v.isEmpty()) continue;
+                                                    String[] parts = v.split(",");
+                                                    List<String> vals = new ArrayList<>();
+                                                    for (String p : parts) {
+                                                        String trimmed = p.trim();
+                                                        if (!trimmed.isEmpty()) vals.add(trimmed);
+                                                    }
+                                                    if (!vals.isEmpty()) selections.put(k, vals);
+                                                }
+                                                // grava em SharedPreferences no mesmo formato usado por PerfilActivity
+                                                SharedPreferences selPrefs = getSharedPreferences("my_profile_selections_" + userId, MODE_PRIVATE);
+                                                Gson g = new Gson();
+                                                String json = g.toJson(selections);
+                                                selPrefs.edit().putString("selections", json).apply();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<Map<String, String>> call, Throwable t) {
+                                            // não impedimos o login; apenas logamos
+                                        }
+                                    });
 
                         Toast.makeText(LoginActivity.this, "Login bem-sucedido!", Toast.LENGTH_LONG).show();
 

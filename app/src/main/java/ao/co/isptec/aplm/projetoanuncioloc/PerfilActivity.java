@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
+import android.util.Log;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
@@ -50,6 +51,7 @@ public class PerfilActivity extends AppCompatActivity {
 
     // Chave para SharedPreferences
     private static final String PREFS_SELECTIONS = "my_profile_selections";
+    private Long currentUserId = -1L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,9 @@ public class PerfilActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        // guarda userId actual para usar nas prefs de seleção
+        this.currentUserId = userId;
 
         initializeData();
         setupRecyclerView();
@@ -281,6 +286,7 @@ public class PerfilActivity extends AppCompatActivity {
         for (ProfileKey key : allKeys) {
             if (key.getName().equals(keyName)) {
                 if (key.getSelectedValues().contains(value)) {
+                    // deselect -> remove on server
                     key.getSelectedValues().remove(value);
                 } else {
                     key.getSelectedValues().add(value);
@@ -295,6 +301,71 @@ public class PerfilActivity extends AppCompatActivity {
 
                 // ✅ SALVA SELEÇÕES LOCALMENTE
                 salvarSelecoes();
+
+                // Envia alteração ao backend (POST para adicionar, DELETE para remover valor)
+                SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                Long userId = prefs.getLong("userId", -1L);
+                if (userId != -1L) {
+                    if (key.getSelectedValues().contains(value)) {
+                        // foi adicionado
+                        Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call = RetrofitClient.getApiService(this).adicionarPerfil(userId, keyName, value);
+                        call.enqueue(new Callback<ao.co.isptec.aplm.projetoanuncioloc.Model.User>() {
+                            @Override
+                            public void onResponse(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Response<ao.co.isptec.aplm.projetoanuncioloc.Model.User> response) {
+                                if (!response.isSuccessful()) {
+                                    // rollback local change
+                                    key.getSelectedValues().remove(value);
+                                    if (key.getSelectedValues().isEmpty()) mySelectedKeys.remove(keyName);
+                                    else mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                                    salvarSelecoes();
+                                    adapter.notifyDataSetChanged();
+                                    Toast.makeText(PerfilActivity.this, "Erro ao salvar perfil no servidor", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                                        @Override
+                                        public void onFailure(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Throwable t) {
+                                            // rollback local change
+                                            key.getSelectedValues().remove(value);
+                                            if (key.getSelectedValues().isEmpty()) mySelectedKeys.remove(keyName);
+                                            else mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                                            salvarSelecoes();
+                                            adapter.notifyDataSetChanged();
+                                            Log.e("PerfilActivity", "Erro ao adicionar perfil: ", t);
+                                            String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
+                                            Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
+                                        }
+                        });
+                    } else {
+                        // foi removido
+                        Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call = RetrofitClient.getApiService(this).removerPerfilValor(userId, keyName, value);
+                        call.enqueue(new Callback<ao.co.isptec.aplm.projetoanuncioloc.Model.User>() {
+                            @Override
+                            public void onResponse(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Response<ao.co.isptec.aplm.projetoanuncioloc.Model.User> response) {
+                                if (!response.isSuccessful()) {
+                                    // rollback local change (re-add)
+                                    if (!key.getSelectedValues().contains(value)) key.getSelectedValues().add(value);
+                                    mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                                    salvarSelecoes();
+                                    adapter.notifyDataSetChanged();
+                                    Toast.makeText(PerfilActivity.this, "Erro ao remover perfil no servidor", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Throwable t) {
+                                // rollback local change (re-add)
+                                if (!key.getSelectedValues().contains(value)) key.getSelectedValues().add(value);
+                                mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                                salvarSelecoes();
+                                adapter.notifyDataSetChanged();
+                                Log.e("PerfilActivity", "Erro ao remover valor de perfil: ", t);
+                                String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
+                                Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }
 
                 adapter.notifyDataSetChanged();
 
@@ -340,7 +411,9 @@ public class PerfilActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<ProfileKey> call, Throwable t) {
-                    Toast.makeText(PerfilActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                    Log.e("PerfilActivity", "Erro ao criar chave pública: ", t);
+                    String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
+                    Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -360,7 +433,9 @@ public class PerfilActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<ProfileKey> call, Throwable t) {
-                    Toast.makeText(PerfilActivity.this, "Falha na rede", Toast.LENGTH_SHORT).show();
+                    Log.e("PerfilActivity", "Erro ao adicionar valores à chave pública: ", t);
+                    String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
+                    Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -380,7 +455,7 @@ public class PerfilActivity extends AppCompatActivity {
 
     // CARREGA SELEÇÕES SALVAS DO USUÁRIO
     private void carregarSelecoesSalvas() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE);
         String json = prefs.getString("selections", "{}");
 
         Gson gson = new Gson();
@@ -395,11 +470,11 @@ public class PerfilActivity extends AppCompatActivity {
 
     // SALVA SELEÇÕES DO USUÁRIO LOCALMENTE
     private void salvarSelecoes() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = gson.toJson(mySelectedKeys);
+           SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE);
+           Gson gson = new Gson();
+           String json = gson.toJson(mySelectedKeys);
 
-        prefs.edit().putString("selections", json).apply();
+           prefs.edit().putString("selections", json).apply();
     }
 
     // RESTAURA SELEÇÕES PESSOAIS NAS CHAVES PÚBLICAS
@@ -434,6 +509,8 @@ public class PerfilActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 prefs.edit().clear().apply();
+                // Limpa também as seleções pessoais associadas ao utilizador que fez logout
+                getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE).edit().clear().apply();
                 // Também limpa as seleções locais se quiser
                 // getSharedPreferences(PREFS_SELECTIONS, MODE_PRIVATE).edit().clear().apply();
 
