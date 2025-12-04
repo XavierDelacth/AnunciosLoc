@@ -34,6 +34,7 @@
                 app:tint="#333333" />
             <!-- Título -->
             <TextView
+                android:id="@+id/tvTituloTela"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="78dp"

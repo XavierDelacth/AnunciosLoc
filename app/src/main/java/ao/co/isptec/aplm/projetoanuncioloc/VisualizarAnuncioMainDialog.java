@@ -1,6 +1,8 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -23,8 +25,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +39,7 @@ import java.util.Map;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 
 public class VisualizarAnuncioMainDialog extends DialogFragment {
 
@@ -138,7 +145,7 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
         Log.d(TAG, "Configurando listeners no diálogo");
         btnClose.setOnClickListener(v -> dismiss());
 
-        /*
+
         if (etPesquisarChaves != null) {
             etPesquisarChaves.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -147,7 +154,7 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
                 }
                 @Override public void afterTextChanged(Editable s) {}
             });
-        }*/
+        }
     }
 
     private void preencherDados() {
@@ -157,30 +164,59 @@ public class VisualizarAnuncioMainDialog extends DialogFragment {
         tvTitle.setText(anuncio.titulo);
         tvContent.setText(anuncio.descricao);
 
+        // === CARREGAMENTO DE IMAGEM - MESMA LÓGICA DO ADAPTER ===
         String urlImagem = anuncio.getImagemUrl();
+        String fullUrl;
+
         if (urlImagem != null && !urlImagem.isEmpty()) {
-            Glide.with(this)
-                    .load(urlImagem)
+            String baseUrl = RetrofitClient.BASE_URL;
+            // Garante que baseUrl não termine com /
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+
+            // Garante que urlImagem comece com /
+            String path = urlImagem;
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+
+            fullUrl = baseUrl + path;
+            Log.d(TAG, "URL construída igual ao adapter: " + fullUrl);
+        } else {
+            fullUrl = null;
+        }
+
+// REMOVER tint
+        imgAnnouncement.setImageTintList(null);
+        imgAnnouncement.setImageTintMode(null);
+        imgAnnouncement.clearColorFilter();
+
+        if (fullUrl != null) {
+            Glide.with(requireContext())
+                    .load(fullUrl)
                     .apply(RequestOptions.bitmapTransform(new RoundedCorners(32)))
                     .placeholder(R.drawable.espaco_image)
-                    .error(R.drawable.espaco_image)
+                    .error(R.drawable.ic_placeholder)
+                    .listener(new RequestListener<Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                    Target<Drawable> target, boolean isFirstResource) {
+                            Log.e(TAG, "FALHA: " + fullUrl);
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(Drawable resource, Object model,
+                                                       Target<Drawable> target, DataSource dataSource,
+                                                       boolean isFirstResource) {
+                            Log.d(TAG, "SUCESSO: " + fullUrl);
+                            return false;
+                        }
+                    })
                     .into(imgAnnouncement);
         } else {
             imgAnnouncement.setImageResource(R.drawable.espaco_image);
-        }
-
-        // Imagem
-        if (anuncio.imagem != null && !anuncio.imagem.isEmpty()) {
-            try {
-                Uri uri = Uri.parse(anuncio.imagem);
-                imgAnnouncement.setImageURI(uri);
-                imgAnnouncement.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            } catch (Exception e) {
-                Log.e(TAG, "Erro ao carregar imagem: " + e.getMessage());
-                imgAnnouncement.setImageResource(android.R.drawable.ic_menu_gallery);
-            }
-        } else {
-            imgAnnouncement.setImageResource(android.R.drawable.ic_menu_gallery);
         }
 
         // Configurar cor do tipo de restrição

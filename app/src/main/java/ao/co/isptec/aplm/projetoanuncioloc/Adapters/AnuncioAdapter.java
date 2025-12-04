@@ -1,6 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.R;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import ao.co.isptec.aplm.projetoanuncioloc.VisualizarAnuncioDialog;
 
 public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHolder> {
@@ -53,16 +55,48 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         String urlImagem = a.getImagemUrl();
 
         if (urlImagem != null && !urlImagem.isEmpty()) {
-            Glide.with(context)
-                    .load(urlImagem)
-                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
-                    .placeholder(R.drawable.espaco_image)
-                    .error(R.drawable.espaco_image)
-                    .into(holder.imgAnuncio);
-        } else {
-            // Se não tiver imagem, mostra o placeholder normal
-            holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
-        }
+
+            holder.imgAnuncio.setImageTintList(null);
+            holder.imgAnuncio.setImageTintMode(null);
+            holder.imgAnuncio.clearColorFilter();
+            holder.imgAnuncio.setBackgroundColor(Color.TRANSPARENT);
+
+            // Lógica de carregamento similar
+                if (urlImagem.startsWith("http://") || urlImagem.startsWith("https://")) {
+                    // URL normal
+                    Glide.with(context)
+                            .load(urlImagem)
+                            .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
+                            .placeholder(R.drawable.espaco_image)
+                            .error(R.drawable.espaco_image)
+                            .into(holder.imgAnuncio);
+                } else if (urlImagem.startsWith("/uploads/") || urlImagem.startsWith("uploads/")) {
+                    // Construir URL completa para caminhos relativos
+                    String baseUrl = RetrofitClient.BASE_URL;
+                    String fullUrl = baseUrl + (urlImagem.startsWith("/") ? urlImagem.substring(1) : urlImagem);
+
+                    Glide.with(context)
+                            .load(fullUrl)
+                            .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
+                            .placeholder(R.drawable.espaco_image)
+                            .error(R.drawable.espaco_image)
+                            .into(holder.imgAnuncio);
+                } else {
+                    // Para outros casos (URIs locais, etc.)
+                    try {
+                        Glide.with(context)
+                                .load(urlImagem)
+                                .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
+                                .placeholder(R.drawable.espaco_image)
+                                .error(R.drawable.espaco_image)
+                                .into(holder.imgAnuncio);
+                    } catch (Exception e) {
+                        holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
+                    }
+                }
+            } else {
+                holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
+            }
 
         // BOOKMARK NA LISTA (sempre salvo = true na tela de guardados)
         holder.btnSalvar.setImageResource(R.drawable.ic_bookmark_salvo);

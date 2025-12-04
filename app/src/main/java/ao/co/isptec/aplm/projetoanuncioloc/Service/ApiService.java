@@ -19,6 +19,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Multipart;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
@@ -37,6 +38,25 @@ public interface ApiService {
     @Multipart
     @POST("/api/anuncios")
     Call<AnuncioResponse> criarAnuncio(
+            @Part("userId") RequestBody userId,
+            @Part("localId") RequestBody localId,
+            @Part("titulo") RequestBody titulo,
+            @Part("descricao") RequestBody descricao,
+            @Part("dataInicio") RequestBody dataInicio,
+            @Part("dataFim") RequestBody dataFim,
+            @Part("horaInicio") RequestBody horaInicio,
+            @Part("horaFim") RequestBody horaFim,
+            @Part("policyType") RequestBody policyType,
+            @Part("modoEntrega") RequestBody modoEntrega,
+            @Part List<MultipartBody.Part> perfilChave,
+            @Part List<MultipartBody.Part> perfilValor,
+            @Part MultipartBody.Part imagem
+    );
+
+    @Multipart
+    @PUT("/api/anuncios/{id}")
+    Call<AnuncioResponse> atualizarAnuncio(
+            @Path("id") Long id,
             @Part("userId") RequestBody userId,
             @Part("localId") RequestBody localId,
             @Part("titulo") RequestBody titulo,
@@ -99,8 +119,10 @@ public interface ApiService {
 
     // Eliminar Anúncio
     @DELETE("/api/anuncios/{id}")
-    Call<Void> eliminarAnuncio(@Path("id") Long id);
-
+    Call<Void> eliminarAnuncio(
+            @Path("id") Long id,
+            @Query("userId") Long userId
+    );
     // PERFIS - Compatível com seu backend
     @GET("/api/perfis")
     Call<List<ProfileKey>> getAllPerfis();
@@ -125,43 +147,6 @@ public interface ApiService {
 
     @DELETE("/api/perfis/chave/{chave}")
     Call<String> removerPerfilPorChave(@Path("chave") String chave);
-
-    @Multipart
-    @POST("/api/anuncios")
-    Call<AnuncioResponse> criarAnuncio(
-            @Part("userId") retrofit2.http.Body userId,
-            @Part("localId") retrofit2.http.Body localId,
-            @Part("titulo") retrofit2.http.Body titulo,
-            @Part("descricao") retrofit2.http.Body descricao,
-            @Part("dataInicio") retrofit2.http.Body dataInicio,
-            @Part("dataFim") retrofit2.http.Body dataFim,
-            @Part("horaInicio") retrofit2.http.Body horaInicio,
-            @Part("horaFim") retrofit2.http.Body horaFim,
-            @Part("policyType") retrofit2.http.Body policyType,
-            @Part("modoEntrega") retrofit2.http.Body modoEntrega,
-            @Part List<MultipartBody.Part> perfilChave,
-            @Part List<MultipartBody.Part> perfilValor,
-            @Part MultipartBody.Part imagem
-    );
-
-    @Multipart
-    @PUT("/api/anuncios/{id}")
-    Call<AnuncioResponse> atualizarAnuncio(
-            @Path("id") Long id,
-            @Part("userId") retrofit2.http.Body userId,
-            @Part("localId") retrofit2.http.Body localId,
-            @Part("titulo") retrofit2.http.Body titulo,
-            @Part("descricao") retrofit2.http.Body descricao,
-            @Part("dataInicio") retrofit2.http.Body dataInicio,
-            @Part("dataFim") retrofit2.http.Body dataFim,
-            @Part("horaInicio") retrofit2.http.Body horaInicio,
-            @Part("horaFim") retrofit2.http.Body horaFim,
-            @Part("policyType") retrofit2.http.Body policyType,
-            @Part("modoEntrega") retrofit2.http.Body modoEntrega,
-            @Part List<MultipartBody.Part> perfilChave,
-            @Part List<MultipartBody.Part> perfilValor,
-            @Part MultipartBody.Part imagem
-    );
 
     // Buscar anúncios próximos (centralizado)
     @GET("/api/anuncios/centralizado/proximos")

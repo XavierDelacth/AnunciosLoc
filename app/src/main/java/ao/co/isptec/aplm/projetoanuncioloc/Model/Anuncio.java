@@ -62,6 +62,12 @@ public class Anuncio implements Parcelable {
 
     // CONSTRUTOR DO PARCELABLE (atualizado com novos campos)
     protected Anuncio(Parcel in) {
+        if (in.readByte() == 0) {
+            id = null;
+        } else {
+            id = in.readLong();
+        }
+
         titulo = in.readString();
         descricao = in.readString();
         salvo = in.readByte() != 0;
@@ -142,6 +148,12 @@ public class Anuncio implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        if (id == null) {
+            dest.writeByte((byte) 0); // flag para null
+        } else {
+            dest.writeByte((byte) 1); // flag para não-null
+            dest.writeLong(id);
+        }
         dest.writeString(titulo);
         dest.writeString(descricao);
         dest.writeByte((byte) (salvo ? 1 : 0));

@@ -12,6 +12,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -132,8 +133,13 @@ public class MainActivity extends AppCompatActivity {
         cardLocais.setOnClickListener(v ->
                 startActivity(new Intent(this, AdicionarLocalActivity.class)));
 
-        cardAnuncios.setOnClickListener(v ->
+        /*cardAnuncios.setOnClickListener(v ->
                 startActivity(new Intent(this, AdicionarAnunciosActivity.class)));
+    */
+        cardAnuncios.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AdicionarAnunciosActivity.class);
+            startActivityForResult(intent, AdicionarAnunciosActivity.REQUEST_CODE_EDIT);
+        });
 
         btnProfile.setOnClickListener(v ->
                 startActivity(new Intent(this, PerfilActivity.class)));
@@ -455,9 +461,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_CODE_EDITAR_ANUNCIO && resultCode == RESULT_OK) {
-            // Atualiza a lista completa (mais seguro)
-            carregarAnuncios();  // já tens este método, só chama de novo
+        if (requestCode == REQUEST_CODE_EDITAR_ANUNCIO && resultCode == RESULT_OK && data != null) {
+            if (data.hasExtra("anuncio_editado")) {
+                Anuncio anuncioEditado = data.getParcelableExtra("anuncio_editado");
+                int position = data.getIntExtra("position", -1);
+
+                if (anuncioEditado != null && position != -1 && position < listaAnuncios.size()) {
+                    // Atualiza o anúncio na lista
+                    listaAnuncios.set(position, anuncioEditado);
+                    adapter.notifyItemChanged(position);
+                    Toast.makeText(this, "Anúncio atualizado!", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Se algo deu errado, recarrega toda a lista
+                    carregarAnuncios();
+                }
+            }
         }
 
         if (requestCode == REQUEST_ENABLE_GPS) {
@@ -474,6 +492,19 @@ public class MainActivity extends AppCompatActivity {
                 tvLocation.setText("GPS desativado");
             }
         }
+
+        if (requestCode == AdicionarAnunciosActivity.REQUEST_CODE_EDIT  // Ou o código que usas para adicionar
+                && resultCode == RESULT_OK
+                && data != null
+                && data.getBooleanExtra("anuncio_criado", false)) {
+
+            Log.d("MainActivity", "Novo anúncio criado – atualizando lista");
+            Long userId = getSharedPreferences("app_prefs", MODE_PRIVATE).getLong("userId", -1);
+            if (userId != -1) {
+                carregarAnuncios(); // Reaproveita o teu método existente para recarregar a lista
+                Toast.makeText(this, "Lista atualizada!", Toast.LENGTH_SHORT).show();
+            }
+            }
     }
 
     @Override
@@ -555,8 +586,17 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MainAnuncioAdapter(this, listaAnuncios, true, new MainAnuncioAdapter.OnActionClickListener() { // ← MUDAR AQUI
             @Override
             public void onEditClick(Anuncio anuncio, int position) {
-                // Implementar edição se necessário
-                Toast.makeText(MainActivity.this, "Editar: " + anuncio.titulo, Toast.LENGTH_SHORT).show();
+                Log.d("MAIN_EDIT", "=== EDITANDO ANÚNCIO ===");
+                Log.d("MAIN_EDIT", "Título: " + anuncio.titulo);
+                Log.d("MAIN_EDIT", "ID: " + anuncio.id);
+                Log.d("MAIN_EDIT", "Posição: " + position);
+
+                Intent intent = new Intent(MainActivity.this, AdicionarAnunciosActivity.class);
+
+                // Use letras minúsculas para consistência
+                intent.putExtra("ANUNCIO_PARA_EDITAR", anuncio);  // Parcelable!
+                intent.putExtra("POSICAO", position);
+                startActivityForResult(intent, REQUEST_CODE_EDITAR_ANUNCIO);
             }
 
             @Override
@@ -609,6 +649,13 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
+        if (userId == -1L) {
+            Toast.makeText(this, "Erro: Utilizador não logado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Log.d("ELIMINAR_ANUNCIO", "=== INICIANDO ELIMINAÇÃO ===");
         Log.d("ELIMINAR_ANUNCIO", "Título: " + anuncio.titulo);
         Log.d("ELIMINAR_ANUNCIO", "ID do anúncio: " + anuncio.id);
@@ -620,7 +667,7 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Eliminar", (dialog, which) -> {
                     Log.d("ELIMINAR_ANUNCIO", "Usuário confirmou eliminação. Chamando API...");
 
-                    Call<Void> call = RetrofitClient.getApiService(this).eliminarAnuncio(anuncio.id);
+                    Call<Void> call = RetrofitClient.getApiService(this).eliminarAnuncio(anuncio.id, userId);
                     call.enqueue(new Callback<Void>() {
                         @Override
                         public void onResponse(Call<Void> call, Response<Void> response) {

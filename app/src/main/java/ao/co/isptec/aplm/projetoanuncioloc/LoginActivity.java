@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -84,6 +85,7 @@ public class LoginActivity extends AppCompatActivity {
                                 .putString("jwt", jwt)
                                 .putString("username", username)
                                 .apply();
+                        Log.d("LoginActivity", "JWT salvo: " + prefs.getString("jwt", "Nenhum"));
 
                             // BUSCA OS PERFIS DO UTILIZADOR NO SERVIDOR e salva localmente
                             RetrofitClient.getApiService(LoginActivity.this).getUserPerfis(userId)

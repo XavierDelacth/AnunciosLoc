@@ -1,11 +1,19 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -24,12 +32,28 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -102,20 +126,146 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     private final ActivityResultLauncher<Intent> imagemLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
-                Log.d(TAG, "Imagem selecionada retornada");
+                Log.d(TAG, "Resultado da galeria: " + result.getResultCode());
+
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri uri = result.getData().getData();
                     if (uri != null) {
-                        caminhoImagem = uri.toString();
-                        ImageView ivPreview = findViewById(R.id.ivPreviewImagem);
-                        ivPreview.setImageURI(uri);
-                        TextView tvHint = findViewById(R.id.tvImagemHint);
-                        tvHint.setText("Imagem selecionada");
-                        Toast.makeText(this, "Imagem adicionada!", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Imagem URI: " + uri);
+                        Log.d(TAG, "URI da imagem: " + uri);
+
+                        // Chamar método corrigido
+                        carregarImagemComGlideCorrigido(uri);
                     }
                 }
             });
+
+    private String salvarImagemTemporaria(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+
+            // Criar arquivo temporário
+            File tempFile = File.createTempFile("temp_img_", ".jpg", getCacheDir());
+            tempFile.deleteOnExit();
+
+            OutputStream outputStream = new FileOutputStream(tempFile);
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+
+            return tempFile.getAbsolutePath();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao salvar imagem temporária: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean imagemFoiAlterada = false;
+    private void carregarImagemComGlideCorrigido(Uri uri) {
+        ImageView ivPreview = findViewById(R.id.ivPreviewImagem);
+        TextView tvHint = findViewById(R.id.tvImagemHint);
+
+        if (ivPreview == null) {
+            Log.e(TAG, "ImageView não encontrado!");
+            return;
+        }
+
+        // Salvar arquivo temporário e guardar o caminho REAL
+        String tempPath = salvarImagemTemporaria(uri);
+        if (tempPath != null) {
+            caminhoImagem = tempPath;
+            Log.d(TAG, "Imagem salva em: " + caminhoImagem);
+        } else {
+            // Fallback: usar URI (não ideal para upload)
+            caminhoImagem = uri.toString();
+        }
+
+        runOnUiThread(() -> {
+            if (tvHint != null) {
+                tvHint.setText("Imagem selecionada");
+            }
+
+            // Remover qualquer imagem/source anterior
+            ivPreview.setImageTintList(null);
+            ivPreview.setImageTintMode(null);
+            ivPreview.clearColorFilter();
+            ivPreview.setBackgroundColor(Color.TRANSPARENT);
+
+            // Carregar com Glide
+            Glide.with(this)
+                    .load(uri)
+                    .placeholder(R.drawable.ic_placeholder)
+                    .error(R.drawable.ic_close)
+                    .apply(RequestOptions.centerCropTransform())
+                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(16)))
+                    .into(ivPreview);
+
+            imagemFoiAlterada = true;
+            Toast.makeText(this, "Imagem adicionada!", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void carregarImagemSemGlide(Uri uri, ImageView imageView) {
+        try {
+            // Método 1: Usar BitmapFactory
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                imageView.setImageBitmap(bitmap);
+                Log.d(TAG, " Carregado com BitmapFactory");
+            } else {
+                // Método 2: Usar setImageURI (como fallback)
+                imageView.setImageURI(uri);
+                Log.d(TAG, "Carregado com setImageURI");
+            }
+            if (inputStream != null) inputStream.close();
+        } catch (Exception e) {
+            Log.e(TAG, " Todos os métodos falharam: " + e.getMessage());
+            imageView.setImageResource(R.drawable.ic_close);
+        }
+    }
+
+    private void solicitarPermissaoImagem() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ precisa de READ_MEDIA_IMAGES
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_MEDIA_IMAGES},
+                        100);
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android 6-12 precisa de READ_EXTERNAL_STORAGE
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        100);
+            }
+        }
+    }
+
+    // Adicionar este método para tratar a resposta da permissão
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Permissão concedida para ler imagens");
+            } else {
+                Log.w(TAG, "Permissão negada para ler imagens");
+                Toast.makeText(this, "Permissão necessária para selecionar imagens", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,8 +273,10 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         Log.d(TAG, "onCreate chamado - Activity iniciada");
         setContentView(R.layout.activity_criar_anuncios);
 
-        // Verifica se está em modo edição
-        verificarModoEdicao();
+        // LOG ADICIONAL para verificar imediatamente
+        Log.d(TAG, "Após verificarModoEdicao(): modoEdicao=" + modoEdicao +
+                ", anuncioParaEditar=" + (anuncioParaEditar != null ? "presente" : "null"));
+        solicitarPermissaoImagem();
 
         initViews();
         if (!initViewsSucesso) {
@@ -140,142 +292,256 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         setupClickListeners();
         atualizarVisibilidadeChaves();
 
-        // Se está em modo edição, preenche os campos
-        if (modoEdicao && anuncioParaEditar != null) {
-            tvTituloTela.setText("Editar Anúncio");
-            btnPublicar.setText("Actualizar");
-            preencherDadosParaEdicao();
-        } else {
-            resetarDataHora(tvDataInicio, "dd/mm/aaaa");
-            resetarDataHora(tvDataFim, "dd/mm/aaaa");
-            resetarDataHora(tvHoraInicio, "hh:mm");
-            resetarDataHora(tvHoraFim, "hh:mm");
-        }
+        // Verifica se está em modo edição
+        verificarModoEdicao();
 
         Log.d(TAG, "onCreate concluído");
     }
 
     private void verificarModoEdicao() {
         Intent intent = getIntent();
-        if (intent.hasExtra("anuncio")) {
+
+        Log.d(TAG, "=== VERIFICANDO MODO EDIÇÃO ===");
+
+        // Verificar TODOS os extras disponíveis
+        Bundle extras = intent.getExtras();
+        if (extras != null) {
+            Log.d(TAG, "Quantidade de extras: " + extras.size());
+            for (String key : extras.keySet()) {
+                Object value = extras.get(key);
+                Log.d(TAG, "Extra [" + key + "]: " +
+                        (value != null ? value.toString().substring(0, Math.min(50, value.toString().length())) : "null"));
+            }
+        }
+
+        // Verificar modo edição
+        if ((intent.hasExtra("modo_edicao") && intent.getBooleanExtra("modo_edicao", false)) ||
+                (intent.hasExtra("MODO_EDICAO") && intent.getBooleanExtra("MODO_EDICAO", false))) {
+
             modoEdicao = true;
-            anuncioParaEditar = intent.getParcelableExtra("anuncio");
             posicaoAnuncio = intent.getIntExtra("position", -1);
-            Log.d(TAG, "Modo EDIÇÃO ativado - Posição: " + posicaoAnuncio);
+            if (posicaoAnuncio == -1) {
+                posicaoAnuncio = intent.getIntExtra("POSICAO", -1);  // ← ADICIONAR ESTA LINHA
+            }
+
+            Log.d(TAG, "Modo EDIÇÃO ativado");
+
+            // ORREÇÃO: Tentar TODOS os nomes possíveis
+            anuncioParaEditar = intent.getParcelableExtra("ANUNCIO_PARA_EDITAR");  // ← NOME CORRETO!
+
+            if (anuncioParaEditar == null) {
+                anuncioParaEditar = intent.getParcelableExtra("anuncio");
+            }
+
+            if (anuncioParaEditar == null) {
+                anuncioParaEditar = intent.getParcelableExtra("ANUNCIO");
+            }
+
+
+            if (anuncioParaEditar == null) {
+                Log.e(TAG, "ERRO CRÍTICO: Não foi possível obter dados do anúncio!");
+                Toast.makeText(this, "Erro: Não foi possível carregar o anúncio para edição", Toast.LENGTH_LONG).show();
+                finish();
+            } else {
+                Log.d(TAG, "Anúncio carregado com sucesso!");
+                Log.d(TAG, "  Título: " + anuncioParaEditar.titulo);
+                Log.d(TAG, "  ID: " + anuncioParaEditar.id);
+                Log.d(TAG, "  Descrição: " + (anuncioParaEditar.descricao != null ?
+                        anuncioParaEditar.descricao.substring(0, Math.min(30, anuncioParaEditar.descricao.length())) : "null"));
+                preencherDadosParaEdicao();
+            }
+
         } else {
             modoEdicao = false;
-            Log.d(TAG, "Modo CRIAÇÃO ativado");
+            Log.d(TAG, "Modo CRIAÇÃO detectado");
         }
     }
 
     private void preencherDadosParaEdicao() {
-        Log.d(TAG, "Preenchendo dados para edição");
+        Log.d(TAG, "=== INICIANDO preencherDadosParaEdicao ===");
 
-        // Título da tela
-        if (tvTituloTela != null) {
-            tvTituloTela.setText("Editar Anúncio");
-        }
-
-        // Botão
-        if (btnPublicar != null) {
-            btnPublicar.setText("Salvar Alterações");
-        }
-
-        // Campos básicos
-        if (etTitulo != null) {
-            etTitulo.setText(anuncioParaEditar.titulo);
-        }
-
-        if (etMensagem != null) {
-            etMensagem.setText(anuncioParaEditar.descricao);
-        }
-
-        // Local
-        if (anuncioParaEditar.local != null && !anuncioParaEditar.local.isEmpty()) {
-            localSelecionado = anuncioParaEditar.local;
-            if (tvLocalSelecionado != null) {
-                tvLocalSelecionado.setText(localSelecionado);
-                tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
+        try {
+            // Proteção contra NULL
+            if (anuncioParaEditar == null) {
+                Log.e(TAG, "ERRO: anuncioParaEditar é NULL!");
+                Toast.makeText(this, "Erro ao carregar dados", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
             }
-            // Seleciona no spinner se existir
-            selecionarNoSpinnerLocais(localSelecionado);
-        }
 
-        // Imagem
-        if (anuncioParaEditar.imagem != null && !anuncioParaEditar.imagem.isEmpty()) {
-            caminhoImagem = anuncioParaEditar.imagem;
+            // Muda título da tela e texto do botão
+            tvTituloTela.setText("Editar Anúncio");
+            btnPublicar.setText("Atualizar Anúncio");
+
+            Log.d(TAG, "Anúncio não é null, continuando...");
+
+            // Título da tela
+            Log.d(TAG, "Configurando título da tela...");
+            if (tvTituloTela != null) {
+                tvTituloTela.setText("Editar Anúncio");
+            }
+
+            // Botão
+            Log.d(TAG, "Configurando botão publicar...");
+            if (btnPublicar != null) {
+                btnPublicar.setText("Salvar Alterações");
+            }
+
+            // Campos básicos
+            Log.d(TAG, "Preenchendo título: " + anuncioParaEditar.titulo);
+            if (etTitulo != null && anuncioParaEditar.titulo != null) {
+                etTitulo.setText(anuncioParaEditar.titulo);
+            }
+
+            Log.d(TAG, "Preenchendo descrição: " +
+                    (anuncioParaEditar.descricao != null ?
+                            anuncioParaEditar.descricao.substring(0, Math.min(20, anuncioParaEditar.descricao.length())) : "null"));
+            if (etMensagem != null && anuncioParaEditar.descricao != null) {
+                etMensagem.setText(anuncioParaEditar.descricao);
+            }
+
+            // Local
+            Log.d(TAG, "Preenchendo local: " + anuncioParaEditar.local);
+            if (anuncioParaEditar.local != null && !anuncioParaEditar.local.isEmpty()) {
+                localSelecionado = anuncioParaEditar.local;
+                if (tvLocalSelecionado != null) {
+                    tvLocalSelecionado.setText(localSelecionado);
+                    tvLocalSelecionado.setTextColor(getColor(android.R.color.black));
+                }
+                selecionarNoSpinnerLocais(localSelecionado);
+            }
+
+            // Imagem
+            Log.d(TAG, "Processando imagem: " + anuncioParaEditar.imagem);
+            // === CARREGAR IMAGEM NO MODO EDIÇÃO (igual ao AnuncioAdapter) ===
             ImageView ivPreview = findViewById(R.id.ivPreviewImagem);
             TextView tvHint = findViewById(R.id.tvImagemHint);
-            if (ivPreview != null && tvHint != null) {
-                ivPreview.setImageURI(Uri.parse(caminhoImagem));
-                tvHint.setText("Imagem selecionada");
+
+            if (anuncioParaEditar.imagem != null && !anuncioParaEditar.imagem.isEmpty()) {
+                caminhoImagem = anuncioParaEditar.imagem; // Guarda para não perder ao atualizar
+
+                String urlImagem = anuncioParaEditar.imagem;
+                String fullUrl;
+
+                // === MESMA LÓGICA DO AnuncioAdapter.java ===
+                if (urlImagem.startsWith("http://") || urlImagem.startsWith("https://")) {
+                    fullUrl = urlImagem;
+                } else {
+                    String baseUrl = RetrofitClient.BASE_URL;
+                    if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                    String path = urlImagem.startsWith("/") ? urlImagem : "/" + urlImagem;
+                    fullUrl = baseUrl + path;
+                }
+
+                Log.d(TAG, "Carregando imagem do anúncio (edição): " + fullUrl);
+
+                // Remove o tint/cinza ANTES de carregar (essencial!)
+                ivPreview.setImageTintList(null);
+                ivPreview.setImageTintMode(null);
+                ivPreview.clearColorFilter();
+                ivPreview.setBackgroundColor(Color.TRANSPARENT);
+
+                Glide.with(this)
+                        .load(fullUrl)
+                        .apply(new RequestOptions()
+                                .placeholder(R.drawable.espaco_image)  // Usa o mesmo do AnuncioAdapter
+                                .error(R.drawable.espaco_image)
+                                .transform(new RoundedCorners(24)))
+                        .into(ivPreview);
+
+                tvHint.setText("Toque para alterar a imagem");
+
+            } else {
+                // Sem imagem
+                ivPreview.setImageResource(R.drawable.espaco_image);
+                ivPreview.setImageTintList(null);  // Remove tint mesmo no placeholder
+                tvHint.setText("Toque para adicionar uma imagem");
             }
-        }
 
-        // Datas e horas
-        if (tvDataInicio != null && anuncioParaEditar.dataInicio != null) {
-            tvDataInicio.setText(anuncioParaEditar.dataInicio);
-            tvDataInicio.setTextColor(getColor(android.R.color.black));
-        }
-
-        if (tvDataFim != null && anuncioParaEditar.dataFim != null) {
-            tvDataFim.setText(anuncioParaEditar.dataFim);
-            tvDataFim.setTextColor(getColor(android.R.color.black));
-        }
-
-        if (tvHoraInicio != null && anuncioParaEditar.horaInicio != null) {
-            tvHoraInicio.setText(anuncioParaEditar.horaInicio);
-            tvHoraInicio.setTextColor(getColor(android.R.color.black));
-        }
-
-        if (tvHoraFim != null && anuncioParaEditar.horaFim != null) {
-            tvHoraFim.setText(anuncioParaEditar.horaFim);
-            tvHoraFim.setTextColor(getColor(android.R.color.black));
-        }
-
-        // Tipo de restrição
-        if (anuncioParaEditar.tipoRestricao != null) {
-            if (tvTipoRestricao != null) {
-                tvTipoRestricao.setText(anuncioParaEditar.tipoRestricao);
+            // Datas
+            Log.d(TAG, "Preenchendo data início: " + anuncioParaEditar.dataInicio);
+            if (tvDataInicio != null && anuncioParaEditar.dataInicio != null) {
+                tvDataInicio.setText(anuncioParaEditar.dataInicio);
+                tvDataInicio.setTextColor(getColor(android.R.color.black));
             }
-            selecionarNoSpinnerRestricao(anuncioParaEditar.tipoRestricao);
-        }
 
-        // Modo de entrega
-        if (anuncioParaEditar.modoEntrega != null) {
-            if (tvModoEntrega != null) {
-                tvModoEntrega.setText(anuncioParaEditar.modoEntrega);
+            Log.d(TAG, "Preenchendo data fim: " + anuncioParaEditar.dataFim);
+            if (tvDataFim != null && anuncioParaEditar.dataFim != null) {
+                tvDataFim.setText(anuncioParaEditar.dataFim);
+                tvDataFim.setTextColor(getColor(android.R.color.black));
             }
-            selecionarNoSpinnerModoEntrega(anuncioParaEditar.modoEntrega);
-        }
 
-        // Chaves de restrição
-        if (anuncioParaEditar.getChavesPerfil() != null && !anuncioParaEditar.getChavesPerfil() .isEmpty()) {
-            restricoesPerfil.clear();
-            restricoesPerfil.putAll(anuncioParaEditar.getChavesPerfil() );
+            // Horas
+            Log.d(TAG, "Preenchendo hora início: " + anuncioParaEditar.horaInicio);
+            if (tvHoraInicio != null && anuncioParaEditar.horaInicio != null) {
+                tvHoraInicio.setText(anuncioParaEditar.horaInicio);
+                tvHoraInicio.setTextColor(getColor(android.R.color.black));
+            }
 
-            // Marca os valores selecionados nas chaves
-            for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
-                String keyName = entry.getKey();
-                List<String> selectedValues = entry.getValue();
+            Log.d(TAG, "Prenchendo hora fim: " + anuncioParaEditar.horaFim);
+            if (tvHoraFim != null && anuncioParaEditar.horaFim != null) {
+                tvHoraFim.setText(anuncioParaEditar.horaFim);
+                tvHoraFim.setTextColor(getColor(android.R.color.black));
+            }
 
-                for (ProfileKey key : allKeys) {
-                    if (key.getName().equals(keyName)) {
-                        for (String value : selectedValues) {
-                            key.toggleValue(value);
+            // Tipo de restrição
+            Log.d(TAG, "Preenchendo tipo restrição: " + anuncioParaEditar.tipoRestricao);
+            if (anuncioParaEditar.tipoRestricao != null) {
+                if (tvTipoRestricao != null) {
+                    tvTipoRestricao.setText(anuncioParaEditar.tipoRestricao);
+                }
+                selecionarNoSpinnerRestricao(anuncioParaEditar.tipoRestricao);
+            }
+
+            // Modo de entrega
+            Log.d(TAG, "Preenchendo modo entrega: " + anuncioParaEditar.modoEntrega);
+            if (anuncioParaEditar.modoEntrega != null) {
+                if (tvModoEntrega != null) {
+                    tvModoEntrega.setText(anuncioParaEditar.modoEntrega);
+                }
+                selecionarNoSpinnerModoEntrega(anuncioParaEditar.modoEntrega);
+            }
+
+            // Chaves de restrição
+            Log.d(TAG, "Processando chaves de perfil...");
+            if (anuncioParaEditar.getChavesPerfil() != null && !anuncioParaEditar.getChavesPerfil().isEmpty()) {
+                Log.d(TAG, "    Encontradas " + anuncioParaEditar.getChavesPerfil().size() + " chaves");
+
+                restricoesPerfil.clear();
+                restricoesPerfil.putAll(anuncioParaEditar.getChavesPerfil());
+
+                // Marca os valores selecionados nas chaves
+                for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
+                    String keyName = entry.getKey();
+                    List<String> selectedValues = entry.getValue();
+                    Log.d(TAG, "    Processando chave: " + keyName + " com " + selectedValues.size() + " valores");
+
+                    for (ProfileKey key : allKeys) {
+                        if (key.getName().equals(keyName)) {
+                            for (String value : selectedValues) {
+                                key.toggleValue(value);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
+
+                if (keyAdapter != null) {
+                    keyAdapter.notifyDataSetChanged();
+                }
+            } else {
+                Log.d(TAG, "    Nenhuma chave de perfil encontrada");
             }
 
-            if (keyAdapter != null) {
-                keyAdapter.notifyDataSetChanged();
-            }
+            Log.d(TAG, "===  preencherDadosParaEdicao CONCLUÍDO COM SUCESSO ===");
+
+        } catch (Exception e) {
+            Log.e(TAG, "EXCEÇÃO em preencherDadosParaEdicao: " + e.getMessage());
+            e.printStackTrace();
+            Toast.makeText(this, "Erro ao carregar dados: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-
-        Log.d(TAG, "Dados preenchidos para edição");
     }
+
 
     private void selecionarNoSpinnerLocais(String local) {
         if (spinnerLocais == null) return;
@@ -324,8 +590,8 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         btnBack = findViewById(R.id.btnBack);
         if (btnBack == null) { Log.e(TAG, "btnBack não encontrado!"); initViewsSucesso = false; }
 
-        // Título da tela (pode não existir no XML atual, será adicionado depois se necessário)
-        tvTituloTela = findViewById(R.id.tvTitulo);
+        // Título da tela
+        tvTituloTela = findViewById(R.id.tvTituloTela);
 
         llLocal = findViewById(R.id.llLocal);
         if (llLocal == null) { Log.e(TAG, "llLocal não encontrado!"); initViewsSucesso = false; }
@@ -583,8 +849,40 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     }
 
     private void abrirGaleriaImagem() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        imagemLauncher.launch(intent);
+        // Primeiro verificar permissão
+        if (!temPermissaoImagem()) {
+            solicitarPermissaoImagem();
+            return;
+        }
+
+        // Usar ACTION_OPEN_DOCUMENT para melhor compatibilidade com Android 10+
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+
+        // Adicionar flags para acesso persistente
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+        // Usar chooser para melhor experiência
+        Intent chooser = Intent.createChooser(intent, "Selecionar imagem");
+
+        try {
+            imagemLauncher.launch(chooser);
+        } catch (ActivityNotFoundException e) {
+            Log.e(TAG, "Nenhuma app de galeria encontrada: " + e.getMessage());
+            Toast.makeText(this, "Instale uma app de galeria", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean temPermissaoImagem() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    == PackageManager.PERMISSION_GRANTED;
+        } else {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
     }
 
     private void showDatePicker(TextView textView) {
@@ -722,6 +1020,36 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
     @Override
     public void onKeyAdded(String keyName, List<String> values) {
         restricoesPerfil.put(keyName, values);
+        // Salva nova chave no backend
+        ApiService apiService = RetrofitClient.getApiService(this);
+        Map<String, Object> request = new HashMap<>();
+        request.put("chave", keyName);
+        request.put("valores", values);  // Lista de strings
+        Call<ProfileKey> call = apiService.criarPerfil(request);
+        call.enqueue(new Callback<ProfileKey>() {
+            @Override
+            public void onResponse(Call<ProfileKey> call, Response<ProfileKey> response) {
+                if (response.isSuccessful()) {
+                    Log.d(TAG, "Nova chave salva na BD: " + keyName + " com valores " + values);
+                    Toast.makeText(AdicionarAnunciosActivity.this, "Chave criada e salva!", Toast.LENGTH_SHORT).show();
+                    // Atualiza lista local se precisar
+                    allKeys.add(new ProfileKey(keyName, values));
+                    chavesFiltradas.add(new ProfileKey(keyName, values));
+                    keyAdapter.notifyDataSetChanged();
+                    atualizarVisibilidadeChaves();
+                } else {
+                    Log.e(TAG, "Erro ao salvar chave na BD: " + response.code() + " - " + response.message());
+                    Toast.makeText(AdicionarAnunciosActivity.this, "Erro ao salvar chave: " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ProfileKey> call, Throwable t) {
+                Log.e(TAG, "Falha na rede ao salvar chave: " + t.getMessage());
+                Toast.makeText(AdicionarAnunciosActivity.this, "Falha: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
         filtrarChaves(etPesquisarChaves.getText().toString());
         if (keyAdapter != null) {
             keyAdapter.notifyDataSetChanged();
@@ -730,73 +1058,6 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         Toast.makeText(this, "Chave pública adicionada: " + keyName, Toast.LENGTH_SHORT).show();
     }
 
-    // SALVAR ALTERAÇÕES (modo edição)
-    private void salvarAlteracoes() {
-        Log.d(TAG, "salvarAlteracoes chamado");
-
-        String titulo = etTitulo.getText().toString().trim();
-        String mensagem = etMensagem.getText().toString().trim();
-        String dataInicio = tvDataInicio.getText().toString();
-        String dataFim = tvDataFim.getText().toString();
-        String horaInicio = tvHoraInicio.getText().toString();
-        String horaFim = tvHoraFim.getText().toString();
-        String restricao = tvTipoRestricao.getText().toString();
-        String modoEntrega = tvModoEntrega.getText().toString();
-
-        // Validações
-        if (localSelecionado == null || localSelecionado.equals("Selecionar um local")) {
-            Toast.makeText(this, "Por favor, adicione um local de propagação", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (titulo.isEmpty()) {
-            Toast.makeText(this, "Digite um título para o anúncio", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (mensagem.isEmpty()) {
-            Toast.makeText(this, "Escreva uma mensagem para o anúncio", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (dataInicio.equals("dd/mm/aaaa") || dataFim.equals("dd/mm/aaaa")) {
-            Toast.makeText(this, "Selecione as datas de início e fim", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (horaInicio.equals("hh:mm") || horaFim.equals("hh:mm")) {
-            Toast.makeText(this, "Selecione os horários", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (!"Nenhuma".equals(restricao) && restricoesPerfil.isEmpty()) {
-            Toast.makeText(this, "Adicione pelo menos uma chave pública de restrição", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // Atualiza o anúncio existente
-        anuncioParaEditar.titulo = titulo;
-        anuncioParaEditar.descricao = mensagem;
-        anuncioParaEditar.local = localSelecionado;
-        anuncioParaEditar.imagem = caminhoImagem;
-        anuncioParaEditar.dataInicio = dataInicio;
-        anuncioParaEditar.dataFim = dataFim;
-        anuncioParaEditar.horaInicio = horaInicio;
-        anuncioParaEditar.horaFim = horaFim;
-        anuncioParaEditar.tipoRestricao = restricao;
-        anuncioParaEditar.modoEntrega = modoEntrega;
-
-        // Atualiza chaves
-        anuncioParaEditar.getChavesPerfil().clear();
-        for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
-            anuncioParaEditar.addChave(entry.getKey(), entry.getValue());
-        }
-
-        // Retorna resultado para MainActivity
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("anuncio_editado", anuncioParaEditar);
-        resultIntent.putExtra("position", posicaoAnuncio);
-        setResult(RESULT_OK, resultIntent);
-
-        Toast.makeText(this, "Anúncio atualizado com sucesso!", Toast.LENGTH_SHORT).show();
-        Log.d(TAG, "Anúncio editado e retornado");
-        finish();
-    }
 
     // PUBLICAR ANÚNCIO (modo criação)
     private void publicarAnuncio() {
@@ -849,33 +1110,16 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
             novoAnuncio.addChave(entry.getKey(), entry.getValue());
         }
 
-        boolean sucesso = salvarAnuncio(novoAnuncio);
-        if (sucesso) {
-            Log.d(TAG, "Anúncio salvo com sucesso");
-            Toast.makeText(this, "Anúncio publicado com sucesso!", Toast.LENGTH_SHORT).show();
-            limparCampos();
-            finish();
-        } else {
-            Log.e(TAG, "Erro ao salvar anúncio");
-            Toast.makeText(this, "Erro ao publicar. Tente novamente.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private boolean salvarAnuncio(Anuncio anuncio) {
-        Log.d(TAG, "salvarAnuncio chamado - Salvando: " + anuncio.titulo);
-
         // Obter userId do SharedPreferences
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
-
         if (userId == -1L) {
             Toast.makeText(this, "Erro: Usuário não logado", Toast.LENGTH_SHORT).show();
-            return false;
+            return;
         }
 
-        // Buscar o ID do local selecionado
-        buscarLocalIdEEnviarAnuncio(anuncio, userId);
-        return true; // Retorna true pois o processo foi iniciado
+        // Chama diretamente a busca do local e envio (sem simulação)
+        buscarLocalIdEEnviarAnuncio(novoAnuncio, userId);
     }
 
     private void buscarLocalIdEEnviarAnuncio(Anuncio anuncio, Long userId) {
@@ -922,12 +1166,12 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         RequestBody localIdBody = RequestBody.create(MediaType.parse("text/plain"), localId.toString());
         RequestBody tituloBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.titulo);
         RequestBody descricaoBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.descricao);
-        RequestBody dataInicioBody = RequestBody.create(MediaType.parse("text/plain"), formatarDataParaBackend(anuncio.dataInicio));
-        RequestBody dataFimBody = RequestBody.create(MediaType.parse("text/plain"), formatarDataParaBackend(anuncio.dataFim));
+        RequestBody dataInicioBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.dataInicio);
+        RequestBody dataFimBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.dataFim);
         RequestBody horaInicioBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaInicio);
         RequestBody horaFimBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaFim);
-        RequestBody policyTypeBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.tipoRestricao);
-        RequestBody modoEntregaBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.modoEntrega);
+        RequestBody policyTypeBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.tipoRestricao.toUpperCase());
+        RequestBody modoEntregaBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.modoEntrega.toUpperCase());
 
         // Preparar chaves e valores do perfil - CORRIGIDO
         List<MultipartBody.Part> perfilChaveParts = new ArrayList<>();
@@ -945,27 +1189,33 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
 
         // Preparar imagem se existir
         MultipartBody.Part imagemPart = null;
-        if (caminhoImagem != null && !caminhoImagem.isEmpty() && !caminhoImagem.startsWith("http")) {
-            try {
-                File file = new File(getRealPathFromURI(Uri.parse(caminhoImagem)));
-                if (file.exists()) {
-                    RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-                    imagemPart = MultipartBody.Part.createFormData("imagem", file.getName(), requestFile);
-                    Log.d(TAG, "Imagem anexada: " + file.getAbsolutePath());
-                } else {
-                    Log.w(TAG, "Arquivo de imagem não encontrado: " + caminhoImagem);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Erro ao processar imagem: " + e.getMessage());
+        if (caminhoImagem != null && !caminhoImagem.isEmpty()) {
+            File file = new File(caminhoImagem); // Já é path local do cache
+            if (file.exists()) {
+                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+                imagemPart = MultipartBody.Part.createFormData("imagem", file.getName(), requestFile);
+                Log.d(TAG, "Imagem anexada: " + file.getAbsolutePath() + " | Tamanho: " + file.length());
+            } else {
+                Log.w(TAG, "Arquivo de imagem não encontrado: " + caminhoImagem);
             }
-        } else if (caminhoImagem != null && caminhoImagem.startsWith("http")) {
-            Log.d(TAG, "Imagem já é uma URL, não anexando ao multipart");
         }
 
         Log.d(TAG, "Enviando anúncio para backend...");
-        Log.d(TAG, "Título: " + anuncio.titulo);
+        Log.d(TAG, "User ID: " + userId);
         Log.d(TAG, "Local ID: " + localId);
-        Log.d(TAG, "Chaves: " + perfilChaveParts.size());
+        Log.d(TAG, "Título: " + anuncio.titulo);
+        Log.d(TAG, "Descrição tamanho: " + anuncio.descricao.length());
+        Log.d(TAG, "Data Início: " + anuncio.dataInicio);
+        Log.d(TAG, "Data Fim: " + anuncio.dataFim);
+        Log.d(TAG, "Hora Início: " + anuncio.horaInicio);
+        Log.d(TAG, "Hora Fim: " + anuncio.horaInicio);
+        Log.d(TAG, "Tipo de Restricção: " + anuncio.tipoRestricao);
+        Log.d(TAG, "Politica de entrega: " + anuncio.modoEntrega);
+        Log.d(TAG, "Imagem path: " + (caminhoImagem != null ? caminhoImagem : "Sem imagem"));
+        Log.d(TAG, "Chaves restrições: " + restricoesPerfil.size() + " itens");
+        for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
+            Log.d(TAG, "Chave: " + entry.getKey() + " | Valores: " + entry.getValue());
+        }
 
         Call<AnuncioResponse> call = apiService.criarAnuncio(
                 userIdBody, localIdBody, tituloBody, descricaoBody,
@@ -986,7 +1236,9 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
                     Intent resultIntent = new Intent();
                     resultIntent.putExtra("anuncio_criado", true);
                     setResult(RESULT_OK, resultIntent);
+                    limparCampos();
                     finish();
+
                 } else {
                     try {
                         String errorBody = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
@@ -1010,36 +1262,262 @@ public class AdicionarAnunciosActivity extends AppCompatActivity implements Adic
         });
     }
 
+    // SALVAR ALTERAÇÕES (modo edição)
+    private void salvarAlteracoes() {
+        Log.d(TAG, "salvarAlteracoes chamado");
 
-    private String formatarDataParaBackend(String data) {
-        if (data == null || data.isEmpty() || data.equals("dd/mm/aaaa")) return "";
+        // Validações (mantenha as mesmas)
+        if (!validarCampos()) {
+            return;
+        }
 
-        try {
-            // Converte de "dd/mm/aaaa" para "aaaa-mm-dd"
-            String[] partes = data.split("/");
-            if (partes.length == 3) {
-                return partes[2] + "-" + partes[1] + "-" + partes[0];
+        // Atualiza o anúncio local
+        anuncioParaEditar.titulo = etTitulo.getText().toString().trim();
+        anuncioParaEditar.descricao = etMensagem.getText().toString().trim();
+        anuncioParaEditar.local = localSelecionado;
+        anuncioParaEditar.dataInicio = tvDataInicio.getText().toString();
+        anuncioParaEditar.dataFim = tvDataFim.getText().toString();
+        anuncioParaEditar.horaInicio = tvHoraInicio.getText().toString();
+        anuncioParaEditar.horaFim = tvHoraFim.getText().toString();
+        anuncioParaEditar.tipoRestricao = tvTipoRestricao.getText().toString();
+        anuncioParaEditar.modoEntrega = tvModoEntrega.getText().toString();
+
+        // Atualiza imagem se foi alterada
+        if (caminhoImagem != null && !caminhoImagem.equals(anuncioParaEditar.imagem)) {
+            anuncioParaEditar.imagem = caminhoImagem;
+        }
+
+        // Atualiza chaves
+        anuncioParaEditar.getChavesPerfil().clear();
+        for (Map.Entry<String, List<String>> entry : restricoesPerfil.entrySet()) {
+            anuncioParaEditar.addChave(entry.getKey(), entry.getValue());
+        }
+
+        // Agora enviar para o backend
+        enviarAtualizacaoParaBackend();
+    }
+
+    private void enviarAtualizacaoParaBackend() {
+        if (anuncioParaEditar == null || anuncioParaEditar.id == null) {
+            Toast.makeText(this, "Erro: Anúncio sem ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Obter userId
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
+        if (userId == -1L) {
+            Toast.makeText(this, "Erro: Usuário não logado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Buscar o ID do local
+        buscarLocalIdEAtualizarAnuncio(anuncioParaEditar, userId);
+    }
+
+    private void buscarLocalIdEAtualizarAnuncio(Anuncio anuncio, Long userId) {
+        ApiService apiService = RetrofitClient.getApiService(this);
+
+        Call<List<Local>> call = apiService.getTodosLocais();
+        call.enqueue(new Callback<List<Local>>() {
+            @Override
+            public void onResponse(Call<List<Local>> call, Response<List<Local>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Long localId = null;
+                    for (Local local : response.body()) {
+                        if (local.getNome().equals(anuncio.local)) {
+                            localId = local.getId();
+                            break;
+                        }
+                    }
+
+                    if (localId != null) {
+                        atualizarAnuncioNoBackend(anuncio, userId, localId);
+                    } else {
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Local não encontrado", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(AdicionarAnunciosActivity.this,
+                            "Erro ao buscar local", Toast.LENGTH_SHORT).show();
+                }
             }
+
+            @Override
+            public void onFailure(Call<List<Local>> call, Throwable t) {
+                Toast.makeText(AdicionarAnunciosActivity.this,
+                        "Falha na rede ao buscar local", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void atualizarAnuncioNoBackend(Anuncio anuncio, Long userId, Long localId) {
+        ApiService apiService = RetrofitClient.getApiService(this);
+
+        // Preparar os dados para multipart - similar ao criar
+        RequestBody userIdBody = RequestBody.create(MediaType.parse("text/plain"), userId.toString());
+        RequestBody localIdBody = RequestBody.create(MediaType.parse("text/plain"), localId.toString());
+        RequestBody tituloBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.titulo);
+        RequestBody descricaoBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.descricao);
+        RequestBody dataInicioBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.dataInicio);
+        RequestBody dataFimBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.dataFim);
+        RequestBody horaInicioBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaInicio);
+        RequestBody horaFimBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.horaFim);
+        RequestBody policyTypeBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.tipoRestricao.toUpperCase());
+        RequestBody modoEntregaBody = RequestBody.create(MediaType.parse("text/plain"), anuncio.modoEntrega.toUpperCase());
+
+        // Preparar chaves e valores do perfil
+        List<MultipartBody.Part> perfilChaveParts = new ArrayList<>();
+        List<MultipartBody.Part> perfilValorParts = new ArrayList<>();
+
+        if (anuncio.getChavesPerfil() != null) {
+            for (Map.Entry<String, List<String>> entry : anuncio.getChavesPerfil().entrySet()) {
+                String chave = entry.getKey();
+                for (String valor : entry.getValue()) {
+                    perfilChaveParts.add(MultipartBody.Part.createFormData("perfilChave", chave));
+                    perfilValorParts.add(MultipartBody.Part.createFormData("perfilValor", valor));
+                }
+            }
+        }
+
+        // Preparar imagem se existir e foi alterada
+        MultipartBody.Part imagemPart = null;
+
+        // ADICIONAR: Verificar se uma nova imagem foi selecionada
+        if (imagemFoiAlterada && caminhoImagem != null && !caminhoImagem.isEmpty()) {
+            File file = new File(caminhoImagem);
+
+            // Verificar se é um caminho real de arquivo (não URI)
+            if (file.exists() && !caminhoImagem.startsWith("content://") && !caminhoImagem.startsWith("file://")) {
+                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+                imagemPart = MultipartBody.Part.createFormData("imagem", file.getName(), requestFile);
+                Log.d(TAG, "Imagem atualizada: " + file.getAbsolutePath());
+            } else if (caminhoImagem.startsWith("content://")) {
+                // Converter URI para arquivo
+                File tempFile = uriParaArquivo(Uri.parse(caminhoImagem));
+                if (tempFile != null && tempFile.exists()) {
+                    RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), tempFile);
+                    imagemPart = MultipartBody.Part.createFormData("imagem", tempFile.getName(), requestFile);
+                    Log.d(TAG, "Imagem convertida de URI: " + tempFile.getAbsolutePath());
+                }
+            }
+        } else {
+            Log.d(TAG, "Imagem não foi alterada, mantendo a original");
+        }
+
+        // Chamar API de atualização - você precisa criar este endpoint no seu ApiService
+        Call<AnuncioResponse> call = apiService.atualizarAnuncio(
+                anuncio.id,  // ID do anúncio a ser atualizado
+                userIdBody, localIdBody, tituloBody, descricaoBody,
+                dataInicioBody, dataFimBody, horaInicioBody, horaFimBody,
+                policyTypeBody, modoEntregaBody, perfilChaveParts, perfilValorParts, imagemPart
+        );
+
+        call.enqueue(new Callback<AnuncioResponse>() {
+            @Override
+            public void onResponse(Call<AnuncioResponse> call, Response<AnuncioResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    AnuncioResponse anuncioAtualizado = response.body();
+                    Log.d(TAG, "Anúncio atualizado com sucesso! ID: " + anuncioAtualizado.getId());
+
+                    // Atualizar o anúncio com os dados retornados
+                    anuncioParaEditar = anuncioAtualizado.toAnuncio();
+
+                    // Retornar resultado para MainActivity
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("anuncio_editado", anuncioParaEditar);
+                    resultIntent.putExtra("position", posicaoAnuncio);
+                    setResult(RESULT_OK, resultIntent);
+
+                    Toast.makeText(AdicionarAnunciosActivity.this,
+                            "Anúncio atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+                    finish();
+
+                } else {
+                    try {
+                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
+                        Log.e(TAG, "Erro ao atualizar anúncio: " + response.code() + " - " + errorBody);
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Erro ao atualizar anúncio: " + response.code(), Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Erro ao ler errorBody: " + e.getMessage());
+                        Toast.makeText(AdicionarAnunciosActivity.this,
+                                "Erro ao atualizar anúncio", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AnuncioResponse> call, Throwable t) {
+                Log.e(TAG, "Falha ao atualizar anúncio: " + t.getMessage());
+                Toast.makeText(AdicionarAnunciosActivity.this,
+                        "Falha na rede: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+
+    // Método auxiliar para converter URI em File
+    private File uriParaArquivo(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream == null) return null;
+
+            File tempFile = File.createTempFile("upload_", ".jpg", getCacheDir());
+            FileOutputStream outputStream = new FileOutputStream(tempFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            return tempFile;
         } catch (Exception e) {
-            Log.e(TAG, "Erro ao formatar data: " + data, e);
+            Log.e(TAG, "Erro ao converter URI para arquivo: " + e.getMessage());
+            return null;
         }
-        return data;
     }
 
-    // Método auxiliar para obter o caminho real do arquivo
-    private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (cursor != null) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            String path = cursor.getString(column_index);
-            cursor.close();
-            return path;
-        }
-        return contentUri.getPath();
-    }
+    private boolean validarCampos() {
+        String titulo = etTitulo.getText().toString().trim();
+        String mensagem = etMensagem.getText().toString().trim();
+        String dataInicio = tvDataInicio.getText().toString();
+        String dataFim = tvDataFim.getText().toString();
+        String horaInicio = tvHoraInicio.getText().toString();
+        String horaFim = tvHoraFim.getText().toString();
+        String restricao = tvTipoRestricao.getText().toString();
 
+        if (localSelecionado == null || localSelecionado.equals("Selecionar um local")) {
+            Toast.makeText(this, "Por favor, adicione um local de propagação", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (titulo.isEmpty()) {
+            Toast.makeText(this, "Digite um título para o anúncio", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (mensagem.isEmpty()) {
+            Toast.makeText(this, "Escreva uma mensagem para o anúncio", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (dataInicio.equals("dd/mm/aaaa") || dataFim.equals("dd/mm/aaaa")) {
+            Toast.makeText(this, "Selecione as datas de início e fim", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (horaInicio.equals("hh:mm") || horaFim.equals("hh:mm")) {
+            Toast.makeText(this, "Selecione os horários", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        if (!"Nenhuma".equals(restricao) && restricoesPerfil.isEmpty()) {
+            Toast.makeText(this, "Adicione pelo menos uma chave pública de restrição", Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        return true;
+    }
     private void limparCampos() {
         Log.d(TAG, "limparCampos chamado - Limpando campos");
         etTitulo.setText("");

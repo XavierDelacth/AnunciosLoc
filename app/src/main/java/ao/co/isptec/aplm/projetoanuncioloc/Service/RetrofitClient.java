@@ -1,6 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc.Service;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,7 +24,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "http://192.168.8.130:8081";
+    public static final String BASE_URL = "http://10.0.2.2:8081";
     private static Retrofit retrofit;
 
     public static ApiService getApiService(Context context) {
@@ -59,10 +60,14 @@ class AuthInterceptor implements Interceptor {
         Request request = chain.request();
         SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
         String jwt = prefs.getString("jwt", null);
+        Log.d("AuthInterceptor", "JWT encontrado: " + (jwt != null ? jwt.substring(0, 20) + "..." : "NENHUM JWT SALVO!"));  // Log parcial para segurança
         if (jwt != null) {
             request = request.newBuilder()
                     .addHeader("Authorization", "Bearer " + jwt)
                     .build();
+            Log.d("AuthInterceptor", "Header adicionado: Authorization Bearer [token]");
+        } else {
+            Log.e("AuthInterceptor", "Sem JWT - Request sem auth! Vai dar 403.");
         }
         return chain.proceed(request);
     }

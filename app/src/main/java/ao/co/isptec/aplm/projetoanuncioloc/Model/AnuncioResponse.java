@@ -82,14 +82,12 @@ public class AnuncioResponse {
     // Método para converter para o modelo Anuncio do Android
     public Anuncio toAnuncio() {
 
-        String baseUrl = "http://192.168.0.130:8081"; // Use a mesma base do Retrofit
-
         String imagemCompleta = "";
         if (imagemUrl != null && !imagemUrl.isEmpty()) {
             if (imagemUrl.startsWith("http")) {
                 imagemCompleta = imagemUrl;
             } else {
-                imagemCompleta = baseUrl + imagemUrl;
+                imagemCompleta = imagemUrl;
             }
         }
 

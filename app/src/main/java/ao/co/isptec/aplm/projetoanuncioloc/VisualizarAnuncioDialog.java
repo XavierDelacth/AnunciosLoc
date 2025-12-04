@@ -21,6 +21,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 
 
 public class VisualizarAnuncioDialog extends DialogFragment {
@@ -93,15 +94,40 @@ public class VisualizarAnuncioDialog extends DialogFragment {
         title.setText(anuncio.titulo);
         content.setText(anuncio.descricao);
 
-        String urlImagem = anuncio.getImagemUrl();  // ou anuncio.imagem
+        // === CARREGAMENTO DE IMAGEM - MESMA LÓGICA DO MAIN DIALOG ===
+        String urlImagem = anuncio.getImagemUrl();
+        String fullUrl;
 
         if (urlImagem != null && !urlImagem.isEmpty()) {
+            String baseUrl = RetrofitClient.BASE_URL;
+            // Garante que baseUrl não termine com /
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+
+            // Garante que urlImagem comece com /
+            String path = urlImagem;
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+
+            fullUrl = baseUrl + path;
+        } else {
+            fullUrl = null;
+        }
+
+// REMOVER tint
+        img.setImageTintList(null);
+        img.setImageTintMode(null);
+        img.clearColorFilter();
+
+        if (fullUrl != null) {
             Glide.with(requireContext())
-                    .load(urlImagem)
+                    .load(fullUrl)
                     .apply(RequestOptions.bitmapTransform(new RoundedCorners(32)))
                     .placeholder(R.drawable.espaco_image)
-                    .error(R.drawable.espaco_image)
-                    .into(img);  // <--- este é o teu ImageView (id: img_announcement)
+                    .error(R.drawable.ic_close)
+                    .into(img);
         } else {
             img.setImageResource(R.drawable.espaco_image);
         }
