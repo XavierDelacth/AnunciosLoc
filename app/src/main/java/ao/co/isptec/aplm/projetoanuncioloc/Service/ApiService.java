@@ -11,6 +11,7 @@ import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.User;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.AlterarSenhaRequest;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.ChangeUsernameRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LoginRequest;
 import okhttp3.MultipartBody;
@@ -175,4 +176,10 @@ public interface ApiService {
     @PUT("/api/locais/{id}")
     Call<Local> atualizarLocal(@Path("id") Long id, @Body LocalRequest request);
 
+
+    @PATCH("/api/users/{id}/change-username")
+    Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> changeUsername(
+            @Path("id") Long id,
+            @Body ChangeUsernameRequest request
+    );
 }

@@ -28,6 +28,7 @@ import java.util.Map;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.ProfileKeyAdapter;
 import android.util.Log;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.ProfileKey;
+import ao.co.isptec.aplm.projetoanuncioloc.Request.ChangeUsernameRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -103,7 +104,7 @@ public class PerfilActivity extends AppCompatActivity {
         layoutEmptyState = findViewById(R.id.layout_empty_state);
     }
 
-    // ✅ CARREGA PERFIS DO BACKEND (CATÁLOGO PÚBLICO)
+    // CARREGA PERFIS DO BACKEND (CATÁLOGO PÚBLICO)
     private void carregarPerfisDoBackend() {
         Call<List<ProfileKey>> call = RetrofitClient.getApiService(this).getAllPerfis();
         call.enqueue(new Callback<List<ProfileKey>>() {
@@ -113,7 +114,7 @@ public class PerfilActivity extends AppCompatActivity {
                     allKeys.clear();
                     allKeys.addAll(response.body());
 
-                    // ✅ RESTAURA AS SELEÇÕES PESSOAIS DO USUÁRIO
+                    //  RESTAURA AS SELEÇÕES PESSOAIS DO USUÁRIO
                     restaurarSelecoesPessoais();
 
                     updateKeysList();
@@ -131,7 +132,7 @@ public class PerfilActivity extends AppCompatActivity {
         });
     }
 
-    // ✅ INICIALIZA DADOS
+    //  INICIALIZA DADOS
     private void initializeData() {
         allKeys = new ArrayList<>();
         mySelectedKeys = new HashMap<>();
@@ -140,7 +141,7 @@ public class PerfilActivity extends AppCompatActivity {
         carregarSelecoesSalvas();
     }
 
-    // ✅ CONFIGURA RECYCLERVIEW
+    //  CONFIGURA RECYCLERVIEW
     private void setupRecyclerView() {
         adapter = new ProfileKeyAdapter(this, new ArrayList<>(), isMyKeysTab);
         adapter.setOnValueClickListener((keyName, value) -> {
@@ -151,7 +152,7 @@ public class PerfilActivity extends AppCompatActivity {
         rvKeys.setAdapter(adapter);
     }
 
-    // ✅ CONFIGURA LISTENERS
+    //  CONFIGURA LISTENERS
     private void setupListeners() {
         // Logout
         btnLogout.setOnClickListener(v -> logout());
@@ -178,11 +179,20 @@ public class PerfilActivity extends AppCompatActivity {
         btnSaveUsername.setOnClickListener(v -> {
             String novoNome = etUsername.getText().toString().trim();
             if (!novoNome.isEmpty()) {
-                tvUsername.setText(novoNome);
-                // Aqui você pode salvar o novo nome no backend se quiser
+                // Verifica se o username realmente mudou
+                String currentUsername = tvUsername.getText().toString();
+                if (novoNome.equals(currentUsername)) {
+                    // Nome igual, apenas fecha a edição
+                    layoutEditUsername.setVisibility(View.GONE);
+                    layoutUsername.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                // Chama o backend para alterar o username
+                alterarUsernameNoBackend(novoNome);
+            } else {
+                Toast.makeText(PerfilActivity.this, "Username não pode estar vazio", Toast.LENGTH_SHORT).show();
             }
-            layoutEditUsername.setVisibility(View.GONE);
-            layoutUsername.setVisibility(View.VISIBLE);
         });
 
         // Tabs
@@ -207,7 +217,7 @@ public class PerfilActivity extends AppCompatActivity {
         btnAddKey.setOnClickListener(v -> showAddKeyDialog());
     }
 
-    // ✅ ALTERA ENTRE ABAS
+    //  ALTERA ENTRE ABAS
     private void switchTab(boolean isMyKeys) {
         isMyKeysTab = isMyKeys;
 
@@ -228,7 +238,7 @@ public class PerfilActivity extends AppCompatActivity {
         updateKeysList();
     }
 
-    // ✅ ATUALIZA LISTA DE CHAVES
+    // ATUALIZA LISTA DE CHAVES
     private void updateKeysList() {
         List<ProfileKey> displayKeys = new ArrayList<>();
 
@@ -256,7 +266,7 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ FILTRA CHAVES NA BUSCA
+    //  FILTRA CHAVES NA BUSCA
     private void filterKeys(String query) {
         List<ProfileKey> filtered = new ArrayList<>();
 
@@ -281,7 +291,7 @@ public class PerfilActivity extends AppCompatActivity {
         adapter.updateKeys(filtered);
     }
 
-    // ✅ ALTERA SELEÇÃO DE VALORES
+    //  ALTERA SELEÇÃO DE VALORES
     private void toggleValueSelection(String keyName, String value) {
         for (ProfileKey key : allKeys) {
             if (key.getName().equals(keyName)) {
@@ -299,7 +309,7 @@ public class PerfilActivity extends AppCompatActivity {
                     mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
                 }
 
-                // ✅ SALVA SELEÇÕES LOCALMENTE
+                //  SALVA SELEÇÕES LOCALMENTE
                 salvarSelecoes();
 
                 // Envia alteração ao backend (POST para adicionar, DELETE para remover valor)
@@ -377,7 +387,7 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ ADICIONA NOVA CHAVE PÚBLICA
+    //  ADICIONA NOVA CHAVE PÚBLICA
     private void showAddKeyDialog() {
         AdicionarKeyDialog dialog = AdicionarKeyDialog.newInstance(allKeys, mySelectedKeys);
         dialog.setOnKeyAddedListener((keyName, values) -> {
@@ -386,7 +396,7 @@ public class PerfilActivity extends AppCompatActivity {
         dialog.show(getSupportFragmentManager(), "AddKeyDialog");
     }
 
-    // ✅ SALVA NOVA CHAVE NO BACKEND (CATÁLOGO PÚBLICO)
+    //  SALVA NOVA CHAVE NO BACKEND (CATÁLOGO PÚBLICO)
     private void salvarNovaChaveNoBackend(String keyName, List<String> values) {
         ProfileKey existingKey = findKeyByName(keyName);
 
@@ -441,7 +451,7 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ BUSCA CHAVE POR NOME
+    // BUSCA CHAVE POR NOME
     private ProfileKey findKeyByName(String keyName) {
         for (ProfileKey key : allKeys) {
             if (key.getName().equals(keyName)) {
@@ -451,7 +461,7 @@ public class PerfilActivity extends AppCompatActivity {
         return null;
     }
 
-    // ✅ 🎯 MÉTODOS CRÍTICOS: GERENCIAMENTO DE SELEÇÕES PESSOAIS
+    //  MÉTODOS CRÍTICOS: GERENCIAMENTO DE SELEÇÕES PESSOAIS
 
     // CARREGA SELEÇÕES SALVAS DO USUÁRIO
     private void carregarSelecoesSalvas() {
@@ -495,7 +505,7 @@ public class PerfilActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ LOGOUT
+    //  LOGOUT
     private void logout() {
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
@@ -522,6 +532,81 @@ public class PerfilActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Toast.makeText(PerfilActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Adicione este método após o método setupListeners():
+    private void alterarUsernameNoBackend(String novoUsername) {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
+
+        if (userId == -1L) {
+            Toast.makeText(this, "Erro: Faça login novamente", Toast.LENGTH_SHORT).show();
+            layoutEditUsername.setVisibility(View.GONE);
+            layoutUsername.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        // Mostra indicador de carregamento
+        btnSaveUsername.setEnabled(false);
+        btnCancelUsername.setEnabled(false);
+
+        // Cria a requisição
+        ChangeUsernameRequest request = new ChangeUsernameRequest(novoUsername);
+
+        // Faz a chamada ao backend
+        Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call =
+                RetrofitClient.getApiService(this).changeUsername(userId, request);
+
+        call.enqueue(new Callback<ao.co.isptec.aplm.projetoanuncioloc.Model.User>() {
+            @Override
+            public void onResponse(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call,
+                                   Response<ao.co.isptec.aplm.projetoanuncioloc.Model.User> response) {
+
+                btnSaveUsername.setEnabled(true);
+                btnCancelUsername.setEnabled(true);
+
+                if (response.isSuccessful()) {
+                    // Sucesso: atualiza a UI
+                    tvUsername.setText(novoUsername);
+
+                    // Atualiza o username nas SharedPreferences
+                    prefs.edit().putString("username", novoUsername).apply();
+
+                    Toast.makeText(PerfilActivity.this,
+                            "Username alterado com sucesso!", Toast.LENGTH_SHORT).show();
+
+                    // Fecha o modo de edição
+                    layoutEditUsername.setVisibility(View.GONE);
+                    layoutUsername.setVisibility(View.VISIBLE);
+                } else {
+                    // Erro do servidor
+                    String errorMessage = "Erro ao alterar username";
+                    if (response.code() == 401) {
+                        errorMessage = "Não autorizado. Faça login novamente.";
+                    } else if (response.code() == 403) {
+                        errorMessage = "Você não tem permissão para alterar este usuário";
+                    } else if (response.code() == 400) {
+                        errorMessage = "Username já existe ou é inválido";
+                    } else if (response.code() == 404) {
+                        errorMessage = "Usuário não encontrado";
+                    }
+
+                    Toast.makeText(PerfilActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                    Log.e("PerfilActivity", "Erro ao alterar username: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Throwable t) {
+                btnSaveUsername.setEnabled(true);
+                btnCancelUsername.setEnabled(true);
+
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Erro de conexão";
+                Toast.makeText(PerfilActivity.this,
+                        "Falha na rede: " + errorMsg, Toast.LENGTH_LONG).show();
+                Log.e("PerfilActivity", "Erro na rede ao alterar username", t);
             }
         });
     }

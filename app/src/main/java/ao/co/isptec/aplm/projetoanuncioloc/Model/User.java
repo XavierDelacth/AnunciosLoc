@@ -32,4 +32,8 @@ public class User {
     public String getSessionId() { return sessionId; }
     public Map<String, String> getProfiles() { return profiles; }
 
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
 }
