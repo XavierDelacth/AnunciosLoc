@@ -3,6 +3,7 @@ import java.util.Map;
 import java.util.List;
 
 
+import ao.co.isptec.aplm.projetoanuncioloc.Adapters.LocationUpdateRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
@@ -182,4 +183,10 @@ public interface ApiService {
             @Path("id") Long id,
             @Body ChangeUsernameRequest request
     );
+
+    @POST("/api/locations/update")
+    Call<Void> updateLocation(@Body LocationUpdateRequest request);
+
+    @PATCH("/api/users/{id}/fcm-token")
+    Call<Void> updateFcmToken(@Path("id") Long id, @Body String token);
 }

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -43,6 +45,7 @@ import java.util.Locale;
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.MainAnuncioAdapter;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Anuncio;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.LocationUpdateService;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -65,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     private LocationCallback locationCallback;
     private Handler locationTimeoutHandler;
 
+    private static final int LOCATION_PERMISSION_REQUEST = 101;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +81,31 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Explicação opcional para o utilizador
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    Toast.makeText(this,
+                            "A app precisa da localização para mostrar anúncios próximos",
+                            Toast.LENGTH_LONG).show();
+                }
+
+                // Pede a permissão
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        LOCATION_PERMISSION_REQUEST);
+            } else {
+                // Já tem permissão → inicia o serviço
+                iniciarLocationService();
+            }
+        } else {
+            // Android antigo → inicia direto
+            iniciarLocationService();
         }
 
         initViews();
@@ -114,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        startService(new Intent(this, LocationUpdateService.class));
     }
 
     private void initViews() {
@@ -325,6 +357,19 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permissão concedida → inicia o serviço
+                Toast.makeText(this, "Permissão de localização concedida", Toast.LENGTH_SHORT).show();
+                iniciarLocationService();
+            } else {
+                // Permissão negada
+                Toast.makeText(this, "Sem permissão de localização, os anúncios próximos não funcionarão",
+                        Toast.LENGTH_LONG).show();
+                // Opcional: desabilita botões ou features que usam localização
+            }
+        }
 
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -757,5 +802,10 @@ public class MainActivity extends AppCompatActivity {
                 badgeNotificacao.setVisibility(View.VISIBLE);
             }
         });
+    }
+
+    private void iniciarLocationService() {
+        startService(new Intent(this, LocationUpdateService.class));
+        Log.d("MainActivity", "LocationUpdateService iniciado");
     }
 }
