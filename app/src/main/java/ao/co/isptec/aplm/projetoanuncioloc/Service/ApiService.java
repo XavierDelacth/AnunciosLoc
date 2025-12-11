@@ -188,5 +188,5 @@ public interface ApiService {
     Call<Void> updateLocation(@Body LocationUpdateRequest request);
 
     @PATCH("/api/users/{id}/fcm-token")
-    Call<Void> updateFcmToken(@Path("id") Long id, @Body String token);
+    Call<Void> updateFcmToken(@Path("id") Long id, @Body Map<String, String> body);
 }

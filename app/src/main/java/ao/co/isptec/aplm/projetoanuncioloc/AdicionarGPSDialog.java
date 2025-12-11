@@ -101,11 +101,11 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
         btnFechar.setOnClickListener(v -> dismiss());
         btnCancelar.setOnClickListener(v -> dismiss());
 
-        // CORREÇÃO PRINCIPAL: Clique no btnWifi abre o WiFi Dialog (sem cast, usa interface comum)
+        // CORREÃ‡ÃƒO PRINCIPAL: Clique no btnWifi abre o WiFi Dialog (sem cast, usa interface comum)
         if (btnWifi != null) {
             btnWifi.setOnClickListener(v -> {
-                dismiss();  // Fecha este diálogo GPS
-                // Passa o mesmo listener comum (sem cast, tipos compatíveis agora)
+                dismiss();  // Fecha este diÃ¡logo GPS
+                // Passa o mesmo listener comum (sem cast, tipos compatÃ­veis agora)
                 AdicionarWIFIDialog wifiDialog = AdicionarWIFIDialog.newInstance(listener);
                 wifiDialog.show(getParentFragmentManager(), "AdicionarWIFIDialog");
             });
@@ -131,7 +131,7 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                 SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
                 Long userId = prefs.getLong("userId", -1L);
                 if (userId == -1L) {
-                    Toast.makeText(requireContext(), "Erro: Faça login novamente", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Erro: FaÃ§a login novamente", Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -170,7 +170,7 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                 });
 
             } catch (NumberFormatException e) {
-                Toast.makeText(requireContext(), "Verifique os valores numéricos", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Verifique os valores numÃ©ricos", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -220,7 +220,7 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
         }
     }
 
-    // Back button fecha o diálogo
+    // Back button fecha o diÃ¡logo
     @Override
     public void onDestroy() {
         super.onDestroy();

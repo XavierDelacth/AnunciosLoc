@@ -53,50 +53,43 @@ public class AnuncioAdapter extends RecyclerView.Adapter<AnuncioAdapter.ViewHold
         holder.tvDescricao.setText(a.descricao);
 
         String urlImagem = a.getImagemUrl();
+        String fullUrl;
 
         if (urlImagem != null && !urlImagem.isEmpty()) {
-
             holder.imgAnuncio.setImageTintList(null);
             holder.imgAnuncio.setImageTintMode(null);
             holder.imgAnuncio.clearColorFilter();
             holder.imgAnuncio.setBackgroundColor(Color.TRANSPARENT);
 
-            // Lógica de carregamento similar
-                if (urlImagem.startsWith("http://") || urlImagem.startsWith("https://")) {
-                    // URL normal
-                    Glide.with(context)
-                            .load(urlImagem)
-                            .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
-                            .placeholder(R.drawable.espaco_image)
-                            .error(R.drawable.espaco_image)
-                            .into(holder.imgAnuncio);
-                } else if (urlImagem.startsWith("/uploads/") || urlImagem.startsWith("uploads/")) {
-                    // Construir URL completa para caminhos relativos
-                    String baseUrl = RetrofitClient.BASE_URL;
-                    String fullUrl = baseUrl + (urlImagem.startsWith("/") ? urlImagem.substring(1) : urlImagem);
-
-                    Glide.with(context)
-                            .load(fullUrl)
-                            .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
-                            .placeholder(R.drawable.espaco_image)
-                            .error(R.drawable.espaco_image)
-                            .into(holder.imgAnuncio);
-                } else {
-                    // Para outros casos (URIs locais, etc.)
-                    try {
-                        Glide.with(context)
-                                .load(urlImagem)
-                                .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
-                                .placeholder(R.drawable.espaco_image)
-                                .error(R.drawable.espaco_image)
-                                .into(holder.imgAnuncio);
-                    } catch (Exception e) {
-                        holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
-                    }
-                }
-            } else {
-                holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
+            // Construir URL completa similar ao MainAnuncioAdapter
+            String baseUrl = RetrofitClient.BASE_URL;
+            // Garante que baseUrl não termine com /
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
             }
+
+            // Garante que urlImagem comece com /
+            String path = urlImagem;
+            if (!path.startsWith("/") && !path.startsWith("http://") && !path.startsWith("https://")) {
+                path = "/" + path;
+            }
+
+            if (path.startsWith("http://") || path.startsWith("https://")) {
+                fullUrl = path; // URL completa já fornecida
+            } else {
+                fullUrl = baseUrl + path; // Construir URL completa
+            }
+
+            // Carregar imagem com Glide
+            Glide.with(context)
+                    .load(fullUrl)
+                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(24)))
+                    .placeholder(R.drawable.espaco_image)
+                    .error(R.drawable.espaco_image)
+                    .into(holder.imgAnuncio);
+        } else {
+            holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
+        }
 
         // BOOKMARK NA LISTA (sempre salvo = true na tela de guardados)
         holder.btnSalvar.setImageResource(R.drawable.ic_bookmark_salvo);

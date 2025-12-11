@@ -17,6 +17,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import ao.co.isptec.aplm.projetoanuncioloc.MainActivity;
 import ao.co.isptec.aplm.projetoanuncioloc.R;
+import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -38,12 +39,25 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage message) {
         super.onMessageReceived(message);
-        Log.d(TAG, "Mensagem FCM recebida: " + message.getNotification());
+        Log.d(TAG, "Mensagem FCM recebida - From: " + message.getFrom());
+        Log.d(TAG, "Notification: " + message.getNotification());
+        Log.d(TAG, "Data: " + message.getData());
 
+        // Quando o app está em FOREGROUND, precisamos exibir manualmente
+        // Quando está em BACKGROUND, o FCM exibe automaticamente
         if (message.getNotification() != null) {
             String title = message.getNotification().getTitle();
             String body = message.getNotification().getBody();
+            Log.d(TAG, "Exibindo notificação manualmente - Title: " + title + ", Body: " + body);
             showNotification(title, body);
+        } else if (!message.getData().isEmpty()) {
+            // Se vier apenas dados, criar notificação manualmente
+            String title = message.getData().get("title");
+            String body = message.getData().get("body");
+            if (title != null && body != null) {
+                Log.d(TAG, "Exibindo notificação de dados - Title: " + title + ", Body: " + body);
+                showNotification(title, body);
+            }
         }
     }
 
@@ -55,14 +69,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             return;
         }
 
-        Call<Void> call = RetrofitClient.getApiService(this).updateFcmToken(userId, token);
+        // Cria o Map esperado pelo backend
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        body.put("token", token);
+
+        Call<Void> call = RetrofitClient.getApiService(this).updateFcmToken(userId, body);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Log.d(TAG, "Token FCM salvo no servidor com sucesso");
                 } else {
-                    Log.e(TAG, "Erro ao salvar token: " + response.code());
+                    Log.e(TAG, "Erro ao salvar token: " + response.code() + " - " + response.message());
                 }
             }
 
@@ -76,24 +94,46 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private void showNotification(String title, String body) {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
+        // Cria canal de notificação com importância alta (aparece mesmo com app fechado)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID, 
+                CHANNEL_NAME, 
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notificações de anúncios localizados");
+            channel.enableLights(true);
+            channel.enableVibration(true);
+            channel.setShowBadge(true);
             manager.createNotificationChannel(channel);
         }
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            this, 
+            0, 
+            intent, 
+            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+        );
 
+        // Cria notificação do sistema (tipo Facebook) - aparece mesmo com app fechado
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.logoapp)  // Seu ícone do app
+                .setSmallIcon(R.mipmap.logoapp)  // Ícone do app
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentIntent(pendingIntent);
+                .setPriority(NotificationCompat.PRIORITY_HIGH) // Prioridade alta
+                .setDefaults(NotificationCompat.DEFAULT_ALL) // Som, vibração e luz
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // Visível mesmo na tela de bloqueio
+                .setContentIntent(pendingIntent)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(body)); // Texto expandido
 
-        manager.notify(0, builder.build());
+        // Gera ID único para cada notificação (evita sobreposição)
+        int notificationId = (int) System.currentTimeMillis();
+        manager.notify(notificationId, builder.build());
+        
+        Log.d(TAG, "Notificação do sistema exibida: " + title);
     }
 }
 

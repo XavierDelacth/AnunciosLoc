@@ -330,7 +330,7 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
 
                         String texto = "";
                         if (cidade != null) texto += " " + cidade;
-                        if (pais != null) texto += ", " + pais;
+                        //if (pais != null) texto += ", " + pais;
 
                         tvLocation.setText(texto.trim());
                     }
