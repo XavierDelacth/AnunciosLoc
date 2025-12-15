@@ -43,15 +43,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Log.d(TAG, "Notification: " + message.getNotification());
         Log.d(TAG, "Data: " + message.getData());
 
-        // Quando o app está em FOREGROUND, precisamos exibir manualmente
-        // Quando está em BACKGROUND, o FCM exibe automaticamente
+        // IMPORTANTE: Quando o app está em BACKGROUND, o FCM exibe automaticamente a notificação
+        // Se criarmos outra manualmente aqui, teremos DUPLICAÇÃO!
+        // Só criar notificação manual quando:
+        // 1. App está em FOREGROUND (onMessageReceived só é chamado em foreground)
+        // 2. OU quando vem apenas dados (sem notification payload)
+
         if (message.getNotification() != null) {
+            // Se tem notification payload, o FCM já exibe automaticamente quando app está em background
+            // Só criar manualmente se app estiver em foreground (que é quando onMessageReceived é chamado)
             String title = message.getNotification().getTitle();
             String body = message.getNotification().getBody();
-            Log.d(TAG, "Exibindo notificação manualmente - Title: " + title + ", Body: " + body);
+            Log.d(TAG, "Exibindo notificação manualmente (app em foreground) - Title: " + title + ", Body: " + body);
             showNotification(title, body);
         } else if (!message.getData().isEmpty()) {
-            // Se vier apenas dados, criar notificação manualmente
+            // Se vier apenas dados (sem notification payload), criar notificação manualmente
             String title = message.getData().get("title");
             String body = message.getData().get("body");
             if (title != null && body != null) {
@@ -97,9 +103,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Cria canal de notificação com importância alta (aparece mesmo com app fechado)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, 
-                CHANNEL_NAME, 
-                NotificationManager.IMPORTANCE_HIGH
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notificações de anúncios localizados");
             channel.enableLights(true);
@@ -111,10 +117,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 
-            0, 
-            intent, 
-            PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
         );
 
         // Cria notificação do sistema (tipo Facebook) - aparece mesmo com app fechado
@@ -132,7 +138,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Gera ID único para cada notificação (evita sobreposição)
         int notificationId = (int) System.currentTimeMillis();
         manager.notify(notificationId, builder.build());
-        
+
         Log.d(TAG, "Notificação do sistema exibida: " + title);
     }
 }

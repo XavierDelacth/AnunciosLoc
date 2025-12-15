@@ -11,9 +11,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import ao.co.isptec.aplm.projetoanuncioloc.Adapters.NotificacaoAdapter;
+import ao.co.isptec.aplm.projetoanuncioloc.Model.AnuncioResponse;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Notificacao;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
@@ -73,22 +76,39 @@ public class NotificacoesActivity extends AppCompatActivity {
         RetrofitClient.getApiService(this).getNotificacoes(userId).enqueue(new Callback<List<Notificacao>>() {
             @Override
             public void onResponse(Call<List<Notificacao>> call, Response<List<Notificacao>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    listaNotificacoes.clear();
-                    listaNotificacoes.addAll(response.body());
-
-                    adapter.notifyDataSetChanged();
-
-                    Toast.makeText(NotificacoesActivity.this,
-                            "Você tem " + listaNotificacoes.size() + " notificação" +
-                                    (listaNotificacoes.size() != 1 ? "s" : ""), Toast.LENGTH_LONG).show();
-
-                    atualizarVisibilidade();
-                } else {
+                if (!response.isSuccessful() || response.body() == null) {
                     tvEmpty.setText("Nenhuma notificação encontrada");
                     tvEmpty.setVisibility(View.VISIBLE);
                     recyclerView.setVisibility(View.GONE);
+                    return;
                 }
+
+                List<Notificacao> notificacoesApi = response.body();
+
+                // Buscar anúncios do próprio utilizador para filtrar
+                RetrofitClient.getApiService(NotificacoesActivity.this)
+                        .getMeusAnuncios(userId)
+                        .enqueue(new Callback<List<AnuncioResponse>>() {
+                            @Override
+                            public void onResponse(Call<List<AnuncioResponse>> callMeus,
+                                                   Response<List<AnuncioResponse>> responseMeus) {
+                                Set<Long> meusAnunciosIds = new HashSet<>();
+                                if (responseMeus.isSuccessful() && responseMeus.body() != null) {
+                                    for (AnuncioResponse ar : responseMeus.body()) {
+                                        if (ar != null && ar.getId() != null) {
+                                            meusAnunciosIds.add(ar.getId());
+                                        }
+                                    }
+                                }
+                                aplicarFiltros(notificacoesApi, meusAnunciosIds);
+                            }
+
+                            @Override
+                            public void onFailure(Call<List<AnuncioResponse>> callMeus, Throwable tMeus) {
+                                // Se falhar, ainda aplica deduplicação básica
+                                aplicarFiltros(notificacoesApi, null);
+                            }
+                        });
             }
 
             @Override
@@ -99,6 +119,43 @@ public class NotificacoesActivity extends AppCompatActivity {
                 Toast.makeText(NotificacoesActivity.this, "Erro de rede: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Aplica filtros:
+     * 1. Remove notificações de anúncios criados pelo próprio utilizador
+     * 2. Remove duplicados (mesmo anuncioId aparece apenas uma vez)
+     */
+    private void aplicarFiltros(List<Notificacao> notificacoesApi, Set<Long> meusAnunciosIds) {
+        listaNotificacoes.clear();
+        Set<Long> anunciosVistos = new HashSet<>();
+
+        if (notificacoesApi != null) {
+            for (Notificacao n : notificacoesApi) {
+                if (n == null || n.getAnuncioId() == null) continue;
+
+                // 1. Filtrar notificações de anúncios próprios
+                if (meusAnunciosIds != null && meusAnunciosIds.contains(n.getAnuncioId())) {
+                    continue; // Ignora notificação do próprio anúncio
+                }
+
+                // 2. Deduplicação: apenas uma notificação por anuncioId
+                if (anunciosVistos.contains(n.getAnuncioId())) {
+                    continue; // Já existe uma notificação deste anúncio
+                }
+
+                anunciosVistos.add(n.getAnuncioId());
+                listaNotificacoes.add(n);
+            }
+        }
+
+        adapter.notifyDataSetChanged();
+
+        Toast.makeText(NotificacoesActivity.this,
+                "Você tem " + listaNotificacoes.size() + " notificação" +
+                        (listaNotificacoes.size() != 1 ? "s" : ""), Toast.LENGTH_LONG).show();
+
+        atualizarVisibilidade();
     }
 
     private void guardarAnuncio(Notificacao notificacao, int position) {
