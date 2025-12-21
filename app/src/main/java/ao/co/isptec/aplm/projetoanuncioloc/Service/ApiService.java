@@ -189,4 +189,7 @@ public interface ApiService {
 
     @PATCH("/api/users/{id}/fcm-token")
     Call<Void> updateFcmToken(@Path("id") Long id, @Body Map<String, String> body);
+
+    @retrofit2.http.HTTP(method = "DELETE", path = "/api/users/{id}/fcm-token", hasBody = true)
+    Call<Void> unregisterFcmToken(@Path("id") Long id, @Body Map<String, String> body);
 }

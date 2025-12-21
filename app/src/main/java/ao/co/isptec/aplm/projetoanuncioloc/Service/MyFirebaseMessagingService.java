@@ -49,17 +49,114 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // 1. App está em FOREGROUND (onMessageReceived só é chamado em foreground)
         // 2. OU quando vem apenas dados (sem notification payload)
 
+        java.util.Map<String, String> data = message.getData();
+        String type = data == null ? null : data.get("type");
+
+        // Ignore heartbeat messages completely (no UI, no internal notifications)
+        if ("heartbeat".equals(type)
+                || (message.getNotification() != null && "heartbeat".equals(message.getNotification().getBody()))) {
+            Log.d(TAG, "Recebido heartbeat - ignorando");
+            return;
+        }
+
+        // If this is an 'anuncio' (either via data or notification+data), show notification and refresh count
+        boolean isAnuncio = "anuncio".equals(type) || (data != null && data.containsKey("anuncioId"));
+
+        if (isAnuncio) {
+            String title = data != null && data.get("title") != null ? data.get("title") : (message.getNotification() != null ? message.getNotification().getTitle() : null);
+            String body = data != null && data.get("body") != null ? data.get("body") : (message.getNotification() != null ? message.getNotification().getBody() : null);
+            Log.d(TAG, "Anúncio recebido - Title: " + title + ", Body: " + body);
+
+            boolean appForeground = isAppInForeground();
+
+            // Garantir NOTIFICAÇÃO EXTERNA (sistema) também quando a app está em foreground.
+            // Para evitar duplicação no background (quando o payload já contém notification), só forçamos a exibição manual
+            // quando a app está em foreground ou quando a mensagem é data-only (message.getNotification()==null).
+            if (title != null && body != null) {
+                if (appForeground || message.getNotification() == null) {
+                    showNotification(title, body);
+                    Log.d(TAG, "Notificação externa exibida (sistema) para anúncio: " + title);
+                } else {
+                    Log.d(TAG, "FCM com payload de notification recebido em background — a exibição será feita pelo sistema");
+                }
+            }
+
+            // Se a app estiver em foreground, também atualiza a UI internamente
+            if (appForeground) {
+                Log.d(TAG, "App em foreground — atualizando UI internamente e emitindo broadcast interno");
+                try {
+                    SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                    long userId = prefs.getLong("userId", -1L);
+                    if (userId != -1L) {
+                        RetrofitClient.getApiService(this).getContagemNotificacoes(userId).enqueue(new retrofit2.Callback<Integer>() {
+                            @Override
+                            public void onResponse(retrofit2.Call<Integer> call, retrofit2.Response<Integer> response) {
+                                if (response.isSuccessful() && response.body() != null) {
+                                    int contagem = response.body();
+                                    prefs.edit().putInt("notificacaoCount", contagem).apply();
+                                    Intent i = new Intent("ao.co.isptec.aplm.NOTIF_COUNT_UPDATED");
+                                    i.putExtra("count", contagem);
+                                    sendBroadcast(i);
+                                    // Notificar componentes internos sobre o novo anúncio para recarregar a lista
+                                    Intent j = new Intent("ao.co.isptec.aplm.NEW_ANUNCIO_INTERNAL");
+                                    j.putExtra("title", title);
+                                    j.putExtra("body", body);
+                                    sendBroadcast(j);
+                                    Log.d(TAG, "Contagem de notificações atualizada para: " + contagem);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(retrofit2.Call<Integer> call, Throwable t) {
+                                Log.e(TAG, "Falha ao atualizar contagem de notificações: " + t.getMessage());
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Erro ao tentar atualizar contagem de notificações: " + e.getMessage());
+                }
+            } else {
+                // App em background/fechado → Atualiza contagem de notificações do backend e notifica a UI (assim que possível)
+                try {
+                    SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                    long userId = prefs.getLong("userId", -1L);
+                    if (userId != -1L) {
+                        RetrofitClient.getApiService(this).getContagemNotificacoes(userId).enqueue(new retrofit2.Callback<Integer>() {
+                            @Override
+                            public void onResponse(retrofit2.Call<Integer> call, retrofit2.Response<Integer> response) {
+                                if (response.isSuccessful() && response.body() != null) {
+                                    int contagem = response.body();
+                                    prefs.edit().putInt("notificacaoCount", contagem).apply();
+                                    Intent i = new Intent("ao.co.isptec.aplm.NOTIF_COUNT_UPDATED");
+                                    i.putExtra("count", contagem);
+                                    sendBroadcast(i);
+                                    Log.d(TAG, "Contagem de notificações atualizada para: " + contagem);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(retrofit2.Call<Integer> call, Throwable t) {
+                                Log.e(TAG, "Falha ao atualizar contagem de notificações: " + t.getMessage());
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Erro ao tentar atualizar contagem de notificações: " + e.getMessage());
+                }
+            }
+
+            return;
+        }
+
+        // Fallback: comportamento anterior (notification payload in foreground, or data-only with title/body)
         if (message.getNotification() != null) {
-            // Se tem notification payload, o FCM já exibe automaticamente quando app está em background
-            // Só criar manualmente se app estiver em foreground (que é quando onMessageReceived é chamado)
             String title = message.getNotification().getTitle();
             String body = message.getNotification().getBody();
             Log.d(TAG, "Exibindo notificação manualmente (app em foreground) - Title: " + title + ", Body: " + body);
             showNotification(title, body);
-        } else if (!message.getData().isEmpty()) {
-            // Se vier apenas dados (sem notification payload), criar notificação manualmente
-            String title = message.getData().get("title");
-            String body = message.getData().get("body");
+        } else if (data != null && !data.isEmpty()) {
+            String title = data.get("title");
+            String body = data.get("body");
             if (title != null && body != null) {
                 Log.d(TAG, "Exibindo notificação de dados - Title: " + title + ", Body: " + body);
                 showNotification(title, body);
@@ -67,17 +164,43 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
+    private boolean isAppInForeground() {
+        try {
+            android.app.ActivityManager activityManager = (android.app.ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            java.util.List<android.app.ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+            if (appProcesses == null) return false;
+            final String packageName = getPackageName();
+            for (android.app.ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+                if (appProcess.processName.equals(packageName)) {
+                    return appProcess.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND ||
+                            appProcess.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao verificar estado da app: " + e.getMessage());
+        }
+        return false;
+    }
+
     private void saveTokenToServer(String token) {
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+
+        // Sempre salva localmente para permitir desregisto no logout, mesmo sem login
+        prefs.edit().putString("fcmToken", token).apply();
+        Log.d(TAG, "Token FCM salvo localmente");
+
         Long userId = prefs.getLong("userId", -1L);
         if (userId == -1L) {
-            Log.e(TAG, "UserId não encontrado - Token não salvo");
+            Log.d(TAG, "UserId não encontrado - envio ao servidor será tentado após login");
+            prefs.edit().putBoolean("pendingFcmRegistration", true).apply();
             return;
         }
 
         // Cria o Map esperado pelo backend
         java.util.Map<String, String> body = new java.util.HashMap<>();
         body.put("token", token);
+        String deviceInfo = android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL;
+        body.put("deviceInfo", deviceInfo);
 
         Call<Void> call = RetrofitClient.getApiService(this).updateFcmToken(userId, body);
         call.enqueue(new Callback<Void>() {
@@ -93,6 +216,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
                 Log.e(TAG, "Falha na rede ao salvar token: " + t.getMessage());
+                prefs.edit().putBoolean("pendingFcmRegistration", true).apply();
             }
         });
     }

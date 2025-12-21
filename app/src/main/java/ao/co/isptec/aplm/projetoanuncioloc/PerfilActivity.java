@@ -333,18 +333,18 @@ public class PerfilActivity extends AppCompatActivity {
                                 }
                             }
 
-                                        @Override
-                                        public void onFailure(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Throwable t) {
-                                            // rollback local change
-                                            key.getSelectedValues().remove(value);
-                                            if (key.getSelectedValues().isEmpty()) mySelectedKeys.remove(keyName);
-                                            else mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
-                                            salvarSelecoes();
-                                            adapter.notifyDataSetChanged();
-                                            Log.e("PerfilActivity", "Erro ao adicionar perfil: ", t);
-                                            String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
-                                            Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
-                                        }
+                            @Override
+                            public void onFailure(Call<ao.co.isptec.aplm.projetoanuncioloc.Model.User> call, Throwable t) {
+                                // rollback local change
+                                key.getSelectedValues().remove(value);
+                                if (key.getSelectedValues().isEmpty()) mySelectedKeys.remove(keyName);
+                                else mySelectedKeys.put(keyName, new ArrayList<>(key.getSelectedValues()));
+                                salvarSelecoes();
+                                adapter.notifyDataSetChanged();
+                                Log.e("PerfilActivity", "Erro ao adicionar perfil: ", t);
+                                String msg = t.getMessage() == null ? "Erro de rede" : t.getMessage();
+                                Toast.makeText(PerfilActivity.this, "Falha na rede: " + msg, Toast.LENGTH_SHORT).show();
+                            }
                         });
                     } else {
                         // foi removido
@@ -480,11 +480,11 @@ public class PerfilActivity extends AppCompatActivity {
 
     // SALVA SELEÇÕES DO USUÁRIO LOCALMENTE
     private void salvarSelecoes() {
-           SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE);
-           Gson gson = new Gson();
-           String json = gson.toJson(mySelectedKeys);
+        SharedPreferences prefs = getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = gson.toJson(mySelectedKeys);
 
-           prefs.edit().putString("selections", json).apply();
+        prefs.edit().putString("selections", json).apply();
     }
 
     // RESTAURA SELEÇÕES PESSOAIS NAS CHAVES PÚBLICAS
@@ -507,17 +507,94 @@ public class PerfilActivity extends AppCompatActivity {
 
     //  LOGOUT
     private void logout() {
+        Log.d("PerfilActivity", "logout() invoked");
+        // Desabilita botão para evitar múltiplos cliques
+        btnLogout.setEnabled(false);
+
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
         Long userId = prefs.getLong("userId", -1L);
         if (userId == -1L) {
             Toast.makeText(this, "Erro: Faça login novamente", Toast.LENGTH_SHORT).show();
+            btnLogout.setEnabled(true);
             return;
         }
 
+        String fcmToken = prefs.getString("fcmToken", null);
+        if (fcmToken != null) {
+            java.util.Map<String, String> body = new java.util.HashMap<>();
+            body.put("token", fcmToken);
+            Call<Void> unregisterCall = RetrofitClient.getApiService(this).unregisterFcmToken(userId, body);
+            unregisterCall.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    // mesmo que falhe, continua com o logout principal
+                    Log.d("PerfilActivity", "unregisterFcmToken response code: " + response.code());
+                    doLogout();
+                }
+
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    // não impede o logout; apenas log
+                    Log.e("PerfilActivity", "Erro ao desregistrar token no servidor: " + t.getMessage());
+                    doLogout();
+                }
+            });
+        } else {
+            // Se não tivermos token armazenado, tentamos obtê-lo do Firebase e desregistrar — MAS somente se o FirebaseApp estiver inicializado
+            try {
+                // Tenta inicializar (se já estiver inicializado retorna a instância)
+                com.google.firebase.FirebaseApp firebaseApp = com.google.firebase.FirebaseApp.initializeApp(this);
+                boolean firebaseAvailable = (firebaseApp != null) || !com.google.firebase.FirebaseApp.getApps(this).isEmpty();
+                if (!firebaseAvailable) {
+                    Log.w("PerfilActivity", "FirebaseApp não inicializado — pulando tentativa de desregistro e prosseguindo com logout local");
+                    doLogout();
+                    return;
+                }
+
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        if (token != null) {
+                            java.util.Map<String, String> body = new java.util.HashMap<>();
+                            body.put("token", token);
+                            Call<Void> unregisterCall = RetrofitClient.getApiService(PerfilActivity.this).unregisterFcmToken(userId, body);
+                            unregisterCall.enqueue(new Callback<Void>() {
+                                @Override
+                                public void onResponse(Call<Void> call, Response<Void> response) {
+                                    doLogout();
+                                }
+
+                                @Override
+                                public void onFailure(Call<Void> call, Throwable t) {
+                                    Log.e("PerfilActivity", "Erro ao desregistrar token no servidor: " + t.getMessage());
+                                    doLogout();
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    // Se falhar ao obter token do Firebase, prossegue com logout para não deixar sessão ativa
+                    doLogout();
+                });
+            } catch (Exception e) {
+                Log.e("PerfilActivity", "Erro ao verificar/inicializar FirebaseApp: " + e.getMessage(), e);
+                doLogout();
+            }
+        }
+    }
+
+    private void doLogout() {
+        SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        Long userId = prefs.getLong("userId", -1L);
         Call<Void> call = RetrofitClient.getApiService(this).logout(userId);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
+                Log.d("PerfilActivity", "logout API response code: " + response.code());
+                // Para segurança, para o serviço de localização em foreground antes de limpar prefs
+                stopService(new Intent(PerfilActivity.this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class));
+                // Também parar o serviço leve de updates
+                stopService(new Intent(PerfilActivity.this, ao.co.isptec.aplm.projetoanuncioloc.Service.LocationUpdateService.class));
                 prefs.edit().clear().apply();
                 // Limpa também as seleções pessoais associadas ao utilizador que fez logout
                 getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE).edit().clear().apply();
@@ -531,7 +608,17 @@ public class PerfilActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(PerfilActivity.this, "Erro de rede", Toast.LENGTH_SHORT).show();
+                Log.e("PerfilActivity", "Logout API failure: " + t.getMessage());
+                // Fail-safe: para o serviço de localização e limpa as prefs mesmo que o logout remoto falhe
+                stopService(new Intent(PerfilActivity.this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class));
+                // Também parar o serviço leve de updates
+                stopService(new Intent(PerfilActivity.this, ao.co.isptec.aplm.projetoanuncioloc.Service.LocationUpdateService.class));
+                prefs.edit().clear().apply();
+                getSharedPreferences(PREFS_SELECTIONS + "_" + currentUserId, MODE_PRIVATE).edit().clear().apply();
+
+                Toast.makeText(PerfilActivity.this, "Erro de rede, sessão finalizada localmente.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(PerfilActivity.this, LoginActivity.class));
+                finishAffinity();
             }
         });
     }

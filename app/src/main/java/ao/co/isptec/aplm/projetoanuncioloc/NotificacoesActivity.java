@@ -1,6 +1,7 @@
 package ao.co.isptec.aplm.projetoanuncioloc;
 
 import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -31,6 +32,28 @@ public class NotificacoesActivity extends AppCompatActivity {
     private Button btnClearNotifications;
     private TextView tvEmpty;
 
+    // Receiver para atualizar lista de notificações quando uma nova notificação chega via FCM
+    private final android.content.BroadcastReceiver notifRefreshReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context context, android.content.Intent intent) {
+            // Se for um novo anúncio interno, mostra uma notificação interna simples e atualiza a lista
+            try {
+                String action = intent.getAction();
+                if ("ao.co.isptec.aplm.NEW_ANUNCIO_INTERNAL".equals(action)) {
+                    String t = intent.getStringExtra("title");
+                    String b = intent.getStringExtra("body");
+                    if (t != null && b != null) {
+                        Toast.makeText(NotificacoesActivity.this, t + " — " + b, Toast.LENGTH_LONG).show();
+                    }
+                }
+            } catch (Exception ex) {
+                // não bloquear a atualização da lista se algo falhar ao extrair extras
+            }
+            // Atualiza a lista imediatamente ao receber o broadcast
+            carregarNotificacoes();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +70,20 @@ public class NotificacoesActivity extends AppCompatActivity {
         btnClose.setOnClickListener(v -> {
             finish(); // volta para trás
         });
+
+        // Regista receiver para atualizações de notificações (quando uma push chega)
+        try {
+            android.content.IntentFilter filter = new android.content.IntentFilter("ao.co.isptec.aplm.NOTIF_COUNT_UPDATED");
+            filter.addAction("ao.co.isptec.aplm.NEW_ANUNCIO_INTERNAL");
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(notifRefreshReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(notifRefreshReceiver, filter);
+            }
+        } catch (Exception e) {
+            // Protege contra erros em alguns dispositivos/ROMs
+            android.util.Log.e("NotificacoesActivity", "Erro ao registar receiver: " + e.getMessage());
+        }
 
         // Configurar o adapter com o listener de guardar
         adapter = new NotificacaoAdapter(this, listaNotificacoes, new NotificacaoAdapter.OnSaveClickListener() {
@@ -235,6 +272,16 @@ public class NotificacoesActivity extends AppCompatActivity {
             recyclerView.setVisibility(View.VISIBLE);
             tvEmpty.setVisibility(View.GONE);
             btnClearNotifications.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(notifRefreshReceiver);
+        } catch (IllegalArgumentException e) {
+            // Já foi removido ou não registado
         }
     }
 }

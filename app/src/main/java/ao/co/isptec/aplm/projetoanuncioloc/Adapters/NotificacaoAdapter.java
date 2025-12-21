@@ -72,12 +72,8 @@ public class NotificacaoAdapter extends RecyclerView.Adapter<NotificacaoAdapter.
         holder.tvTitulo.setText(notificacao.getTitulo());
         holder.tvDescricao.setText(notificacao.getDescricao());
 
-        // CARREGAR IMAGEM DO ANÚNCIO
-        if (notificacao.getAnuncioId() != null) {
-            carregarImagemAnuncio(notificacao.getAnuncioId(), holder.imgAnuncio);
-        } else {
-            holder.imgAnuncio.setImageResource(R.drawable.espaco_image);
-        }
+        // Não mostrar imagem nas notificações internas — apenas título e descrição (requisito do cliente)
+        holder.imgAnuncio.setVisibility(View.GONE);
 
         // BOOKMARK - sempre mostra como não salvo inicialmente
         holder.btnSalvar.setImageResource(R.drawable.ic_bookmark_nao_salvo);

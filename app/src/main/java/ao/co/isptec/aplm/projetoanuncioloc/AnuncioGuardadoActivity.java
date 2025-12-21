@@ -317,26 +317,41 @@ public class AnuncioGuardadoActivity extends AppCompatActivity implements Anunci
         Task<Location> task = fusedLocationProviderClient.getLastLocation();
         task.addOnSuccessListener(this, location -> {
             if (location != null) {
-                try {
-                    Geocoder geocoder = new Geocoder(AnuncioGuardadoActivity.this, Locale.getDefault());
-                    List<Address> addresses = geocoder.getFromLocation(
-                            location.getLatitude(),
-                            location.getLongitude(),
-                            1);
+                // Geocoder can block / do network IO — run off the main thread to avoid UI freeze
+                new Thread(() -> {
+                    try {
+                        Geocoder geocoder = new Geocoder(AnuncioGuardadoActivity.this, Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocation(
+                                location.getLatitude(),
+                                location.getLongitude(),
+                                1);
 
-                    if (addresses != null && !addresses.isEmpty()) {
-                        String cidade = addresses.get(0).getLocality();
-                        String pais = addresses.get(0).getCountryName();
+                        if (addresses != null && !addresses.isEmpty()) {
+                            Address addr = addresses.get(0);
+                            String cidade = addr.getLocality();
+                            String subadmin = addr.getSubAdminArea();
+                            String admin = addr.getAdminArea();
 
-                        String texto = "";
-                        if (cidade != null) texto += " " + cidade;
-                        //if (pais != null) texto += ", " + pais;
+                            String texto = "";
+                            if (cidade != null && !cidade.isEmpty()) texto = cidade;
+                            else if (subadmin != null && !subadmin.isEmpty()) texto = subadmin;
+                            else if (admin != null && !admin.isEmpty()) texto = admin;
+                            else if (addr.getAddressLine(0) != null && !addr.getAddressLine(0).isEmpty()) texto = addr.getAddressLine(0);
 
-                        tvLocation.setText(texto.trim());
+                            final String finalTexto = texto.isEmpty() ? "Localização não disponível" : texto;
+                            runOnUiThread(() -> tvLocation.setText(finalTexto));
+                        } else {
+                            runOnUiThread(() -> tvLocation.setText("Localização não disponível."));
+                        }
+                    } catch (IOException e) {
+                        Log.e("AnuncioGuardado", "Geocoder IOException: " + e.getMessage());
+                        runOnUiThread(() -> tvLocation.setText("Erro ao obter localização."));
+                    } catch (Exception e) {
+                        Log.e("AnuncioGuardado", "Geocoder unexpected error: " + e.getMessage());
+                        runOnUiThread(() -> tvLocation.setText("Erro ao obter localização."));
                     }
-                } catch (IOException e) {
-                    tvLocation.setText("Erro ao obter localização.");
-                }
+                }).start();
+
             } else {
                 tvLocation.setText("Localização não disponível.");
             }

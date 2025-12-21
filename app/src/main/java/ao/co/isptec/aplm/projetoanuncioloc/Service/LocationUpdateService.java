@@ -33,7 +33,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 public class LocationUpdateService extends Service {
 
     private static final String TAG = "LocationService";
-    private static final long UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos
+    private static final long UPDATE_INTERVAL = 2 * 60 * 1000; // 3 minutos
 
     private FusedLocationProviderClient fusedLocationClient;
     private WifiManager wifiManager;
@@ -73,6 +73,12 @@ public class LocationUpdateService extends Service {
 
     private void updateLocation() {
         SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+        // Se o ForegroundLocationService estiver a correr, evita duplicar envios
+        boolean fgRunning = prefs.getBoolean("fgLocationServiceRunning", false);
+        if (fgRunning) {
+            Log.d(TAG, "FG service a correr — pulando envio leve");
+            return;
+        }
         Long userId = prefs.getLong("userId", -1L);
         if (userId == -1L) {
             Log.e(TAG, "userId não encontrado");

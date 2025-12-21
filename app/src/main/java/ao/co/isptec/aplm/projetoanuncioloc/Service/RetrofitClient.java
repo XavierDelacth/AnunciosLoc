@@ -24,7 +24,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    public static final String BASE_URL = "http://192.168.110.157:8081";
+    // Atualizado para o IP local atual da máquina; NÃO incluir barra final porque as rotas em ApiService usam leading '/'
+    public static final String BASE_URL = "http://192.168.216.157:8081";
     private static Retrofit retrofit;
 
     public static ApiService getApiService(Context context) {

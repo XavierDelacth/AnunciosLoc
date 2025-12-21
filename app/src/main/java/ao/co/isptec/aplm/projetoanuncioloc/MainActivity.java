@@ -50,6 +50,9 @@ import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import androidx.core.app.NotificationManagerCompat;
 
 public class MainActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_EDITAR_ANUNCIO = 1001;
@@ -62,6 +65,49 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private TextView badgeNotificacao;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+    private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 102;
+    private static final int FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE = 300;
+
+    // Receiver para atualizações da contagem de notificações vindas do serviço FCM
+    private final android.content.BroadcastReceiver notifCountReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int count = intent.getIntExtra("count", -1);
+            if (count >= 0) {
+                atualizarBadgeNotificacao(count);
+            }
+        }
+    };
+
+    // Receiver para falha ao iniciar FGS — instrui a UI a pedir permissões
+    private final android.content.BroadcastReceiver fgsFailReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String reason = intent.getStringExtra("reason");
+            Log.w("MainActivity", "Recebido FGS_START_FAILED: " + reason);
+
+            // Mostra um diálogo com opções: abrir definições ou tentar novamente
+            runOnUiThread(() -> {
+                try {
+                    new android.app.AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Impossível ativar localização em 2º plano")
+                            .setMessage("O sistema impediu que a app inicie localização em segundo plano (" + reason + "). Deseja abrir as definições da app para ajustar permissões ou tentar novamente?")
+                            .setPositiveButton("Abrir definições", (d, w) -> openAppSettings())
+                            .setNeutralButton("Tentar novamente", (d, w) -> {
+                                // Tenta reativar o fluxo de verificação/início do FGS
+                                // Nota: não resetamos a flag de verificação — garantimos que o fluxo de verificação só será mostrado uma vez
+                                // Curto delay para garantir que a UI settle
+                                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> startForegroundLocationIfNeeded(), 300);
+                            })
+                            .setNegativeButton("Fechar", null)
+                            .show();
+                } catch (Exception e) {
+                    // Fallback minimal: Toast
+                    Toast.makeText(MainActivity.this, "Não foi possível ativar localização em 2º plano: verifique permissões", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
 
     private boolean gpsAtivado = false;
     private static final int REQUEST_ENABLE_GPS = 1002;
@@ -95,10 +141,24 @@ public class MainActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG).show();
                 }
 
-                // Pede a permissão
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        LOCATION_PERMISSION_REQUEST);
+                // Evita pedir permissões repetidamente em loops (ex.: o utilizador escolheu "só desta vez")
+                long lastPrompt = prefs.getLong("lastLocationPrompt", 0L);
+                long now = System.currentTimeMillis();
+                if (now - lastPrompt < 10_000L) {
+                    // Já pedimos há menos de 10s — não pedir de novo imediatamente
+                    Log.d("MainActivity", "Já pedimos permissão de localização recentemente; não pedir novamente agora");
+                    // Apenas mostra um aviso curto e deixa a UI continuar
+                    Toast.makeText(this, "Conceda permissão de localização nas configurações, se necessário", Toast.LENGTH_SHORT).show();
+                    // Inicia o fluxo mesmo sem permissão (lista ficará sem localização)
+                    setupListaAnuncios();
+                } else {
+                    // Regista a hora em que pedimos e solicita a permissão ao sistema
+                    prefs.edit().putLong("lastLocationPrompt", now).apply();
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            LOCATION_PERMISSION_REQUEST);
+                }
+
             } else {
                 // Já tem permissão → inicia o serviço
                 iniciarLocationService();
@@ -112,6 +172,15 @@ public class MainActivity extends AppCompatActivity {
         setupClickListeners();
         setupTabs();
         selectTab(true);
+
+        // Regista receiver para atualizações de contagem de notificações
+        android.content.IntentFilter notifFilter = new android.content.IntentFilter("ao.co.isptec.aplm.NOTIF_COUNT_UPDATED");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // A partir do Android 13 (Tiramisu) é exigido especificar se o receiver é exportado ou não
+            registerReceiver(notifCountReceiver, notifFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(notifCountReceiver, notifFilter);
+        }
 
         // Inicializa provedor de localização
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -131,6 +200,122 @@ public class MainActivity extends AppCompatActivity {
 
         carregarAnuncios();
         carregarContagemNotificacoes();
+
+        // Garantir canal de notificação e permissões (Android 13+)
+        createNotificationChannel();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 200);
+            }
+        }
+
+        // Se ainda não temos permissão de background location (Android Q+), pedir ao utilizador de forma educada
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("Permissão de Localização em Segundo Plano")
+                        .setMessage("Para enviar a sua localização mesmo quando a app está em segundo plano (ex.: para mostrar anúncios próximos continuamente), permita a localização em segundo plano.")
+                        .setPositiveButton("Permitir", (dialog, which) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION, "android.permission.FOREGROUND_SERVICE_LOCATION"}, BACKGROUND_LOCATION_PERMISSION_CODE))
+                        .setNegativeButton("Não", (dialog, which) -> Log.d("MainActivity", "Background location negada pelo utilizador"))
+                        .show();
+                // Marca que já mostramos a verificação do sistema/permissão para não repetir (one-shot)
+                try {
+                    getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("fgs_verification_shown", true).apply();
+                } catch (Exception ex) { /* ignore */ }
+            } else {
+                // Se já tiver, confirma que temos a permissão específica de FGS location (Android S+)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{"android.permission.FOREGROUND_SERVICE_LOCATION"}, FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE);
+                } else {
+                    startForegroundLocationIfNeeded();
+                }
+            }
+        } else {
+            // Em versões antigas, garante que o serviço foreground pode ser iniciado (não obrigatório)
+            startForegroundLocationIfNeeded();
+        }
+
+        // Se anteriormente falhou o registro do token FCM, tenta novamente aqui (após login estar estabelecido)
+        boolean pending = prefs.getBoolean("pendingFcmRegistration", false);
+        long currentUserId = prefs.getLong("userId", -1L);
+        if (pending && currentUserId != -1L) {
+            try {
+                if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                    com.google.firebase.FirebaseApp.initializeApp(this);
+                }
+
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        if (token != null) {
+                            prefs.edit().putString("fcmToken", token).putBoolean("pendingFcmRegistration", false).apply();
+                            java.util.Map<String, String> body = new java.util.HashMap<>();
+                            body.put("token", token);
+                            body.put("deviceInfo", android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL);
+                            RetrofitClient.getApiService(this).updateFcmToken(currentUserId, body).enqueue(new Callback<Void>() {
+                                @Override
+                                public void onResponse(Call<Void> call, Response<Void> response) {
+                                    if (response.isSuccessful()) {
+                                        Log.d("MainActivity", "Retry: token FCM registrado no backend");
+                                    } else {
+                                        Log.e("MainActivity", "Retry: falha ao registrar token: " + response.code());
+                                        prefs.edit().putBoolean("pendingFcmRegistration", true).apply();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<Void> call, Throwable t) {
+                                    Log.e("MainActivity", "Retry: erro de rede ao registrar token: " + t.getMessage());
+                                    prefs.edit().putBoolean("pendingFcmRegistration", true).apply();
+                                }
+                            });
+                        }
+                    } else {
+                        Log.e("MainActivity", "Retry: não foi possível obter token FCM: " + task.getException());
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("MainActivity", "Retry: Firebase não disponível no MainActivity: " + e.getMessage(), e);
+            }
+        }
+
+        // Regista receiver para falhas ao iniciar FGS (ex.: falta de permissão específica do SO)
+        try {
+            android.content.IntentFilter f = new android.content.IntentFilter("ao.co.isptec.aplm.FGS_START_FAILED");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(fgsFailReceiver, f, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(fgsFailReceiver, f);
+            }
+        } catch (Exception ex) {
+            Log.e("MainActivity", "Erro ao registar receiver FGS_START_FAILED: " + ex.getMessage());
+        }
+
+        // Verifica se as notificações estão ativas nas configurações do sistema
+        boolean notificationsEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled();
+        if (!notificationsEnabled) {
+            Log.d("MainActivity", "Notificações do sistema estão desativadas para esta app");
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Notificações desativadas")
+                    .setMessage("As notificações estão desativadas nas configurações do dispositivo. Deseja abrir as definições da app para ativá-las?")
+                    .setPositiveButton("Abrir definições", (d, w) -> {
+                        try {
+                            Intent intent = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                            intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+                            startActivity(intent);
+                        } catch (Exception ex) {
+                            try {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                                startActivity(intent);
+                            } catch (Exception ex2) {
+                                Log.e("MainActivity", "Failed to open notification settings: " + ex2.getMessage());
+                            }
+                        }
+                    })
+                    .setNegativeButton("Fechar", null)
+                    .show();
+        }
 
         // Compatível com back gesture (Android 13+)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -209,7 +394,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MAPS_DEBUG", "Iniciando obtenção de localização...");
 
         // Mostra estado de carregamento
-        runOnUiThread(() -> tvLocation.setText("Obtendo localização..."));
+        runOnUiThread(() -> { if (tvLocation != null) tvLocation.setText("Obtendo localização..."); });
 
         // Verifica se já tem permissão
         if (temPermissaoLocalizacao()) {
@@ -218,12 +403,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // Solicita permissões
             Log.d("MAPS_DEBUG", "Solicitando permissões de localização...");
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    },
-                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    // Garante que o canal de notificação necessário exista (usado por FCM)
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("anuncios_channel", "Anúncios Localizados", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Notificações de anúncios localizados");
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.createNotificationChannel(channel);
         }
     }
 
@@ -306,20 +495,22 @@ public class MainActivity extends AppCompatActivity {
             );
 
             // Timeout: Se após 15 segundos não obtiver localização, mostra mensagem
-            locationTimeoutHandler.postDelayed(() -> {
-                runOnUiThread(() -> {
-                    String textoAtual = tvLocation.getText().toString();
-                    if (textoAtual.equals("Obtendo localização...")) {
-                        tvLocation.setText("Localização não disponível");
-                        Log.d("MAPS_DEBUG", "Timeout na obtenção de localização");
+            if (locationTimeoutHandler != null) {
+                locationTimeoutHandler.postDelayed(() -> {
+                    runOnUiThread(() -> {
+                        String textoAtual = (tvLocation != null ? tvLocation.getText().toString() : "");
+                        if (textoAtual.equals("Obtendo localização...")) {
+                            if (tvLocation != null) tvLocation.setText("Localização não disponível");
+                            Log.d("MAPS_DEBUG", "Timeout na obtenção de localização");
 
-                        // Para as atualizações
-                        if (locationCallback != null) {
-                            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+                            // Para as atualizações
+                            if (locationCallback != null && fusedLocationProviderClient != null) {
+                                fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+                            }
                         }
-                    }
-                });
-            }, 15000);
+                    });
+                }, 15000);
+            }
 
         } catch (SecurityException e) {
             Log.e("MAPS_DEBUG", "Erro de segurança: " + e.getMessage());
@@ -358,63 +549,197 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == LOCATION_PERMISSION_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permissão concedida → inicia o serviço
-                Toast.makeText(this, "Permissão de localização concedida", Toast.LENGTH_SHORT).show();
-                iniciarLocationService();
-            } else {
-                // Permissão negada
-                Toast.makeText(this, "Sem permissão de localização, os anúncios próximos não funcionarão",
-                        Toast.LENGTH_LONG).show();
-                // Opcional: desabilita botões ou features que usam localização
-            }
-        }
-
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("MAPS_DEBUG", "Permissão concedida, obtendo localização...");
-
-                // Pequeno delay para garantir que as permissões foram processadas
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (temPermissaoLocalizacao()) {
-                        obterLocalizacaoComPermissao();
+        try {
+            if (requestCode == LOCATION_PERMISSION_REQUEST) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permissão concedida → inicia o serviço
+                    Toast.makeText(this, "Permissão de localização concedida", Toast.LENGTH_SHORT).show();
+                    try {
+                        iniciarLocationService();
+                    } catch (Exception e) {
+                        Log.e("MAPS_DEBUG", "Erro ao iniciar LocationService após permissão: " + e.getMessage(), e);
                     }
-                }, 500);
-
-            } else {
-                // Permissão negada
-                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    // Usuário negou, mas não marcou "nunca mais perguntar"
-                    tvLocation.setText("Localização necessária para mostrar anúncios próximos");
-
-                    new android.app.AlertDialog.Builder(this)
-                            .setTitle("Permissão de Localização")
-                            .setMessage("O app precisa da localização para mostrar anúncios relevantes da sua área. Deseja permitir?")
-                            .setPositiveButton("Sim", (dialog, which) -> obterLocalizacaoAtual())
-                            .setNegativeButton("Não", (dialog, which) -> {
-                                tvLocation.setText("Localização não permitida");
-                                setupListaAnuncios();
-                            })
-                            .show();
                 } else {
-                    // Usuário marcou "nunca mais perguntar"
-                    tvLocation.setText("Ative a localização nas configurações");
-
-                    new android.app.AlertDialog.Builder(this)
-                            .setTitle("Localização Necessária")
-                            .setMessage("Para usar todos os recursos do app, ative a localização nas configurações do dispositivo.")
-                            .setPositiveButton("Configurações", (dialog, which) -> {
-                                Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                startActivity(intent);
-                            })
-                            .setNegativeButton("Cancelar", (dialog, which) -> {
-                                tvLocation.setText("Localização desativada");
-                                setupListaAnuncios();
-                            })
-                            .show();
+                    // Permissão negada
+                    Toast.makeText(this, "Sem permissão de localização, os anúncios próximos não funcionarão",
+                            Toast.LENGTH_LONG).show();
+                    // Opcional: desabilita botões ou features que usam localização
                 }
             }
+
+            if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("MAPS_DEBUG", "Permissão concedida, obtendo localização...");
+
+                    // Pequeno delay para garantir que as permissões foram processadas
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        if (temPermissaoLocalizacao()) {
+                            obterLocalizacaoComPermissao();
+                        }
+                    }, 500);
+
+                } else {
+                    // Permissão negada
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        // Usuário negou, mas não marcou "nunca mais perguntar"
+                        if (tvLocation != null) tvLocation.setText("Localização necessária para mostrar anúncios próximos");
+
+                        new android.app.AlertDialog.Builder(this)
+                                .setTitle("Permissão de Localização")
+                                .setMessage("O app precisa da localização para mostrar anúncios relevantes da sua área. Deseja permitir?")
+                                .setPositiveButton("Sim", (dialog, which) -> obterLocalizacaoAtual())
+                                .setNegativeButton("Não", (dialog, which) -> {
+                                    if (tvLocation != null) tvLocation.setText("Localização não permitida");
+                                    setupListaAnuncios();
+                                })
+                                .show();
+                    } else {
+                        // Usuário marcou "nunca mais perguntar"
+                        if (tvLocation != null) tvLocation.setText("Ative a localização nas configurações");
+
+                        new android.app.AlertDialog.Builder(this)
+                                .setTitle("Localização Necessária")
+                                .setMessage("Para usar todos os recursos do app, ative a localização nas configurações do dispositivo.")
+                                .setPositiveButton("Configurações", (dialog, which) -> {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivity(intent);
+                                })
+                                .setNegativeButton("Cancelar", (dialog, which) -> {
+                                    if (tvLocation != null) tvLocation.setText("Localização desativada");
+                                    setupListaAnuncios();
+                                })
+                                .show();
+                    }
+                }
+            }
+
+            // RESULTADO DO PEDIDO DE PERMISSÃO DE NOTIFICAÇÕES (REQUEST CODE: 200)
+            if (requestCode == 200) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("MainActivity", "Permissão de notificação concedida");
+                    Toast.makeText(this, "Notificações ativadas", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.d("MainActivity", "Permissão de notificação negada");
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+                        // Usuário negou, mas permitimos mostrar a explicação e tentar de novo
+                        new android.app.AlertDialog.Builder(this)
+                                .setTitle("Permissão de Notificação")
+                                .setMessage("Para receber alertas e notificações, permita notificações. Deseja permitir agora?")
+                                .setPositiveButton("Permitir", (dialog, which) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 200))
+                                .setNegativeButton("Não", null)
+                                .show();
+                    } else {
+                        // O sistema pode ter negado permanentemente ("Não perguntar novamente") ou desabilitado nas configs
+                        Toast.makeText(this, "Ative as notificações nas configurações do app para receber alertas", Toast.LENGTH_LONG).show();
+                        // Opcional: abrir as configurações do app
+                        // Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        // intent.setData(Uri.parse("package:" + getPackageName()));
+                        // startActivity(intent);
+                    }
+                }
+            }
+
+            // RESULTADO DO PEDIDO DE PERMISSÃO DE BACKGROUND LOCATION (REQUEST_CODE: BACKGROUND_LOCATION_PERMISSION_CODE)
+            if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
+                boolean backgroundGranted = false;
+                // Find the specific permission result for ACCESS_BACKGROUND_LOCATION if present
+                for (int i = 0; i < permissions.length; i++) {
+                    if (Manifest.permission.ACCESS_BACKGROUND_LOCATION.equals(permissions[i])) {
+                        backgroundGranted = (i < grantResults.length && grantResults[i] == PackageManager.PERMISSION_GRANTED);
+                        break;
+                    }
+                }
+
+                if (!backgroundGranted && grantResults.length == 1 && permissions.length == 1 && Manifest.permission.ACCESS_BACKGROUND_LOCATION.equals(permissions[0])) {
+                    backgroundGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                }
+
+                if (backgroundGranted) {
+                    Log.d("MainActivity", "Permissão de background location concedida");
+                    // Marca que já mostramos/gerimos a verificação da permissão para não repetir a UI de orientação
+                    try { getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("fgs_verification_shown", true).apply(); } catch (Exception ex) { /* ignore */ }
+                    // Pequeno atraso para garantir que o sistema atualizou os estados de permissão antes de iniciar o serviço
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        try {
+                            startForegroundLocationIfNeeded();
+                            try { getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("fgs_auto_attempted", true).apply(); } catch (Exception ex) { /* ignore */ }
+                        } catch (Exception ex) {
+                            Log.e("MainActivity", "Erro ao iniciar FGS após permissão de background: " + ex.getMessage(), ex);
+                            Toast.makeText(MainActivity.this, "Erro ao iniciar localização em background", Toast.LENGTH_LONG).show();
+                        }
+                    }, 300);
+                } else {
+                    Log.d("MainActivity", "Permissão de background location negada");
+                }
+            }
+
+            // RESULTADO DO PEDIDO PARA FOREGROUND_SERVICE_LOCATION (REQUEST_CODE: FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE)
+            if (requestCode == FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("MainActivity", "Permissão FOREGROUND_SERVICE_LOCATION concedida");
+                    try { getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("fgs_verification_shown", true).apply(); } catch (Exception ex) { /* ignore */ }
+                    try { getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putBoolean("fgs_auto_attempted", true).apply(); } catch (Exception ex) { /* ignore */ }
+                    startForegroundLocationIfNeeded();
+                } else {
+                    Log.d("MainActivity", "Permissão FOREGROUND_SERVICE_LOCATION negada");
+
+                    // Se o utilizador negou permanentemente (não podemos pedir novamente), sugere abrir definições
+                    String perm = "android.permission.FOREGROUND_SERVICE_LOCATION";
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+                        new android.app.AlertDialog.Builder(this)
+                                .setTitle("Permissão necessária")
+                                .setMessage("A permissão para iniciar serviço em foreground de localização foi negada permanentemente. Deseja abrir as definições da app para permitir?")
+                                .setPositiveButton("Abrir definições", (d, w) -> openAppSettings())
+                                .setNegativeButton("Cancelar", null)
+                                .show();
+                    } else {
+                        // Usuário negou, mas ainda podemos pedir novamente com explicação
+                        new android.app.AlertDialog.Builder(this)
+                                .setTitle("Permissão necessária")
+                                .setMessage("Para enviar a sua localização em segundo plano, a app precisa desta permissão. Deseja tentar novamente?")
+                                .setPositiveButton("Tentar", (d, w) -> requestForegroundServiceLocationPermissionWithRationale())
+                                .setNegativeButton("Cancelar", null)
+                                .show();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Log.e("MainActivity", "Erro em onRequestPermissionsResult: " + ex.getMessage(), ex);
+        }
+    }
+
+    // Abre a página de definições da app para que o utilizador possa ajustar permissões manualmente
+    private void openAppSettings() {
+        try {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("MainActivity", "Erro ao abrir definições da app: " + e.getMessage(), e);
+            Toast.makeText(this, "Não foi possível abrir definições da app", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Pede a permissão FOREGROUND_SERVICE_LOCATION com explicação se necessário
+    private void requestForegroundServiceLocationPermissionWithRationale() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return; // only relevant on S+
+
+        String perm = "android.permission.FOREGROUND_SERVICE_LOCATION";
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Permissão de Foreground Service Location")
+                    .setMessage("Para enviar a sua localização em segundo plano, a app precisa da permissão específica para serviço foreground de localização. Deseja permitir agora?")
+                    .setPositiveButton("Permitir", (d, w) -> ActivityCompat.requestPermissions(MainActivity.this, new String[]{perm}, FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE))
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        } else {
+            // Pode ter sido negada permanentemente — convidar o utilizador a abrir definições
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Permissão necessária")
+                    .setMessage("A permissão de serviço em foreground para localização parece estar negada permanentemente. Abra as definições da app para concedê-la?")
+                    .setPositiveButton("Abrir definições", (d, w) -> openAppSettings())
+                    .setNegativeButton("Cancelar", null)
+                    .show();
         }
     }
 
@@ -440,34 +765,41 @@ public class MainActivity extends AppCompatActivity {
                     if (addresses != null && !addresses.isEmpty()) {
                         Address address = addresses.get(0);
 
-                        // Tenta obter o nome da localidade primeiro
+                        // Tenta obter atributos mais específicos, com vários fallbacks
                         String localidade = address.getLocality();
-                        if (localidade != null && !localidade.isEmpty()) {
-                            tvLocation.setText(localidade);
-                            Log.d("MAPS_DEBUG", "Localidade definida: " + localidade);
+                        String subadmin = address.getSubAdminArea();
+                        String admin = address.getAdminArea();
+                        String feature = address.getFeatureName();
+                        String enderecoLinha = address.getAddressLine(0);
+
+                        Log.d("MAPS_DEBUG", "Geocoder returned address: " + address.toString());
+
+                        String resolved = null;
+                        if (localidade != null && !localidade.isEmpty()) resolved = localidade;
+                        else if (subadmin != null && !subadmin.isEmpty()) resolved = subadmin;
+                        else if (admin != null && !admin.isEmpty()) resolved = admin;
+                        else if (feature != null && !feature.isEmpty()) resolved = feature;
+                        else if (enderecoLinha != null && !enderecoLinha.isEmpty()) resolved = enderecoLinha;
+
+                        if (resolved != null) {
+                            tvLocation.setText(resolved);
+                            Log.d("MAPS_DEBUG", "Localidade definida (fallbacks aplicados): " + resolved);
                         } else {
-                            // Fallback para o endereço completo
-                            String enderecoCompleto = address.getAddressLine(0);
-                            if (enderecoCompleto != null && !enderecoCompleto.isEmpty()) {
-                                tvLocation.setText(enderecoCompleto);
-                                Log.d("MAPS_DEBUG", "Endereço completo definido: " + enderecoCompleto);
-                            } else {
-                                tvLocation.setText("Localização atual");
-                                Log.d("MAPS_DEBUG", "Usando fallback: Localização atual");
-                            }
+                            tvLocation.setText("Localização não disponível");
+                            Log.d("MAPS_DEBUG", "Usando fallback: Localização não disponível");
                         }
                     } else {
-                        tvLocation.setText("Localização atual");
+                        tvLocation.setText("Localização não disponível");
                         Log.d("MAPS_DEBUG", "Nenhum endereço encontrado");
                     }
                 });
 
             } catch (IOException e) {
                 Log.e("MAPS_DEBUG", "Erro Geocoder: " + e.getMessage());
-                runOnUiThread(() -> tvLocation.setText("Localização atual"));
+                runOnUiThread(() -> tvLocation.setText("Localização não disponível"));
             } catch (Exception e) {
                 Log.e("MAPS_DEBUG", "Erro inesperado: " + e.getMessage());
-                runOnUiThread(() -> tvLocation.setText("Localização atual"));
+                runOnUiThread(() -> tvLocation.setText("Localização não disponível"));
             }
         }).start();
     }
@@ -549,7 +881,7 @@ public class MainActivity extends AppCompatActivity {
                 carregarAnuncios(); // Reaproveita o teu método existente para recarregar a lista
                 Toast.makeText(this, "Lista atualizada!", Toast.LENGTH_SHORT).show();
             }
-            }
+        }
     }
 
     @Override
@@ -571,29 +903,66 @@ public class MainActivity extends AppCompatActivity {
         // Verifica se precisamos tentar obter localização novamente
         verificarEstadoLocalizacao();
         carregarContagemNotificacoes();
+
+        // Garantir que enquanto a app está em foreground usamos o serviço leve (handler-based)
+        try {
+            startService(new Intent(this, LocationUpdateService.class));
+            stopForegroundLocationService();
+        } catch (Exception e) {
+            Log.e("MainActivity", "Erro no onResume ao gerir serviços de localização: " + e.getMessage(), e);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         // Para as atualizações de localização quando a activity não está visível
-        if (locationCallback != null) {
-            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-        }
-        if (locationTimeoutHandler != null) {
-            locationTimeoutHandler.removeCallbacksAndMessages(null);
+        try {
+            if (locationCallback != null) {
+                fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+            }
+            if (locationTimeoutHandler != null) {
+                locationTimeoutHandler.removeCallbacksAndMessages(null);
+            }
+
+            // Quando a app vai para background, parar o serviço leve e, se tivermos permissão, iniciar o foreground service
+            stopLocationUpdateService();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                // Também pedir permissão de FGS em S+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
+                    // Não temos a permissão exigida — pede ao utilizador de forma adequada
+                    Log.d("MainActivity", "FOREGROUND_SERVICE_LOCATION ausente — solicitando permissão ou orientando o utilizador");
+                    // Tenta pedir com razão / abre definições se for caso de 'não perguntar novamente'
+                    requestForegroundServiceLocationPermissionWithRationale();
+                } else {
+                    startForegroundLocationIfNeeded();
+                }
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Erro no onPause ao gerir serviços de localização: " + e.getMessage(), e);
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Limpa recursos
+        // Limpa recursos relacionados com localização
         if (locationCallback != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
         if (locationTimeoutHandler != null) {
             locationTimeoutHandler.removeCallbacksAndMessages(null);
+        }
+        // Unregister receivers
+        try {
+            unregisterReceiver(notifCountReceiver);
+        } catch (IllegalArgumentException e) {
+            // Já estava registado ou removido
+        }
+        try {
+            unregisterReceiver(fgsFailReceiver);
+        } catch (IllegalArgumentException e) {
+            // Já estava registado ou removido
         }
     }
 
@@ -805,7 +1174,226 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void iniciarLocationService() {
+        // Inicio o serviço de atualização leve (usa getLastLocation periodicamente)
         startService(new Intent(this, LocationUpdateService.class));
         Log.d("MainActivity", "LocationUpdateService iniciado");
+
+        // Se tivermos permissão de background, iniciar o serviço em foreground para garantir atualizações contínuas
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                startForegroundLocationIfNeeded();
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Erro ao tentar iniciar ForegroundLocationService: " + e.getMessage(), e);
+        }
     }
+
+    private void startForegroundLocationIfNeeded() {
+        try {
+            // Pre-check: ensure we have both the foreground-service-location and a location permission on S+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                boolean hasFgs = checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") == PackageManager.PERMISSION_GRANTED;
+                boolean hasLocation = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                if (!hasFgs || !hasLocation) {
+                    Log.w("MainActivity", "Não tem permissão necessária para iniciar FGS (fgs=" + hasFgs + ", loc=" + hasLocation + ")");
+                    // Tenta solicitar permissões se possível
+                    if (!hasFgs) {
+                        ActivityCompat.requestPermissions(this, new String[]{"android.permission.FOREGROUND_SERVICE_LOCATION"}, FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE);
+                    }
+                    if (!hasLocation) {
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+                    }
+                    return;
+                }
+
+                // Extra heuristic: check AppOps for foreground-service-location if available to avoid OS-level denial
+                try {
+                    android.app.AppOpsManager aom = (android.app.AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+                    if (aom != null) {
+                        // OPSTR_FOREGROUND_SERVICE_LOCATION exists on newer APIs — obtain it reflectively so code compiles on older compileSdk
+                        String op;
+                        try {
+                            java.lang.reflect.Field f = android.app.AppOpsManager.class.getField("OPSTR_FOREGROUND_SERVICE_LOCATION");
+                            op = (String) f.get(null);
+                        } catch (Throwable e) {
+                            // Fallback string used by AppOps internally
+                            op = "android:foreground_service_location";
+                        }
+                        int mode = aom.checkOpNoThrow(op, android.os.Process.myUid(), getPackageName());
+                        if (mode != android.app.AppOpsManager.MODE_ALLOWED) {
+                            Log.w("MainActivity", "AppOps forbids starting FGS (mode=" + mode + ") — skipping start");
+                            Toast.makeText(this, "Não foi possível ativar localização em segundo plano: verifique configurações do dispositivo", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                    }
+                } catch (Throwable t) {
+                    // AppOps check failed — if permissions are already granted, try to start the FGS directly (best-effort);
+                    // only show the dialog if the user still needs to grant permissions.
+                    Log.d("MainActivity", "AppOps check not available: " + t.getMessage());
+
+                    boolean hasFgsPerm = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") == PackageManager.PERMISSION_GRANTED;
+                    boolean hasLocationPerm = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+                    if (hasFgsPerm && hasLocationPerm) {
+                        final SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                        boolean autoAttempted = prefs.getBoolean("fgs_auto_attempted", false);
+                        boolean fgRunning = prefs.getBoolean("fgLocationServiceRunning", false);
+                        boolean currentPermsAll = hasFgsPerm && hasLocationPerm;
+
+                        if (autoAttempted) {
+                            if (fgRunning) {
+                                Log.d("MainActivity", "FGS already running; skipping automatic attempt.");
+                                return;
+                            }
+                            if (!currentPermsAll) {
+                                Log.d("MainActivity", "FGS automatic attempt already done; skipping (permissions not satisfied).");
+                                return;
+                            }
+                            Log.d("MainActivity", "FGS automatic attempt done previously but permissions now satisfied; proceeding to attempt again.");
+                        }
+
+                        // Permissions present — attempt to start the FGS and inform the user we couldn't verify AppOps
+                        Toast.makeText(this, "Não foi possível verificar configurações do sistema; tentando ativar localização em 2º plano...", Toast.LENGTH_LONG).show();
+                        Intent fg = new Intent(this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class);
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                ContextCompat.startForegroundService(this, fg);
+                            } else {
+                                startService(fg);
+                            }
+                            Log.d("MainActivity", "ForegroundLocationService solicitado após falha AppOps (tentativa automática)");
+                            // Mark that we attempted an automatic activation and record whether permissions were all present
+                            prefs.edit().putBoolean("fgs_auto_attempted", true).putBoolean("fgs_auto_attempted_perms_all_granted", currentPermsAll).apply();
+                            Log.d("MainActivity", "fgs_auto_attempted set=true, permsAll=" + currentPermsAll + " at " + System.currentTimeMillis());
+                        } catch (SecurityException se) {
+                            Log.e("MainActivity", "SecurityException ao tentar iniciar FGS após falha AppOps: " + se.getMessage(), se);
+                            // Fall back to asking the user explicitly
+                            new android.app.AlertDialog.Builder(this)
+                                    .setTitle("Não foi possível ativar")
+                                    .setMessage("Não foi possível iniciar a localização em segundo plano devido a restrições do sistema. Deseja tentar novamente e ajustar permissões?")
+                                    .setPositiveButton("Tentar", (dialog, which) -> {
+                                        // Record that user chose to try so we won't ask again
+                                        prefs.edit().putBoolean("fgs_verification_shown", true).apply();
+
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 200);
+                                            }
+                                        }
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            if (checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
+                                                ActivityCompat.requestPermissions(this, new String[]{"android.permission.FOREGROUND_SERVICE_LOCATION"}, FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE);
+                                            }
+                                        }
+                                    })
+                                    .setNegativeButton("Cancelar", null)
+                                    .show();
+                        }
+                        return;
+                    }
+
+                    // Caso contrário, pedimos ao utilizador para tentar e pedimos as permissões necessárias
+                    final SharedPreferences prefs = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                    if (prefs.getBoolean("fgs_verification_shown", false)) {
+                        Log.d("MainActivity", "Skipping system verification dialog (already attempted).");
+                        return;
+                    }
+
+                    new android.app.AlertDialog.Builder(this)
+                            .setTitle("Verificação de sistema não disponível")
+                            .setMessage("Não foi possível verificar se o sistema permite a localização em segundo plano. Deseja tentar ativar mesmo assim? Pode não funcionar em alguns dispositivos.")
+                            .setPositiveButton("Tentar", (dialog, which) -> {
+                                // Record that the user chose to try so we won't ask again
+                                prefs.edit().putBoolean("fgs_verification_shown", true).apply();
+
+                                // Request notification permission (Android 13+)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 200);
+                                    }
+                                }
+
+                                // Request FGS-specific permission on S+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    if (checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") != PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(this, new String[]{"android.permission.FOREGROUND_SERVICE_LOCATION"}, FOREGROUND_SERVICE_LOCATION_PERMISSION_CODE);
+                                    }
+                                }
+
+                                // Attempt to start the foreground service anyway; ForegroundLocationService will handle failures gracefully
+                                Intent fg = new Intent(this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class);
+                                try {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        ContextCompat.startForegroundService(this, fg);
+                                    } else {
+                                        startService(fg);
+                                    }
+                                    Log.d("MainActivity", "ForegroundLocationService solicitado (forçado)");
+                                    // Record that we forced an attempt and capture current permission state
+                                    try {
+                                        SharedPreferences prefsLocal = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                                        boolean hasFgsPermLocal = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") == PackageManager.PERMISSION_GRANTED;
+                                        boolean hasLocPermLocal = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                                        prefsLocal.edit().putBoolean("fgs_auto_attempted", true).putBoolean("fgs_auto_attempted_perms_all_granted", hasFgsPermLocal && hasLocPermLocal).apply();
+                                        Log.d("MainActivity", "fgs_auto_attempted set=true (forced), permsAll=" + (hasFgsPermLocal && hasLocPermLocal) + " at " + System.currentTimeMillis());
+                                    } catch (Exception ex) { /* ignore */ }
+                                } catch (SecurityException se) {
+                                    Log.e("MainActivity", "SecurityException ao tentar iniciar FGS forçado: " + se.getMessage(), se);
+                                    Toast.makeText(this, "Não foi possível iniciar localização em background: conceda permissão de localização em segundo plano", Toast.LENGTH_LONG).show();
+                                }
+                            })
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                    return;
+                }
+            }
+
+            Intent fg = new Intent(this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class);
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(this, fg);
+                } else {
+                    startService(fg);
+                }
+                Log.d("MainActivity", "ForegroundLocationService solicitado");
+                // Record automatic attempt state and current permission snapshot
+                try {
+                    SharedPreferences prefsLocal = getSharedPreferences("app_prefs", MODE_PRIVATE);
+                    boolean hasFgsPermLocal = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission("android.permission.FOREGROUND_SERVICE_LOCATION") == PackageManager.PERMISSION_GRANTED;
+                    boolean hasLocPermLocal = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                    prefsLocal.edit().putBoolean("fgs_auto_attempted", true).putBoolean("fgs_auto_attempted_perms_all_granted", hasFgsPermLocal && hasLocPermLocal).apply();
+                    Log.d("MainActivity", "fgs_auto_attempted set=true (auto), permsAll=" + (hasFgsPermLocal && hasLocPermLocal) + " at " + System.currentTimeMillis());
+                } catch (Exception ex) { /* ignore */ }
+            } catch (SecurityException se) {
+                Log.e("MainActivity", "SecurityException ao tentar iniciar FGS: " + se.getMessage(), se);
+                Toast.makeText(this, "Não foi possível iniciar localização em background: conceda permissão de localização em segundo plano", Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Falha ao iniciar ForegroundLocationService: " + e.getMessage(), e);
+        }
+    }
+
+    private void stopForegroundLocationService() {
+        try {
+            Intent fg = new Intent(this, ao.co.isptec.aplm.projetoanuncioloc.Service.ForegroundLocationService.class);
+            stopService(fg);
+            Log.d("MainActivity", "ForegroundLocationService parado");
+        } catch (Exception e) {
+            Log.e("MainActivity", "Falha ao parar ForegroundLocationService: " + e.getMessage(), e);
+        }
+    }
+
+    private void stopLocationUpdateService() {
+        try {
+            Intent i = new Intent(this, LocationUpdateService.class);
+            stopService(i);
+            Log.d("MainActivity", "LocationUpdateService parado");
+        } catch (Exception e) {
+            Log.e("MainActivity", "Falha ao parar LocationUpdateService: " + e.getMessage(), e);
+        }
+    }
+
+
+
+
 }

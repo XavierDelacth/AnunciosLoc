@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1040897908589",
+    "project_id": "anunciosloc-isptec",
+    "storage_bucket": "anunciosloc-isptec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1040897908589:android:ebbe5edceade52bf434464",
+        "android_client_info": {
+          "package_name": "ao.co.isptec.aplm.projetoanuncioloc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF742K-aESsQnoOR7G-kGeZSBF7qEXk5w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
