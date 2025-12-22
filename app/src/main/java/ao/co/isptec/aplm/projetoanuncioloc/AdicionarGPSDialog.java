@@ -5,9 +5,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -29,7 +33,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Locale;
 
-import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;  // Import da interface comum
+import ao.co.isptec.aplm.projetoanuncioloc.Interface.OnLocalAddedListener;
 import ao.co.isptec.aplm.projetoanuncioloc.Model.Local;
 import ao.co.isptec.aplm.projetoanuncioloc.Request.LocalRequest;
 import ao.co.isptec.aplm.projetoanuncioloc.Service.RetrofitClient;
@@ -39,19 +43,21 @@ import retrofit2.Response;
 
 public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCallback {
 
+    private static final String TAG = "AdicionarGPSDialog";
     private GoogleMap mapa;
     private FusedLocationProviderClient clienteLocalizacao;
     private static final int REQ_LOCALIZACAO = 100;
 
     private EditText etNomeLocal, etLatitude, etLongitude, etRaio;
-    private Button btnCancelar, btnAdicionar, btnWifi;  // btnWifi para alternar
+    private Button btnCancelar, btnAdicionar, btnWifi;
     private ImageView btnFechar;
     private Switch switchMapear;
+    private View mapaContainer;
 
-    // Usa a interface comum
+    private boolean camposBloqueados = false;
+    private boolean mapaInicializado = false;
     private OnLocalAddedListener listener;
 
-    // Factory method para newInstance
     public static AdicionarGPSDialog newInstance(OnLocalAddedListener listener) {
         AdicionarGPSDialog dialog = new AdicionarGPSDialog();
         dialog.listener = listener;
@@ -61,22 +67,42 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        listener = (OnLocalAddedListener) context;  // Cast seguro para a interface comum
+        listener = (OnLocalAddedListener) context;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         clienteLocalizacao = LocationServices.getFusedLocationProviderClient(requireContext());
+        // Remove full screen style - pode causar problemas com o mapa
+        setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Light);
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_add_gps, container, false);
+
+        // Remove título do dialog se existir
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        }
+
         initViews(view);
         setupClickListeners(view);
+
+        Log.d(TAG, "onCreateView: View criada");
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // ✅ DELAY para garantir que o layout está pronto
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            inicializarMapa();
+        }, 300);
     }
 
     private void initViews(View view) {
@@ -86,14 +112,50 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
         etRaio = view.findViewById(R.id.etRaio);
         btnCancelar = view.findViewById(R.id.btnCancelar);
         btnAdicionar = view.findViewById(R.id.btnAdicionar);
-        btnWifi = view.findViewById(R.id.btnWifi);  // Certifica-te de que o ID existe no XML
+        btnWifi = view.findViewById(R.id.btnWifi);
         btnFechar = view.findViewById(R.id.btnFechar);
         switchMapear = view.findViewById(R.id.switchMapear);
+        mapaContainer = view.findViewById(R.id.fragmentoMapa);
 
-        // Inicializa mapa
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.fragmentoMapa);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
+        Log.d(TAG, "initViews: Views inicializadas");
+    }
+
+    /**
+     * ✅ MÉTODO CRÍTICO: Inicializa o mapa com tratamento robusto
+     */
+    private void inicializarMapa() {
+        try {
+            // Tenta obter fragmento existente
+            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                    .findFragmentById(R.id.fragmentoMapa);
+
+            if (mapFragment == null) {
+                Log.d(TAG, "Criando novo SupportMapFragment");
+                mapFragment = SupportMapFragment.newInstance();
+
+                getChildFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentoMapa, mapFragment)
+                        .commitAllowingStateLoss();
+
+                // Aguarda um pouco antes de obter o mapa
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    SupportMapFragment fragment = (SupportMapFragment) getChildFragmentManager()
+                            .findFragmentById(R.id.fragmentoMapa);
+                    if (fragment != null) {
+                        fragment.getMapAsync(this);
+                        Log.d(TAG, "getMapAsync chamado após criação do fragmento");
+                    }
+                }, 500);
+            } else {
+                Log.d(TAG, "Fragmento de mapa já existe");
+                mapFragment.getMapAsync(this);
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao inicializar mapa: " + e.getMessage(), e);
+            Toast.makeText(requireContext(),
+                    "Erro ao carregar mapa. Verifique sua conexão.",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -101,15 +163,26 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
         btnFechar.setOnClickListener(v -> dismiss());
         btnCancelar.setOnClickListener(v -> dismiss());
 
-        // CORREÃ‡ÃƒO PRINCIPAL: Clique no btnWifi abre o WiFi Dialog (sem cast, usa interface comum)
         if (btnWifi != null) {
             btnWifi.setOnClickListener(v -> {
-                dismiss();  // Fecha este diÃ¡logo GPS
-                // Passa o mesmo listener comum (sem cast, tipos compatÃ­veis agora)
+                dismiss();
                 AdicionarWIFIDialog wifiDialog = AdicionarWIFIDialog.newInstance(listener);
                 wifiDialog.show(getParentFragmentManager(), "AdicionarWIFIDialog");
             });
         }
+
+        switchMapear.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                desbloquearCamposCoordenadas();
+                Toast.makeText(requireContext(),
+                        "Toque no mapa para selecionar nova localização",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                if (!etLatitude.getText().toString().trim().isEmpty()) {
+                    bloquearCamposCoordenadas();
+                }
+            }
+        });
 
         btnAdicionar.setOnClickListener(v -> {
             String nome = etNomeLocal.getText().toString().trim();
@@ -127,25 +200,15 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                 double lng = Double.parseDouble(lngStr);
                 int raio = Integer.parseInt(raioStr);
 
-                // PEGA USERID DO SHARED PREFS
                 SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
                 Long userId = prefs.getLong("userId", -1L);
                 if (userId == -1L) {
-                    Toast.makeText(requireContext(), "Erro: FaÃ§a login novamente", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Erro: Faça login novamente", Toast.LENGTH_LONG).show();
                     return;
                 }
 
-                // CRIA OBJETO PARA ENVIO
-                LocalRequest request = new LocalRequest(
-                        nome,
-                        "GPS",
-                        lat,
-                        lng,
-                        raio,
-                        null  // wifiIds = null para GPS
-                );
+                LocalRequest request = new LocalRequest(nome, "GPS", lat, lng, raio, null);
 
-                // ENVIA PARA O BACKEND
                 Call<Local> call = RetrofitClient.getApiService(requireContext()).criarLocal(request, userId);
                 call.enqueue(new Callback<Local>() {
                     @Override
@@ -153,7 +216,6 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                         if (response.isSuccessful() && response.body() != null) {
                             Toast.makeText(requireContext(), "Local GPS adicionado com sucesso!", Toast.LENGTH_LONG).show();
 
-                            // AVISA A ACTIVITY QUE ADICIONOU (atualiza lista)
                             if (listener != null) {
                                 listener.onLocalAddedGPS(nome, lat, lng, raio);
                             }
@@ -170,60 +232,205 @@ public class AdicionarGPSDialog extends DialogFragment implements OnMapReadyCall
                 });
 
             } catch (NumberFormatException e) {
-                Toast.makeText(requireContext(), "Verifique os valores numÃ©ricos", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Verifique os valores numéricos", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady: Mapa pronto!");
         mapa = googleMap;
-        mapa.getUiSettings().setZoomControlsEnabled(true);
-        mapa.getUiSettings().setMyLocationButtonEnabled(true);
+        mapaInicializado = true;
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            ativarLocalizacao();
-        } else {
-            ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCALIZACAO);
+        try {
+            // Configurações básicas do mapa
+            mapa.getUiSettings().setZoomControlsEnabled(true);
+            mapa.getUiSettings().setMyLocationButtonEnabled(false); // Desabilitado inicialmente
+            mapa.getUiSettings().setMapToolbarEnabled(false);
+            mapa.getUiSettings().setCompassEnabled(true);
+            mapa.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+            // Define posição padrão (Luanda) caso GPS falhe
+            LatLng luanda = new LatLng(-8.8383, 13.2344);
+            mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(luanda, 12));
+
+            // Verifica permissões
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Permissão concedida, ativando localização");
+                ativarLocalizacao();
+            } else {
+                Log.d(TAG, "Solicitando permissão de localização");
+                ActivityCompat.requestPermissions(requireActivity(),
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCALIZACAO);
+            }
+
+            // Listener de clique no mapa
+            mapa.setOnMapClickListener(latLng -> {
+                if (!camposBloqueados) {
+                    Log.d(TAG, "Clique no mapa: " + latLng.latitude + ", " + latLng.longitude);
+                    mapa.clear();
+                    mapa.addMarker(new MarkerOptions()
+                            .position(latLng)
+                            .title("Localização Selecionada"));
+                    etLatitude.setText(String.format(Locale.US, "%.6f", latLng.latitude));
+                    etLongitude.setText(String.format(Locale.US, "%.6f", latLng.longitude));
+                } else {
+                    Toast.makeText(requireContext(),
+                            "Coordenadas bloqueadas. Ative o Switch para alterar.",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            Log.d(TAG, "Mapa configurado com sucesso");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao configurar mapa: " + e.getMessage(), e);
         }
-
-        mapa.setOnMapClickListener(latLng -> {
-            mapa.clear();
-            mapa.addMarker(new MarkerOptions().position(latLng).title("Selecionado"));
-            etLatitude.setText(String.format(Locale.US, "%.6f", latLng.latitude));
-            etLongitude.setText(String.format(Locale.US, "%.6f", latLng.longitude));
-        });
     }
 
     private void ativarLocalizacao() {
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) return;
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Sem permissão para acessar localização");
+            return;
+        }
 
-        mapa.setMyLocationEnabled(true);
-        clienteLocalizacao.getLastLocation().addOnSuccessListener(location -> {
-            if (location != null) {
-                LatLng atual = new LatLng(location.getLatitude(), location.getLongitude());
-                mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(atual, 15));
-                etLatitude.setText(String.format(Locale.US, "%.6f", atual.latitude));
-                etLongitude.setText(String.format(Locale.US, "%.6f", atual.longitude));
+        try {
+            if (mapa != null) {
+                mapa.setMyLocationEnabled(true);
+                mapa.getUiSettings().setMyLocationButtonEnabled(true);
             }
-        });
+
+            Log.d(TAG, "Obtendo última localização conhecida...");
+            clienteLocalizacao.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    Log.d(TAG, "Localização obtida: " + location.getLatitude() + ", " + location.getLongitude());
+
+                    LatLng atual = new LatLng(location.getLatitude(), location.getLongitude());
+
+                    if (mapa != null) {
+                        // Limpa marcadores anteriores
+                        mapa.clear();
+
+                        // Adiciona marcador
+                        mapa.addMarker(new MarkerOptions()
+                                .position(atual)
+                                .title("Sua Localização Atual"));
+
+                        // Move câmera com animação
+                        mapa.animateCamera(CameraUpdateFactory.newLatLngZoom(atual, 16), 1500, null);
+                    }
+
+                    // Preenche campos
+                    etLatitude.setText(String.format(Locale.US, "%.6f", atual.latitude));
+                    etLongitude.setText(String.format(Locale.US, "%.6f", atual.longitude));
+
+                    // Bloqueia campos
+                    bloquearCamposCoordenadas();
+
+                } else {
+                    Log.w(TAG, "Localização é null");
+                    Toast.makeText(requireContext(),
+                            "Não foi possível obter sua localização. Toque no mapa para selecionar.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }).addOnFailureListener(e -> {
+                Log.e(TAG, "Erro ao obter localização: " + e.getMessage(), e);
+                Toast.makeText(requireContext(),
+                        "Erro ao obter localização: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            });
+
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException: " + e.getMessage(), e);
+            Toast.makeText(requireContext(),
+                    "Permissão de localização necessária",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void bloquearCamposCoordenadas() {
+        etLatitude.setEnabled(false);
+        etLongitude.setEnabled(false);
+        etLatitude.setFocusable(false);
+        etLongitude.setFocusable(false);
+        etLatitude.setAlpha(0.6f);
+        etLongitude.setAlpha(0.6f);
+        camposBloqueados = true;
+        switchMapear.setChecked(false);
+
+        Log.d(TAG, "Campos de coordenadas bloqueados");
+    }
+
+    private void desbloquearCamposCoordenadas() {
+        etLatitude.setEnabled(true);
+        etLongitude.setEnabled(true);
+        etLatitude.setFocusableInTouchMode(true);
+        etLongitude.setFocusableInTouchMode(true);
+        etLatitude.setAlpha(1.0f);
+        etLongitude.setAlpha(1.0f);
+        camposBloqueados = false;
+
+        Log.d(TAG, "Campos de coordenadas desbloqueados");
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_LOCALIZACAO && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            ativarLocalizacao();
+        Log.d(TAG, "onRequestPermissionsResult: requestCode=" + requestCode);
+
+        if (requestCode == REQ_LOCALIZACAO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Permissão concedida pelo usuário");
+                if (mapa != null) {
+                    ativarLocalizacao();
+                }
+            } else {
+                Log.d(TAG, "Permissão negada pelo usuário");
+                Toast.makeText(requireContext(),
+                        "Permissão necessária para obter localização automática. Toque no mapa para selecionar.",
+                        Toast.LENGTH_LONG).show();
+            }
         }
     }
 
-    // Back button fecha o diÃ¡logo
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Garante que o dialog ocupe a tela adequadamente
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: Dialog resumido");
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(TAG, "onDestroyView: Limpando recursos");
+
+        // Limpa o mapa
+        if (mapa != null) {
+            mapa.clear();
+            mapa = null;
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy: Dialog destruído");
+
         if (clienteLocalizacao != null) {
             clienteLocalizacao = null;
         }

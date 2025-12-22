@@ -35,7 +35,7 @@
         <!-- TUA CHAVE DO GOOGLE MAPS -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCdUFNVoG0VaUQx-fnd3r-VamMcxjZQtPY" />
+            android:value="AIzaSyA5uayP0OH9bCkCxT6ArplGm0ct6B54tL4" />
 
         <service android:name=".Service.MyFirebaseMessagingService" android:exported="false">
             <intent-filter>
