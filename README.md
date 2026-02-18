@@ -9,44 +9,47 @@ O aplicativo foi desenvolvido para facilitar a criação de anúncios personaliz
 
 ## Funcionalidades Principais
 
-- **Autenticação de Usuário**: Login e registro de contas.
-- **Gerenciamento de Anúncios**: Criar, visualizar e salvar anúncios associados a locais.
-- **Mapas Integrados**: Visualização de anúncios no mapa usando Google Maps.
-- **Localização em Tempo Real**: Serviços de localização em foreground e background.
-- **Notificações Push**: Recebimento de notificações via Firebase Messaging.
-- **Compartilhamento via WiFi Direct**: Compartilhamento de anúncios entre dispositivos próximos.
-- **Sincronização Offline**: Gerenciamento de dados quando offline.
-- **Perfis de Usuário**: Edição de perfil, alteração de senha e gerenciamento de chaves de perfil.
-- **Chaves de Perfil**: Sistema de chaves para categorizar e filtrar anúncios.
+- **Autenticação de Usuário**: Login, registro e logout de contas.
+- **Gerenciamento de Anúncios**: Criar, visualizar, editar, excluir e salvar (bookmark) anúncios associados a locais.
+- **Mapas Integrados**: Visualização de anúncios no mapa usando Google Maps e geocodificação de endereços.
+- **Localização em Tempo Real**: Serviços de localização em foreground e background com autorização de permissões apropriadas.
+- **Notificações Push**: Recebimento de notificações via Firebase Messaging; contador de notificações exibido na UI.
+- **Compartilhamento via WiFi Direct**: Compartilhamento de anúncios entre dispositivos próximos sem necessidade de Internet.
+- **Sincronização Offline**: Gerenciamento de dados quando offline com armazenamento básico e retries.
+- **Perfis de Usuário**: Edição de perfil, alteração de senha e gerenciamento de perfis e valores de perfil.
+- **Chaves de Perfil**: Sistema de chaves e valores para categorizar e filtrar anúncios (whitelist/blacklist).
+- **Gestão de Locais**: Adição de locais via GPS, Wi‑Fi ou manualmente; busca e edição de locais.
+- **Alterar Senha**: Interface para atualização de credenciais de conta.
+- **Modo Descentralizado**: Anúncios podem ser propagados por dispositivos na mesma rede local usando WiFi Direct.
 
 ## Tecnologias Utilizadas
 
 - **Linguagem**: JAVA
 - **Framework**: Android SDK (minSdk 26, targetSdk 36)
 - **Build Tool**: Gradle (JAVA DSL)
-- **Arquitetura**: Activities, Services, Broadcast Receivers
+- **Arquitetura**: Activities, Services, Broadcast Receivers e adaptadores RecyclerView
 - **Bibliotecas**:
   - Google Maps/Location Services
   - Firebase Messaging
-  - Retrofit para API REST
+  - Retrofit e OkHttp para API REST
   - Glide para carregamento de imagens
-  - RecyclerView para listas
+  - RecyclerView e CardView para listas
   - Material Design Components
-  - Gson para serialização JSON
-  - WiFi Direct para P2P
+  - Gson para serialização JSON e adaptadores de data
+  - WiFi Direct (WiFiP2p) para P2P
 
 ## Pré-requisitos
 
 - **Android Studio**: Versão 2022.3.1 ou superior (para suporte ao AGP 8.13.0)
 - **JDK**: Java 11
-- **Dispositivo/Emulador**: Android API 26 ou superior
+- **Dispositivo/Emulador**: Android API 26 ou superior com Google Play Services
 - **Google Play Services**: Instalado no dispositivo
 - **Servidor Backend**: Um servidor Spring Boot ou similar rodando na URL configurada (padrão: http://192.168.39.157:8081)
 
 ## Instalação
 
 1. **Clone o repositório**:
-   ```bash
+   ```
    git clone <url-do-repositorio>
    cd AnunciosLoc
    ```
@@ -75,8 +78,8 @@ O aplicativo foi desenvolvido para facilitar a criação de anúncios personaliz
    - Habilite Firebase Cloud Messaging
 
 5. **Configure o Servidor Backend**:
-   - Certifique-se de que o servidor backend está rodando na URL especificada em `RetrofitClient.java`
-   - Se necessário, altere a `BASE_URL` para o IP/endereço correto do seu servidor
+   - Garanta que o servidor backend está operando na URL especificada em `RetrofitClient.java`.
+   - Ajuste a `BASE_URL` se necessário para o IP/endereço correto do seu servidor.
 
 ## Como Rodar
 
@@ -120,13 +123,15 @@ AnunciosLoc/
 
 O aplicativo se comunica com um backend via REST API usando Retrofit. As principais endpoints incluem:
 
-- **Autenticação**: `/login`, `/register`
-- **Anúncios**: `/anuncios` (GET, POST, PUT, DELETE)
-- **Locais**: `/locais`
-- **Usuários**: `/users`
-- **Notificações**: `/notificacoes`
+- **Autenticação**: `/login`, `/register`, `/logout`
+- **Anúncios**: `/api/anuncios` (listar, criar, atualizar, eliminar; consulta por proximidade etc.)
+- **Locais**: `/api/locais` (criar, listar, buscar, atualizar, excluir)
+- **Usuários**: `/api/users` (perfil, alteração de senha, perfis de chave/valor)
+- **Notificações**: `/api/notificacoes` e `/api/notificacoes/count`
+- **Guardados**: `/api/guardados/usuario/{usuarioId}` para salvar e recuperar anúncios favoritos
+- **Compartilhamento**: `/api/anuncios/partilhar`
 
-Certifique-se de que o servidor backend implementa essas rotas conforme definido em `ApiService.java`.
+Certifique-se de que o servidor backend implemente essas rotas conforme definido em `ApiService.java`.
 
 ## Permissões Necessárias
 
@@ -180,7 +185,7 @@ Para executar testes:
 
 ## Problemas Conhecidos
 
-- A chave do Google Maps está hardcoded no código (substitua pela sua)
+- A chave do Google Maps está hardcoded no código 
 - O IP do servidor backend pode precisar ser ajustado dependendo da rede
 - WiFi Direct requer dispositivos com suporte ao hardware
 
@@ -196,5 +201,3 @@ Para suporte ou dúvidas:
 
 ---
 
-**Nota**: Este README foi gerado baseado na análise do código fonte. Algumas configurações podem precisar de ajustes específicos do ambiente de desenvolvimento.</content>
-<parameter name="filePath">c:\Users\hp\AndroidStudioProjects\backup1\AnunciosLoc\README.md
